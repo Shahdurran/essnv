@@ -401,48 +401,22 @@ export class MemStorage implements IStorage {
     // Set current date to August 2025
     const currentDate = new Date(2025, 7, 3); // August 3, 2025 (month is 0-indexed)
     
-    // Generate historical actual data (60 months back including July 2025)
-    for (let i = 59; i >= 0; i--) {
+    // Generate all 60 months of data (historical + some future)
+    for (let i = 59; i >= -2; i--) {
       const date = new Date(currentDate);
       date.setMonth(date.getMonth() - i);
       
-      // Only generate data for months before current month (August 2025)
-      if (date.getMonth() < currentDate.getMonth() || date.getFullYear() < currentDate.getFullYear()) {
-        // Add growth trend (8% annual growth over 5 years)
-        const growthFactor = Math.pow(1.08, (59 - i) / 12);
-        
-        // Add seasonal variation (higher in spring/summer for cosmetic procedures)
-        const seasonalFactor = 1 + 0.15 * Math.sin(((date.getMonth() + 3) / 12) * 2 * Math.PI);
-        
-        // Add monthly variation (±20%)
-        const monthlyVariation = (Math.random() * 0.4 - 0.2);
-        
-        const revenue = Math.round(baseRevenue * growthFactor * seasonalFactor * (1 + monthlyVariation));
-        
-        months.push({
-          month: date.toISOString().slice(0, 7), // YYYY-MM format
-          revenue: revenue,
-          patientCount: Math.round(revenue / 340), // Average revenue per patient
-          arDays: 25 + Math.round(Math.random() * 15), // AR days 25-40
-          date: date,
-          isProjected: false // Historical data is not projected
-        });
-      }
-    }
-    
-    // Generate projected data for current and future months (August, September, October 2025)
-    for (let i = 0; i <= 2; i++) {
-      const date = new Date(currentDate);
-      date.setMonth(date.getMonth() + i);
+      // Add growth trend (8% annual growth over 5 years)
+      const growthFactor = Math.pow(1.08, Math.max(0, (59 - i)) / 12);
       
-      // Use latest growth trend for projections
-      const growthFactor = Math.pow(1.08, 59 / 12);
-      
-      // Add seasonal variation
+      // Add seasonal variation (higher in spring/summer for cosmetic procedures)
       const seasonalFactor = 1 + 0.15 * Math.sin(((date.getMonth() + 3) / 12) * 2 * Math.PI);
       
-      // Add monthly variation for projections (smaller variation for projections)
-      const monthlyVariation = (Math.random() * 0.2 - 0.1);
+      // Add monthly variation (±20% for historical, ±10% for projected)
+      const isProjected = date >= currentDate; // August 2025 and later are projected
+      const monthlyVariation = isProjected ? 
+        (Math.random() * 0.2 - 0.1) : // Smaller variation for projections
+        (Math.random() * 0.4 - 0.2);  // Larger variation for historical data
       
       const revenue = Math.round(baseRevenue * growthFactor * seasonalFactor * (1 + monthlyVariation));
       
@@ -452,9 +426,11 @@ export class MemStorage implements IStorage {
         patientCount: Math.round(revenue / 340), // Average revenue per patient
         arDays: 25 + Math.round(Math.random() * 15), // AR days 25-40
         date: date,
-        isProjected: true // Current and future months are projections
+        isProjected: isProjected
       });
     }
+    
+
     
     return months;
   }
