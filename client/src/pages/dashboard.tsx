@@ -62,9 +62,11 @@ export default function Dashboard() {
           <div className="flex justify-between items-center h-16">
             {/* Brand and Logo Section */}
             <div className="flex items-center space-x-4">
-              <div className="w-10 h-10 bg-primary rounded-lg flex items-center justify-center">
-                <i className="fas fa-brain text-white text-lg"></i>
-              </div>
+              <img 
+                src="/attached_assets/MDS Logo_1754254040718.png" 
+                alt="MDS Medical & Dental Solutions Logo" 
+                className="w-12 h-12 object-contain"
+              />
               <div>
                 <h1 className="text-xl font-bold text-gray-900">MDS AI Analytics</h1>
                 <p className="text-sm text-gray-600">Rao Dermatology Business Intelligence</p>
@@ -77,9 +79,11 @@ export default function Dashboard() {
                 <p className="text-sm font-medium text-gray-900">Dr. Babar K. Rao</p>
                 <p className="text-xs text-gray-600">Practice Owner</p>
               </div>
-              <div className="w-8 h-8 bg-gray-300 rounded-full flex items-center justify-center">
-                <i className="fas fa-user text-gray-600 text-sm"></i>
-              </div>
+              <img 
+                src="/attached_assets/image_1754253968575.png" 
+                alt="Dr. Babar K. Rao" 
+                className="w-10 h-10 rounded-full object-cover border-2 border-blue-100"
+              />
             </div>
           </div>
         </div>
