@@ -397,19 +397,32 @@ export class MemStorage implements IStorage {
       }, 0);
     }
     
-    for (let i = 11; i >= 0; i--) {
+    // Generate 60 months (5 years) of historical data for proper time period filtering
+    for (let i = 59; i >= 0; i--) {
       const date = new Date();
       date.setMonth(date.getMonth() - i);
-      const monthlyVariation = (Math.random() * 0.4 - 0.2); // ±20% variation
-      const seasonalFactor = 1 + 0.1 * Math.sin((date.getMonth() / 12) * 2 * Math.PI); // Seasonal variation
-      const revenue = Math.round(baseRevenue * seasonalFactor * (1 + monthlyVariation));
+      
+      // Add growth trend (8% annual growth over 5 years)
+      const growthFactor = Math.pow(1.08, (59 - i) / 12);
+      
+      // Add seasonal variation (higher in spring/summer for cosmetic procedures)
+      const seasonalFactor = 1 + 0.15 * Math.sin(((date.getMonth() + 3) / 12) * 2 * Math.PI);
+      
+      // Add monthly variation (±20%)
+      const monthlyVariation = (Math.random() * 0.4 - 0.2);
+      
+      const revenue = Math.round(baseRevenue * growthFactor * seasonalFactor * (1 + monthlyVariation));
+      
+      // Add some projected data for the most recent months to show actual vs projected
+      const isProjected = i <= 3; // Last 3 months are projections
       
       months.push({
         month: date.toISOString().slice(0, 7), // YYYY-MM format
         revenue: revenue,
         patientCount: Math.round(revenue / 340), // Average revenue per patient
         arDays: 25 + Math.round(Math.random() * 15), // AR days 25-40
-        date: date
+        date: date,
+        isProjected: isProjected
       });
     }
     
