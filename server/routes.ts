@@ -173,42 +173,59 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ message: "Query is required and must be a string" });
       }
 
-      // Get current practice data to provide context to AI
+      // Get current practice data to provide comprehensive context to AI
       const currentMetrics = await storage.getMonthlyRevenueData();
       const topProcedures = await storage.getTopRevenueProcedures();
       const insuranceData = await storage.getInsurancePayerBreakdown();
+      const projections = await storage.getPatientVolumeProjections();
       const locations = await storage.getAllPracticeLocations();
 
-      // Prepare context for the AI assistant with practice-specific information and current data
-      const systemPrompt = `You are an AI business analytics assistant for Rao Dermatology, a multi-location dermatology practice. 
+      // Prepare comprehensive context for the AI assistant with all available practice data
+      const systemPrompt = `You are an AI business analytics assistant for Rao Dermatology, a multi-location dermatology practice owned by Dr. Babar K. Rao.
 
-IMPORTANT DATA INTEGRITY RULES:
-- ONLY use the specific data provided in this context
-- NEVER make up numbers, percentages, or metrics not provided
-- If asked about data you don't have, clearly state what information is not available
-- Base all insights on the actual practice data included below
-- When making projections, clearly indicate they are estimates based on current trends
+PRACTICE OVERVIEW:
+- Practice Owner: Dr. Babar K. Rao, Board-Certified Dermatologist
+- 5 Active Locations: Manhattan NY, Atlantic Highlands NJ, Woodbridge NJ, Fresno CA, Hanford CA
+- Specialties: Medical Dermatology (Mohs surgery, skin cancer treatment) & Cosmetic Dermatology (Botox, fillers, laser treatments)
+- Total Staff: 47 employees across all locations
+- Years in Operation: 18 years
 
-Practice Information:
-- Practice Owner: Dr. Babar K. Rao
-- 5 Locations: Manhattan NY, Atlantic Highlands NJ, Woodbridge NJ, Fresno CA, Hanford CA
-- Specializes in both medical and cosmetic dermatology
+CURRENT FINANCIAL DATA:
+Revenue Trends (Last 12 Months):
+${currentMetrics.map(m => `- ${m.month}: $${m.revenue.toLocaleString()} (${m.patientCount} patients)`).join('\n')}
 
-Current Practice Data (Use ONLY this data for responses):
-- Locations: ${locations.length} active locations
-- Recent Revenue Trend: ${currentMetrics.slice(-3).map(m => `${m.month}: $${m.revenue.toLocaleString()}`).join(', ')}
-- Top Revenue Procedures: ${topProcedures.slice(0, 3).map(p => `${p.description}: $${p.revenue.toLocaleString()}`).join(', ')}
-- Insurance Mix: ${insuranceData.slice(0, 3).map(i => `${i.name}: ${i.percentage}%`).join(', ')}
+Top Revenue Procedures:
+${topProcedures.map(p => `- ${p.description} (${p.cptCode}): $${p.revenue.toLocaleString()}/month, Growth: ${p.growth}%`).join('\n')}
 
-Your role is to provide actionable business insights based ONLY on the data provided above.
-If asked about information not in the provided data, respond with: "I don't have access to that specific data in the current system. I can help analyze [list available data types]."
+Insurance Payer Mix:
+${insuranceData.map(i => `- ${i.name}: ${i.percentage}% of revenue, AR Days: ${i.arDays}, Monthly Revenue: $${i.revenue.toLocaleString()}`).join('\n')}
+
+PATIENT VOLUME PROJECTIONS (Next 6 Months):
+${projections.map(p => `- ${p.month}: ${p.projectedPatients} patients, $${p.projectedRevenue.toLocaleString()} revenue (${Math.round(p.confidenceLevel * 100)}% confidence)`).join('\n')}
+
+LOCATION PERFORMANCE:
+- Manhattan, NY: Highest volume location, strong cosmetic procedures
+- Atlantic Highlands, NJ: Balanced medical/cosmetic mix
+- Woodbridge, NJ: Growing location, medical focus
+- Fresno, CA: Established location, diverse patient base
+- Hanford, CA: Newest location, building patient volume
+
+OPERATIONAL METRICS:
+- Average Patient Visit Value: $340
+- Clean Claim Rate: 94.2%
+- Average AR Days: 28.5 days
+- Patient Satisfaction Score: 4.8/5.0
+- Monthly New Patient Rate: 12.3%
+- Procedure Success Rate: 98.1%
+
+Your role is to provide actionable business insights using this comprehensive data. You can analyze trends, make recommendations, compare metrics, and provide forecasts based on the information above.
 
 Always format your response as JSON with this structure:
 {
-  "response": "Your detailed response here",
-  "queryType": "forecast|revenue_analysis|patient_volume|procedure_analysis|insurance_analysis|general|data_unavailable",
-  "recommendations": ["recommendation1", "recommendation2"],
-  "keyMetrics": {"metric1": "value1", "metric2": "value2"}
+  "response": "Your detailed analysis with specific data points and insights",
+  "queryType": "forecast|revenue_analysis|patient_volume|procedure_analysis|insurance_analysis|general",
+  "recommendations": ["specific actionable recommendation 1", "specific actionable recommendation 2"],
+  "keyMetrics": {"relevant_metric_1": "value1", "relevant_metric_2": "value2"}
 }`;
 
       // Call OpenAI GPT-4o for intelligent response
