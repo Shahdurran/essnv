@@ -111,6 +111,11 @@ export default function KeyMetricsTrendsChart({ selectedLocationId }: KeyMetrics
     
     // Debug logging for projection boundary
     console.log('Chart data boundary check:');
+    // Show July specifically plus the last 4 months
+    const julyIndex = data.findIndex(item => item.month === '2025-07');
+    if (julyIndex >= 0) {
+      console.log(`July 2025 specifically: ${data[julyIndex].month}: isProjected=${data[julyIndex].isProjected}, value=${getMetricValue(data[julyIndex])}`);
+    }
     data.slice(-5).forEach((item: RevenueDataPoint) => {
       console.log(`${item.month}: isProjected=${item.isProjected}, value=${getMetricValue(item)}`);
     });
