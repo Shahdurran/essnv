@@ -350,9 +350,19 @@ export class MemStorage implements IStorage {
 
   // Analytics aggregation methods
   async getTopRevenueProcedures(locationId?: string, category?: 'medical' | 'cosmetic'): Promise<any[]> {
-    // Implementation would aggregate visit procedures by revenue
-    // For now, return structured data based on real dermatology procedures
     const procedures = Array.from(this.procedures.values());
+    const locations = Array.from(this.practiceLocations.values());
+    
+    // Get location multiplier for realistic data scaling
+    let locationMultiplier = 1;
+    if (locationId) {
+      // Single location gets base multiplier
+      locationMultiplier = 1;
+    } else {
+      // All locations aggregate - multiply by number of locations
+      locationMultiplier = locations.length;
+    }
+
     return procedures
       .filter(proc => !category || proc.category === category)
       .sort((a, b) => parseFloat(b.basePrice || "0") - parseFloat(a.basePrice || "0"))
@@ -361,15 +371,31 @@ export class MemStorage implements IStorage {
         cptCode: proc.cptCode,
         description: proc.description,
         category: proc.category,
-        revenue: parseFloat(proc.basePrice || "0") * 45, // Simulated monthly volume
-        growth: (Math.random() * 30 - 5).toFixed(1) // Random growth between -5% and 25%
+        revenue: Math.round(parseFloat(proc.basePrice || "0") * 45 * locationMultiplier), // Scale by locations
+        growth: ((Math.random() * 30 - 5) * (locationId ? 1 : 0.8)).toFixed(1) // Slightly lower growth for aggregated data
       }));
   }
 
   async getMonthlyRevenueData(locationId?: string): Promise<any[]> {
-    // Return time series data for revenue trends
     const months = [];
-    const baseRevenue = 420000;
+    const locations = Array.from(this.practiceLocations.values());
+    
+    // Base revenue per location - different for each location type
+    let baseRevenue = 420000;
+    if (locationId) {
+      // Single location - use base revenue with location-specific variation
+      const location = locations.find(loc => loc.id === locationId);
+      if (location) {
+        // Adjust base revenue by location characteristics
+        const locationIndex = locations.indexOf(location);
+        baseRevenue = baseRevenue * (0.7 + locationIndex * 0.15); // Variation between locations
+      }
+    } else {
+      // All locations - aggregate all location revenues
+      baseRevenue = locations.reduce((total, location, index) => {
+        return total + (420000 * (0.7 + index * 0.15));
+      }, 0);
+    }
     
     for (let i = 11; i >= 0; i--) {
       const date = new Date();
@@ -382,6 +408,7 @@ export class MemStorage implements IStorage {
         month: date.toISOString().slice(0, 7), // YYYY-MM format
         revenue: revenue,
         patientCount: Math.round(revenue / 340), // Average revenue per patient
+        arDays: 25 + Math.round(Math.random() * 15), // AR days 25-40
         date: date
       });
     }
@@ -390,22 +417,64 @@ export class MemStorage implements IStorage {
   }
 
   async getInsurancePayerBreakdown(locationId?: string): Promise<any[]> {
-    // Return insurance payer analysis
-    return [
-      { name: "Blue Cross Blue Shield", percentage: 32.4, arDays: 24.2, revenue: 136800 },
-      { name: "Aetna", percentage: 18.7, arDays: 31.5, revenue: 78900 },
-      { name: "Self-Pay", percentage: 15.2, arDays: 0, revenue: 64200 },
-      { name: "Medicare", percentage: 12.8, arDays: 45.3, revenue: 54000 },
-      { name: "Cigna", percentage: 8.9, arDays: 28.7, revenue: 37600 },
-      { name: "United Healthcare", percentage: 7.3, arDays: 33.1, revenue: 30800 },
-      { name: "Other", percentage: 4.7, arDays: 35.8, revenue: 19800 }
+    const locations = Array.from(this.practiceLocations.values());
+    
+    // Base insurance data with location-specific variations
+    const baseInsuranceData = [
+      { name: "Blue Cross Blue Shield", percentage: 32.4, arDays: 24.2, baseRevenue: 136800 },
+      { name: "Aetna", percentage: 18.7, arDays: 31.5, baseRevenue: 78900 },
+      { name: "Self-Pay", percentage: 15.2, arDays: 0, baseRevenue: 64200 },
+      { name: "Medicare", percentage: 12.8, arDays: 45.3, baseRevenue: 54000 },
+      { name: "Cigna", percentage: 8.9, arDays: 28.7, baseRevenue: 37600 },
+      { name: "United Healthcare", percentage: 7.3, arDays: 33.1, baseRevenue: 30800 },
+      { name: "Other", percentage: 4.7, arDays: 35.8, baseRevenue: 19800 }
     ];
+
+    let multiplier = 1;
+    
+    if (locationId) {
+      // Single location - apply location-specific variation
+      const location = locations.find(loc => loc.id === locationId);
+      if (location) {
+        const locationIndex = locations.indexOf(location);
+        multiplier = 0.7 + locationIndex * 0.15; // Different multiplier per location
+      }
+    } else {
+      // All locations - aggregate across all locations
+      multiplier = locations.reduce((total, location, index) => {
+        return total + (0.7 + index * 0.15);
+      }, 0);
+    }
+
+    return baseInsuranceData.map(payer => ({
+      name: payer.name,
+      percentage: locationId ? 
+        payer.percentage * (0.9 + Math.random() * 0.2) : // Single location variation
+        payer.percentage, // All locations keeps base percentages
+      arDays: payer.arDays * (0.9 + Math.random() * 0.2), // Small AR variation
+      revenue: Math.round(payer.baseRevenue * multiplier)
+    }));
   }
 
   async getPatientVolumeProjections(locationId?: string): Promise<any[]> {
-    // Return patient volume projections for next 6 months
     const projections = [];
-    const baseVolume = 1247;
+    const locations = Array.from(this.practiceLocations.values());
+    
+    // Base volume calculation based on location
+    let baseVolume = 1247;
+    if (locationId) {
+      // Single location - use base volume with location variation
+      const location = locations.find(loc => loc.id === locationId);
+      if (location) {
+        const locationIndex = locations.indexOf(location);
+        baseVolume = Math.round(baseVolume * (0.7 + locationIndex * 0.15));
+      }
+    } else {
+      // All locations - aggregate patient volume
+      baseVolume = locations.reduce((total, location, index) => {
+        return total + Math.round(1247 * (0.7 + index * 0.15));
+      }, 0);
+    }
     
     for (let i = 1; i <= 6; i++) {
       const date = new Date();
@@ -419,6 +488,7 @@ export class MemStorage implements IStorage {
         projectedPatients: projectedVolume,
         projectedRevenue: projectedVolume * 340, // Average revenue per patient
         confidenceLevel: Math.max(0.7, 0.95 - (i * 0.05)), // Decreasing confidence over time
+        growthRate: `+${(growthRate * 100).toFixed(1)}%`,
         date: date
       });
     }
