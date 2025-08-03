@@ -105,7 +105,7 @@ export default function KeyMetricsTrendsChart({ selectedLocationId }: KeyMetrics
       }
     };
 
-    // Separate actual and projected values while maintaining labels alignment
+    // Create separate datasets with index-based data points
     const actualValues: (number | null)[] = [];
     const projectedValues: (number | null)[] = [];
     
@@ -120,7 +120,7 @@ export default function KeyMetricsTrendsChart({ selectedLocationId }: KeyMetrics
       }
     });
 
-    // Chart configuration
+    // Chart configuration with separate datasets
     const config: ChartConfiguration<'line'> = {
       type: 'line' as const,
       data: {
@@ -138,8 +138,7 @@ export default function KeyMetricsTrendsChart({ selectedLocationId }: KeyMetrics
             pointHoverRadius: 8,
             pointBackgroundColor: '#0EA5E9',
             pointBorderColor: '#ffffff',
-            pointBorderWidth: 2,
-            spanGaps: false // Don't connect across null values
+            pointBorderWidth: 2
           },
           {
             label: `Projected ${selectedMetric === 'revenue' ? 'Revenue' : selectedMetric === 'patients' ? 'Patients' : 'AR Days'}`,
@@ -154,8 +153,7 @@ export default function KeyMetricsTrendsChart({ selectedLocationId }: KeyMetrics
             pointBackgroundColor: '#10B981',
             pointBorderColor: '#ffffff',
             pointBorderWidth: 2,
-            borderDash: [8, 4],
-            spanGaps: false // Don't connect across null values
+            borderDash: [8, 4]
           }
         ]
       },
