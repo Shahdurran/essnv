@@ -251,72 +251,74 @@ export default function TopRevenueProcedures({
           </div>
         </div>
 
-        {/* Procedures List */}
-        <div className="space-y-4">
-          {procedures.length === 0 ? (
-            <div className="text-center py-8">
-              <DollarSign className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-              <p className="text-gray-600">No procedure data available</p>
-              <p className="text-sm text-gray-500 mt-2">
-                {selectedLocationId === "all" 
-                  ? "Data will appear when procedures are recorded"
-                  : "Try selecting 'All Locations' or a different location"
-                }
-              </p>
-            </div>
-          ) : (
-            procedures.map((procedure, index) => {
-              const IconComponent = getProcedureIcon(procedure.cptCode);
-              const colorClass = getProcedureColor(procedure.category);
-              
-              return (
-                <div 
-                  key={procedure.cptCode || index} 
-                  className="flex items-center justify-between p-4 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors"
-                >
-                  <div className="flex items-center space-x-4">
-                    {/* Procedure Icon */}
-                    <div className={`w-10 h-10 ${colorClass} rounded-lg flex items-center justify-center`}>
-                      <IconComponent className="h-5 w-5 text-white" />
+        {/* Procedures List - Scrollable Container (shows 5 items max) */}
+        <div className="max-h-[400px] overflow-y-auto scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-gray-100">
+          <div className="space-y-4 pr-2">
+            {procedures.length === 0 ? (
+              <div className="text-center py-8">
+                <DollarSign className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+                <p className="text-gray-600">No procedure data available</p>
+                <p className="text-sm text-gray-500 mt-2">
+                  {selectedLocationId === "all" 
+                    ? "Data will appear when procedures are recorded"
+                    : "Try selecting 'All Locations' or a different location"
+                  }
+                </p>
+              </div>
+            ) : (
+              procedures.map((procedure, index) => {
+                const IconComponent = getProcedureIcon(procedure.cptCode);
+                const colorClass = getProcedureColor(procedure.category);
+                
+                return (
+                  <div 
+                    key={procedure.cptCode || index} 
+                    className="flex items-center justify-between p-4 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors"
+                  >
+                    <div className="flex items-center space-x-4">
+                      {/* Procedure Icon */}
+                      <div className={`w-10 h-10 ${colorClass} rounded-lg flex items-center justify-center`}>
+                        <IconComponent className="h-5 w-5 text-white" />
+                      </div>
+                      
+                      {/* Procedure Details */}
+                      <div>
+                        <h4 className="font-medium text-gray-900">
+                          {procedure.description || `${procedure.cptCode} Procedure`}
+                        </h4>
+                        <div className="flex items-center space-x-2 mt-1">
+                          <p className="text-sm text-gray-600">
+                            CPT: {procedure.cptCode}
+                          </p>
+                          <Badge 
+                            variant="outline" 
+                            className={`text-xs ${
+                              procedure.category === 'medical' 
+                                ? 'text-blue-600 border-blue-200' 
+                                : 'text-purple-600 border-purple-200'
+                            }`}
+                          >
+                            {procedure.category}
+                          </Badge>
+                        </div>
+                      </div>
                     </div>
                     
-                    {/* Procedure Details */}
-                    <div>
-                      <h4 className="font-medium text-gray-900">
-                        {procedure.description || `${procedure.cptCode} Procedure`}
-                      </h4>
+                    {/* Revenue and Growth */}
+                    <div className="text-right">
+                      <p className="font-semibold text-gray-900">
+                        {formatRevenue(procedure.revenue || 0)}
+                      </p>
                       <div className="flex items-center space-x-2 mt-1">
-                        <p className="text-sm text-gray-600">
-                          CPT: {procedure.cptCode}
-                        </p>
-                        <Badge 
-                          variant="outline" 
-                          className={`text-xs ${
-                            procedure.category === 'medical' 
-                              ? 'text-blue-600 border-blue-200' 
-                              : 'text-purple-600 border-purple-200'
-                          }`}
-                        >
-                          {procedure.category}
-                        </Badge>
+                        {formatGrowth(procedure.growth || "+0.0%")}
+                        <TrendingUp className="h-3 w-3 text-green-500" />
                       </div>
                     </div>
                   </div>
-                  
-                  {/* Revenue and Growth */}
-                  <div className="text-right">
-                    <p className="font-semibold text-gray-900">
-                      {formatRevenue(procedure.revenue || 0)}
-                    </p>
-                    <div className="flex items-center space-x-2 mt-1">
-                      {formatGrowth(procedure.growth || "+0.0%")}
-                      <TrendingUp className="h-3 w-3 text-green-500" />
-                    </div>
-                  </div>
-                </div>
-              );
-            })
-          )}
+                );
+              })
+            )}
+          </div>
         </div>
 
         {/* Category Summary */}
