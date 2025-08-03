@@ -401,7 +401,7 @@ export class MemStorage implements IStorage {
     // Set current date to August 2025
     const currentDate = new Date(2025, 7, 3); // August 3, 2025 (month is 0-indexed)
     
-    // Generate all 60 months of data (historical + some future)
+    // Generate 62 months of data: 60 historical + 2 future projection months
     for (let i = 59; i >= -2; i--) {
       const date = new Date(currentDate);
       date.setMonth(date.getMonth() - i);
