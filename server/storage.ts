@@ -401,30 +401,33 @@ export class MemStorage implements IStorage {
     // Set current date to August 2025
     const currentDate = new Date(2025, 7, 3); // August 3, 2025 (month is 0-indexed)
     
-    // Generate historical actual data (60 months back to July 2025)
-    for (let i = 59; i >= 1; i--) {
+    // Generate historical actual data (60 months back including July 2025)
+    for (let i = 59; i >= 0; i--) {
       const date = new Date(currentDate);
       date.setMonth(date.getMonth() - i);
       
-      // Add growth trend (8% annual growth over 5 years)
-      const growthFactor = Math.pow(1.08, (59 - i) / 12);
-      
-      // Add seasonal variation (higher in spring/summer for cosmetic procedures)
-      const seasonalFactor = 1 + 0.15 * Math.sin(((date.getMonth() + 3) / 12) * 2 * Math.PI);
-      
-      // Add monthly variation (±20%)
-      const monthlyVariation = (Math.random() * 0.4 - 0.2);
-      
-      const revenue = Math.round(baseRevenue * growthFactor * seasonalFactor * (1 + monthlyVariation));
-      
-      months.push({
-        month: date.toISOString().slice(0, 7), // YYYY-MM format
-        revenue: revenue,
-        patientCount: Math.round(revenue / 340), // Average revenue per patient
-        arDays: 25 + Math.round(Math.random() * 15), // AR days 25-40
-        date: date,
-        isProjected: false // Historical data is not projected
-      });
+      // Only generate data for months before current month (August 2025)
+      if (date.getMonth() < currentDate.getMonth() || date.getFullYear() < currentDate.getFullYear()) {
+        // Add growth trend (8% annual growth over 5 years)
+        const growthFactor = Math.pow(1.08, (59 - i) / 12);
+        
+        // Add seasonal variation (higher in spring/summer for cosmetic procedures)
+        const seasonalFactor = 1 + 0.15 * Math.sin(((date.getMonth() + 3) / 12) * 2 * Math.PI);
+        
+        // Add monthly variation (±20%)
+        const monthlyVariation = (Math.random() * 0.4 - 0.2);
+        
+        const revenue = Math.round(baseRevenue * growthFactor * seasonalFactor * (1 + monthlyVariation));
+        
+        months.push({
+          month: date.toISOString().slice(0, 7), // YYYY-MM format
+          revenue: revenue,
+          patientCount: Math.round(revenue / 340), // Average revenue per patient
+          arDays: 25 + Math.round(Math.random() * 15), // AR days 25-40
+          date: date,
+          isProjected: false // Historical data is not projected
+        });
+      }
     }
     
     // Generate projected data for current and future months (August, September, October 2025)
