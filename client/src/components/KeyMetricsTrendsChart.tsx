@@ -109,12 +109,6 @@ export default function KeyMetricsTrendsChart({ selectedLocationId }: KeyMetrics
     const actualValues: (number | null)[] = [];
     const projectedValues: (number | null)[] = [];
     
-    // Debug logging
-    console.log('Chart data processing - first few items:');
-    data.slice(-5).forEach((item: RevenueDataPoint) => {
-      console.log(`${item.month}: isProjected=${item.isProjected}, revenue=${item.revenue}`);
-    });
-    
     data.forEach((item: RevenueDataPoint) => {
       const value = getMetricValue(item);
       if (item.isProjected) {
@@ -125,10 +119,6 @@ export default function KeyMetricsTrendsChart({ selectedLocationId }: KeyMetrics
         projectedValues.push(null);
       }
     });
-    
-    // Debug the final arrays
-    console.log('Last 5 actual values:', actualValues.slice(-5));
-    console.log('Last 5 projected values:', projectedValues.slice(-5));
 
     // Chart configuration
     const config: ChartConfiguration<'line'> = {
@@ -148,7 +138,8 @@ export default function KeyMetricsTrendsChart({ selectedLocationId }: KeyMetrics
             pointHoverRadius: 8,
             pointBackgroundColor: '#0EA5E9',
             pointBorderColor: '#ffffff',
-            pointBorderWidth: 2
+            pointBorderWidth: 2,
+            spanGaps: false // Don't connect across null values
           },
           {
             label: `Projected ${selectedMetric === 'revenue' ? 'Revenue' : selectedMetric === 'patients' ? 'Patients' : 'AR Days'}`,
@@ -163,7 +154,8 @@ export default function KeyMetricsTrendsChart({ selectedLocationId }: KeyMetrics
             pointBackgroundColor: '#10B981',
             pointBorderColor: '#ffffff',
             pointBorderWidth: 2,
-            borderDash: [8, 4]
+            borderDash: [8, 4],
+            spanGaps: false // Don't connect across null values
           }
         ]
       },
