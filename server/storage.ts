@@ -413,7 +413,8 @@ export class MemStorage implements IStorage {
       const seasonalFactor = 1 + 0.15 * Math.sin(((date.getMonth() + 3) / 12) * 2 * Math.PI);
       
       // Add monthly variation (±20% for historical, ±10% for projected)
-      const isProjected = date >= currentDate; // August 2025 and later are projected
+      // July 2025 and earlier should be actual data, August 2025 and later should be projected
+      const isProjected = (date.getFullYear() > 2025) || (date.getFullYear() === 2025 && date.getMonth() >= 7); // August (month 7) 2025 and later are projected
       const monthlyVariation = isProjected ? 
         (Math.random() * 0.2 - 0.1) : // Smaller variation for projections
         (Math.random() * 0.4 - 0.2);  // Larger variation for historical data
