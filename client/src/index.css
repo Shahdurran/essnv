@@ -1,0 +1,340 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --background: hsl(0, 0%, 100%);
+  --foreground: hsl(20, 14.3%, 4.1%);
+  --muted: hsl(60, 4.8%, 95.9%);
+  --muted-foreground: hsl(25, 5.3%, 44.7%);
+  --popover: hsl(0, 0%, 100%);
+  --popover-foreground: hsl(20, 14.3%, 4.1%);
+  --card: hsl(0, 0%, 100%);
+  --card-foreground: hsl(20, 14.3%, 4.1%);
+  --border: hsl(20, 5.9%, 90%);
+  --input: hsl(20, 5.9%, 90%);
+  --primary: hsl(207, 90%, 54%);
+  --primary-foreground: hsl(211, 100%, 99%);
+  --secondary: hsl(60, 4.8%, 95.9%);
+  --secondary-foreground: hsl(24, 9.8%, 10%);
+  --accent: hsl(60, 4.8%, 95.9%);
+  --accent-foreground: hsl(24, 9.8%, 10%);
+  --destructive: hsl(0, 84.2%, 60.2%);
+  --destructive-foreground: hsl(60, 9.1%, 97.8%);
+  --ring: hsl(20, 14.3%, 4.1%);
+  --radius: 0.5rem;
+  
+  /* Medical-specific color variables for dermatology practice */
+  --medical-blue: hsl(213, 78%, 46%);
+  --medical-teal: hsl(180, 69%, 28%);
+  --medical-green: hsl(160, 84%, 39%);
+  --success: hsl(160, 84%, 39%);
+  --success-foreground: hsl(160, 84%, 10%);
+  --warning: hsl(43, 89%, 38%);
+  --warning-foreground: hsl(43, 89%, 10%);
+  --info: hsl(207, 90%, 54%);
+  --info-foreground: hsl(207, 90%, 10%);
+}
+
+.dark {
+  --background: hsl(240, 10%, 3.9%);
+  --foreground: hsl(0, 0%, 98%);
+  --muted: hsl(240, 3.7%, 15.9%);
+  --muted-foreground: hsl(240, 5%, 64.9%);
+  --popover: hsl(240, 10%, 3.9%);
+  --popover-foreground: hsl(0, 0%, 98%);
+  --card: hsl(240, 10%, 3.9%);
+  --card-foreground: hsl(0, 0%, 98%);
+  --border: hsl(240, 3.7%, 15.9%);
+  --input: hsl(240, 3.7%, 15.9%);
+  --primary: hsl(207, 90%, 54%);
+  --primary-foreground: hsl(211, 100%, 99%);
+  --secondary: hsl(240, 3.7%, 15.9%);
+  --secondary-foreground: hsl(0, 0%, 98%);
+  --accent: hsl(240, 3.7%, 15.9%);
+  --accent-foreground: hsl(0, 0%, 98%);
+  --destructive: hsl(0, 62.8%, 30.6%);
+  --destructive-foreground: hsl(0, 0%, 98%);
+  --ring: hsl(240, 4.9%, 83.9%);
+  --radius: 0.5rem;
+  
+  /* Dark mode medical colors */
+  --medical-blue: hsl(213, 78%, 56%);
+  --medical-teal: hsl(180, 69%, 38%);
+  --medical-green: hsl(160, 84%, 49%);
+  --success: hsl(160, 84%, 49%);
+  --success-foreground: hsl(160, 84%, 90%);
+  --warning: hsl(43, 89%, 48%);
+  --warning-foreground: hsl(43, 89%, 90%);
+  --info: hsl(207, 90%, 64%);
+  --info-foreground: hsl(207, 90%, 90%);
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  body {
+    @apply font-sans antialiased bg-background text-foreground;
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue', sans-serif;
+  }
+
+  /* Medical dashboard specific styles */
+  .medical-card {
+    @apply bg-card border border-border rounded-xl shadow-sm;
+  }
+
+  .medical-button-primary {
+    @apply bg-primary text-primary-foreground hover:bg-primary/90 transition-colors;
+  }
+
+  .medical-button-secondary {
+    @apply bg-secondary text-secondary-foreground hover:bg-secondary/80 transition-colors;
+  }
+
+  .medical-gradient-blue {
+    background: linear-gradient(135deg, hsl(213, 78%, 46%) 0%, hsl(213, 78%, 36%) 100%);
+  }
+
+  .medical-gradient-teal {
+    background: linear-gradient(135deg, hsl(180, 69%, 28%) 0%, hsl(180, 69%, 18%) 100%);
+  }
+
+  .medical-gradient-green {
+    background: linear-gradient(135deg, hsl(160, 84%, 39%) 0%, hsl(160, 84%, 29%) 100%);
+  }
+
+  /* Chart and visualization enhancements */
+  .chart-container {
+    @apply bg-card border border-border rounded-lg p-4;
+  }
+
+  .metric-card {
+    @apply bg-gradient-to-br from-gray-50 to-gray-100 border border-gray-200 rounded-lg p-4 transition-all hover:shadow-md;
+  }
+
+  .metric-card.positive {
+    @apply from-green-50 to-green-100 border-green-200;
+  }
+
+  .metric-card.negative {
+    @apply from-red-50 to-red-100 border-red-200;
+  }
+
+  .metric-card.neutral {
+    @apply from-blue-50 to-blue-100 border-blue-200;
+  }
+
+  /* AI Assistant chat styles */
+  .chat-message {
+    @apply p-4 rounded-2xl max-w-[80%] break-words;
+  }
+
+  .chat-message.user {
+    @apply bg-primary text-primary-foreground ml-auto rounded-br-sm;
+  }
+
+  .chat-message.ai {
+    @apply bg-muted text-muted-foreground mr-auto rounded-tl-sm;
+  }
+
+  .chat-message.error {
+    @apply bg-red-50 text-red-700 border border-red-200;
+  }
+
+  /* Professional medical typography */
+  .medical-heading {
+    @apply text-foreground font-semibold tracking-tight;
+  }
+
+  .medical-subheading {
+    @apply text-muted-foreground text-sm font-medium;
+  }
+
+  .medical-body {
+    @apply text-foreground text-sm leading-relaxed;
+  }
+
+  .medical-caption {
+    @apply text-muted-foreground text-xs;
+  }
+
+  /* Enhanced focus states for accessibility */
+  .medical-focus {
+    @apply focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 focus:ring-offset-background;
+  }
+
+  /* Animation enhancements */
+  .medical-transition {
+    @apply transition-all duration-200 ease-in-out;
+  }
+
+  .medical-hover {
+    @apply hover:bg-muted/50 hover:border-border hover:shadow-sm;
+  }
+
+  /* Professional button variants */
+  .btn-medical-primary {
+    @apply bg-primary text-primary-foreground hover:bg-primary/90 focus:bg-primary/90 active:bg-primary/95;
+  }
+
+  .btn-medical-secondary {
+    @apply bg-secondary text-secondary-foreground hover:bg-secondary/80 focus:bg-secondary/80 active:bg-secondary/90;
+  }
+
+  .btn-medical-outline {
+    @apply border border-border bg-background hover:bg-muted focus:bg-muted active:bg-muted/80;
+  }
+
+  /* Status indicators */
+  .status-indicator {
+    @apply inline-flex items-center px-2 py-1 rounded-full text-xs font-medium;
+  }
+
+  .status-indicator.success {
+    @apply bg-green-100 text-green-800;
+  }
+
+  .status-indicator.warning {
+    @apply bg-yellow-100 text-yellow-800;
+  }
+
+  .status-indicator.error {
+    @apply bg-red-100 text-red-800;
+  }
+
+  .status-indicator.info {
+    @apply bg-blue-100 text-blue-800;
+  }
+
+  /* Professional data visualization styles */
+  .data-table {
+    @apply w-full border-collapse bg-card;
+  }
+
+  .data-table th {
+    @apply border-b border-border bg-muted/50 px-4 py-3 text-left text-sm font-medium text-muted-foreground;
+  }
+
+  .data-table td {
+    @apply border-b border-border px-4 py-3 text-sm text-foreground;
+  }
+
+  .data-table tr:hover {
+    @apply bg-muted/30;
+  }
+
+  /* Loading and skeleton states */
+  .skeleton {
+    @apply animate-pulse bg-muted rounded;
+  }
+
+  .loading-spinner {
+    @apply animate-spin inline-block w-4 h-4 border-2 border-current border-t-transparent rounded-full;
+  }
+
+  /* Medical-specific utility classes */
+  .revenue-positive {
+    @apply text-green-600;
+  }
+
+  .revenue-negative {
+    @apply text-red-600;
+  }
+
+  .ar-days-good {
+    @apply text-green-600;
+  }
+
+  .ar-days-warning {
+    @apply text-yellow-600;
+  }
+
+  .ar-days-poor {
+    @apply text-red-600;
+  }
+
+  /* Professional spacing for medical interfaces */
+  .medical-section {
+    @apply space-y-6;
+  }
+
+  .medical-grid {
+    @apply grid gap-6;
+  }
+
+  /* Enhanced scrollbar styles for medical interfaces */
+  .medical-scrollbar {
+    scrollbar-width: thin;
+    scrollbar-color: hsl(var(--muted)) hsl(var(--background));
+  }
+
+  .medical-scrollbar::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+  }
+
+  .medical-scrollbar::-webkit-scrollbar-track {
+    background: hsl(var(--muted));
+    border-radius: 3px;
+  }
+
+  .medical-scrollbar::-webkit-scrollbar-thumb {
+    background: hsl(var(--muted-foreground));
+    border-radius: 3px;
+  }
+
+  .medical-scrollbar::-webkit-scrollbar-thumb:hover {
+    background: hsl(var(--foreground));
+  }
+}
+
+/* Print styles for medical reports */
+@media print {
+  .no-print {
+    display: none !important;
+  }
+
+  .medical-card {
+    @apply shadow-none border border-gray-300;
+  }
+
+  body {
+    @apply text-black bg-white;
+  }
+
+  .chart-container {
+    @apply break-inside-avoid;
+  }
+}
+
+/* High contrast mode support for accessibility */
+@media (prefers-contrast: high) {
+  :root {
+    --border: hsl(0, 0%, 30%);
+    --muted: hsl(0, 0%, 90%);
+    --muted-foreground: hsl(0, 0%, 20%);
+  }
+
+  .dark {
+    --border: hsl(0, 0%, 70%);
+    --muted: hsl(0, 0%, 15%);
+    --muted-foreground: hsl(0, 0%, 80%);
+  }
+}
+
+/* Reduced motion support */
+@media (prefers-reduced-motion: reduce) {
+  .medical-transition {
+    @apply transition-none;
+  }
+
+  .loading-spinner {
+    @apply animate-none;
+  }
+
+  .animate-pulse {
+    @apply animate-none;
+  }
+}
