@@ -83,25 +83,25 @@ export default function LocationSelector({ selectedLocationId, onLocationChange 
 
   return (
     <Card className="bg-white rounded-xl shadow-sm border border-gray-200">
-      <CardContent className="p-6">
-        {/* Section Header */}
-        <div className="flex items-center mb-4">
-          <MapPin className="text-primary mr-3 h-5 w-5" />
-          <h2 className="text-lg font-semibold text-gray-900">Practice Locations</h2>
+      <CardContent className="p-4 sm:p-6">
+        {/* Section Header - Mobile Responsive */}
+        <div className="flex items-center mb-3 sm:mb-4">
+          <MapPin className="text-primary mr-2 sm:mr-3 h-4 w-4 sm:h-5 sm:w-5" />
+          <h2 className="text-base sm:text-lg font-semibold text-gray-900">Practice Locations</h2>
         </div>
         
         {/* Section Description */}
-        <p className="text-gray-600 mb-6">
+        <p className="text-sm sm:text-base text-gray-600 mb-4 sm:mb-6">
           Select locations to analyze - view individual sites or all locations together
         </p>
         
-        {/* Location Selection Buttons */}
-        <div className="flex flex-wrap gap-3">
+        {/* Location Selection Buttons - Mobile Responsive */}
+        <div className="grid grid-cols-2 sm:flex sm:flex-wrap gap-2 sm:gap-3">
           
           {/* "All Locations" Button */}
           <Button
             variant={selectedLocationId === "all" ? "default" : "outline"}
-            className={`flex items-center space-x-2 ${
+            className={`flex items-center justify-center space-x-1 sm:space-x-2 text-xs sm:text-sm px-2 sm:px-4 py-2 ${
               selectedLocationId === "all" 
                 ? "bg-primary text-white hover:bg-primary/90" 
                 : "bg-white border-gray-300 text-gray-700 hover:bg-gray-50"
@@ -119,20 +119,20 @@ export default function LocationSelector({ selectedLocationId, onLocationChange 
             </span>
           </Button>
 
-          {/* Individual Location Buttons */}
+          {/* Individual Location Buttons - Mobile Responsive */}
           {locations.map((location) => (
             <Button
               key={location.id}
               variant={selectedLocationId === location.id ? "destructive" : "outline"}
-              className={`flex items-center space-x-2 ${
+              className={`flex items-center justify-center space-x-1 sm:space-x-2 text-xs sm:text-sm px-2 sm:px-4 py-2 ${
                 selectedLocationId === location.id
                   ? "bg-red-500 text-white hover:bg-red-600"
                   : "bg-white border-gray-300 text-gray-700 hover:bg-gray-50"
               }`}
               onClick={() => handleLocationClick(location.id)}
             >
-              <MapPin className="h-4 w-4" />
-              <span>{location.name}</span>
+              <MapPin className="h-3 w-3 sm:h-4 sm:w-4" />
+              <span className="truncate">{location.name}</span>
             </Button>
           ))}
         </div>

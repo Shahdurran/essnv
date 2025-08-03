@@ -212,45 +212,48 @@ export default function AIBusinessAssistant({ selectedLocationId }) {
   return (
     <Card className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
       
-      {/* AI Assistant Header */}
-      <div className="bg-gradient-to-r from-primary to-blue-700 p-6 text-white">
+      {/* AI Assistant Header - Mobile Responsive */}
+      <div className="bg-gradient-to-r from-primary to-blue-700 p-4 sm:p-6 text-white">
         <div className="flex items-center justify-between">
-          <div className="flex items-center space-x-4">
-            <div className="w-12 h-12 bg-white/20 rounded-xl flex items-center justify-center">
-              <Bot className="h-6 w-6" />
+          <div className="flex items-center space-x-2 sm:space-x-4 min-w-0 flex-1">
+            <div className="w-10 h-10 sm:w-12 sm:h-12 bg-white/20 rounded-xl flex items-center justify-center flex-shrink-0">
+              <Bot className="h-5 w-5 sm:h-6 sm:w-6" />
             </div>
-            <div>
-              <h3 className="text-xl font-bold">AI Business Assistant</h3>
-              <p className="text-blue-100">
+            <div className="min-w-0 flex-1">
+              <h3 className="text-lg sm:text-xl font-bold truncate">AI Business Assistant</h3>
+              <p className="text-xs sm:text-sm text-blue-100 hidden sm:block">
                 Ask anything about your practice performance across all 5 locations
+              </p>
+              <p className="text-xs text-blue-100 sm:hidden">
+                Ask about practice performance
               </p>
             </div>
           </div>
-          <div className="flex items-center space-x-2">
+          <div className="flex items-center space-x-1 sm:space-x-2 flex-shrink-0">
             <div className="w-2 h-2 bg-green-400 rounded-full"></div>
-            <span className="text-sm text-blue-100">Online</span>
+            <span className="text-xs sm:text-sm text-blue-100">Online</span>
           </div>
         </div>
       </div>
 
-      {/* Chat Interface */}
-      <div className="p-6">
+      {/* Chat Interface - Mobile Responsive */}
+      <div className="p-4 sm:p-6">
         
-        {/* Messages Container */}
-        <div className="h-80 overflow-y-auto mb-6 space-y-4">
+        {/* Messages Container - Mobile Responsive */}
+        <div className="h-60 sm:h-80 overflow-y-auto mb-4 sm:mb-6 space-y-3 sm:space-y-4">
           {messages.map((message) => (
             <div
               key={message.id}
               className={`flex ${message.type === 'user' ? 'justify-end' : 'justify-start'}`}
             >
               {message.type === 'ai' && (
-                <div className="w-8 h-8 bg-blue-100 rounded-lg flex items-center justify-center flex-shrink-0 mr-3">
-                  <Bot className="h-4 w-4 text-primary" />
+                <div className="w-6 h-6 sm:w-8 sm:h-8 bg-blue-100 rounded-lg flex items-center justify-center flex-shrink-0 mr-2 sm:mr-3">
+                  <Bot className="h-3 w-3 sm:h-4 sm:w-4 text-primary" />
                 </div>
               )}
               
               <div
-                className={`max-w-[80%] p-4 rounded-2xl ${
+                className={`max-w-[85%] sm:max-w-[80%] p-3 sm:p-4 rounded-2xl ${
                   message.type === 'user'
                     ? 'bg-primary text-white rounded-br-sm'
                     : message.isError
@@ -293,7 +296,7 @@ export default function AIBusinessAssistant({ selectedLocationId }) {
               </div>
               
               {message.type === 'user' && (
-                <div className="w-8 h-8 bg-gray-300 rounded-lg flex items-center justify-center flex-shrink-0 ml-3">
+                <div className="w-6 h-6 sm:w-8 sm:h-8 bg-gray-300 rounded-lg flex items-center justify-center flex-shrink-0 ml-2 sm:ml-3">
                   <span className="text-xs font-medium text-gray-700">DR</span>
                 </div>
               )}
@@ -319,59 +322,59 @@ export default function AIBusinessAssistant({ selectedLocationId }) {
           <div ref={messagesEndRef} />
         </div>
 
-        {/* Input Area */}
+        {/* Input Area - Mobile Responsive */}
         <div className="relative">
           <Textarea
             value={inputMessage}
             onChange={(e) => setInputMessage(e.target.value)}
             onKeyPress={handleKeyPress}
             placeholder="Ask about patient volume, revenue, AR days, forecasts..."
-            className="w-full pr-12 resize-none focus:ring-2 focus:ring-primary focus:border-primary"
-            rows={3}
+            className="w-full pr-12 sm:pr-14 resize-none focus:ring-2 focus:ring-primary focus:border-primary text-sm sm:text-base"
+            rows={2}
             disabled={isLoading}
           />
           <Button
             onClick={() => handleSendMessage()}
             disabled={!inputMessage.trim() || isLoading}
-            className="absolute bottom-3 right-3 h-10 w-10 p-0"
+            className="absolute bottom-2 sm:bottom-3 right-2 sm:right-3 h-8 w-8 sm:h-10 sm:w-10 p-0"
           >
             {isLoading ? (
-              <Loader2 className="h-4 w-4 animate-spin" />
+              <Loader2 className="h-3 w-3 sm:h-4 sm:w-4 animate-spin" />
             ) : (
-              <Send className="h-4 w-4" />
+              <Send className="h-3 w-3 sm:h-4 sm:w-4" />
             )}
           </Button>
         </div>
       </div>
 
-      {/* Popular Questions Grid */}
-      <div className="border-t border-gray-100 p-6">
-        <h4 className="text-sm font-medium text-gray-900 mb-4 flex items-center">
+      {/* Popular Questions Grid - Mobile Responsive */}
+      <div className="border-t border-gray-100 p-4 sm:p-6">
+        <h4 className="text-sm font-medium text-gray-900 mb-3 sm:mb-4 flex items-center">
           <MessageSquare className="h-4 w-4 mr-2" />
           Popular Questions:
         </h4>
         
         {questionsLoading ? (
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 sm:gap-3">
             {[...Array(6)].map((_, index) => (
-              <div key={index} className="h-12 bg-gray-200 animate-pulse rounded-lg"></div>
+              <div key={index} className="h-10 sm:h-12 bg-gray-200 animate-pulse rounded-lg"></div>
             ))}
           </div>
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 sm:gap-3">
             {popularQuestions.map((question) => (
               <Button
                 key={question.id}
                 variant="outline"
-                className="text-left p-3 h-auto justify-start hover:bg-gray-50 transition-colors"
+                className="text-left p-2 sm:p-3 h-auto justify-start hover:bg-gray-50 transition-colors"
                 onClick={() => handleQuestionClick(question)}
                 disabled={isLoading}
               >
-                <div className="flex items-center space-x-3">
-                  <div className="text-primary">
+                <div className="flex items-center space-x-2 sm:space-x-3">
+                  <div className="text-primary flex-shrink-0">
                     {getQuestionIcon(question.icon)}
                   </div>
-                  <span className="text-sm text-gray-700">{question.question}</span>
+                  <span className="text-xs sm:text-sm text-gray-700 truncate">{question.question}</span>
                 </div>
               </Button>
             ))}

@@ -350,27 +350,27 @@ export default function KeyMetricsTrendsChart({ selectedLocationId }: KeyMetrics
 
   return (
     <Card className="w-full">
-      <CardContent className="p-6">
-        {/* Chart Header with Controls */}
-        <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between mb-6 space-y-4 lg:space-y-0">
-          <div className="flex items-center space-x-3">
-            <div className="flex items-center justify-center w-10 h-10 bg-blue-100 rounded-lg">
-              <TrendingUp className="h-5 w-5 text-blue-600" />
+      <CardContent className="p-4 sm:p-6">
+        {/* Chart Header with Controls - Mobile Responsive */}
+        <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between mb-4 sm:mb-6 space-y-3 sm:space-y-4 lg:space-y-0">
+          <div className="flex items-center space-x-2 sm:space-x-3">
+            <div className="flex items-center justify-center w-8 h-8 sm:w-10 sm:h-10 bg-blue-100 rounded-lg">
+              <TrendingUp className="h-4 w-4 sm:h-5 sm:w-5 text-blue-600" />
             </div>
             <div>
-              <h3 className="text-lg font-semibold text-slate-900">Key Metrics Trends</h3>
-              <p className="text-sm text-slate-500">Performance analysis with projections</p>
+              <h3 className="text-base sm:text-lg font-semibold text-slate-900">Key Metrics Trends</h3>
+              <p className="text-xs sm:text-sm text-slate-500 hidden sm:block">Performance analysis with projections</p>
             </div>
           </div>
 
-          {/* Chart Controls */}
-          <div className="flex flex-col sm:flex-row items-start sm:items-center space-y-3 sm:space-y-0 sm:space-x-4">
+          {/* Chart Controls - Mobile Responsive */}
+          <div className="flex flex-col space-y-3 sm:flex-row sm:items-center sm:space-y-0 sm:space-x-4">
             
             {/* Metric Selection */}
             <div className="flex items-center space-x-2">
               <BarChart3 className="h-4 w-4 text-slate-500" />
               <Select value={selectedMetric} onValueChange={handleMetricChange}>
-                <SelectTrigger className="w-[140px]">
+                <SelectTrigger className="w-full sm:w-[140px] text-sm">
                   <SelectValue placeholder="Select metric" />
                 </SelectTrigger>
                 <SelectContent>
@@ -384,14 +384,14 @@ export default function KeyMetricsTrendsChart({ selectedLocationId }: KeyMetrics
             {/* Time Period Selection */}
             <div className="flex items-center space-x-2">
               <Calendar className="h-4 w-4 text-slate-500" />
-              <div className="flex space-x-1 bg-slate-100 rounded-lg p-1">
+              <div className="flex space-x-1 bg-slate-100 rounded-lg p-1 w-full sm:w-auto">
                 {['1yr', '2yr', '5yr'].map((period) => (
                   <Button
                     key={period}
                     variant={selectedTimePeriod === period ? "default" : "ghost"}
                     size="sm"
                     onClick={() => handleTimePeriodChange(period)}
-                    className={`px-3 py-1 text-xs font-medium transition-all ${
+                    className={`flex-1 sm:flex-none px-2 sm:px-3 py-1 text-xs font-medium transition-all ${
                       selectedTimePeriod === period
                         ? 'bg-white shadow-sm text-slate-900'
                         : 'text-slate-600 hover:text-slate-900'

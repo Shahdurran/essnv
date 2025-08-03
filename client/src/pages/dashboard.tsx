@@ -56,35 +56,35 @@ export default function Dashboard() {
   return (
     <div className="min-h-screen bg-gray-50">
       {/* 
-        Header Section
+        Header Section - Mobile Responsive
         Displays practice branding and user information matching the design
       */}
       <header className="bg-white border-b border-gray-200 sticky top-0 z-50">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between items-center h-16">
-            {/* Brand and Logo Section */}
-            <div className="flex items-center space-x-4">
+        <div className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8">
+          <div className="flex justify-between items-center h-14 sm:h-16">
+            {/* Brand and Logo Section - Mobile Optimized */}
+            <div className="flex items-center space-x-2 sm:space-x-4">
               <img 
                 src={mdsLogo} 
                 alt="MDS Medical & Dental Solutions Logo" 
-                className="w-12 h-12 object-contain"
+                className="w-8 h-8 sm:w-12 sm:h-12 object-contain"
               />
-              <div>
-                <h1 className="text-xl font-bold text-gray-900">MDS AI Analytics</h1>
-                <p className="text-sm text-gray-600">Rao Dermatology Business Intelligence</p>
+              <div className="min-w-0 flex-1">
+                <h1 className="text-sm sm:text-xl font-bold text-gray-900 truncate">MDS AI Analytics</h1>
+                <p className="text-xs sm:text-sm text-gray-600 hidden sm:block">Rao Dermatology Business Intelligence</p>
               </div>
             </div>
             
-            {/* User Profile Section */}
-            <div className="flex items-center space-x-4">
-              <div className="text-right">
+            {/* User Profile Section - Mobile Optimized */}
+            <div className="flex items-center space-x-2 sm:space-x-4">
+              <div className="text-right hidden sm:block">
                 <p className="text-sm font-medium text-gray-900">Dr. Babar K. Rao</p>
                 <p className="text-xs text-gray-600">Practice Owner</p>
               </div>
               <img 
                 src={drRaoPhoto} 
                 alt="Dr. Babar K. Rao" 
-                className="w-10 h-10 rounded-full object-cover border-2 border-blue-100"
+                className="w-8 h-8 sm:w-10 sm:h-10 rounded-full object-cover border-2 border-blue-100"
               />
             </div>
           </div>
@@ -92,10 +92,10 @@ export default function Dashboard() {
       </header>
 
       {/* 
-        Main Dashboard Content
+        Main Dashboard Content - Mobile Responsive
         Organized in a responsive grid layout matching the design specifications
       */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-8">
+      <div className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 py-4 sm:py-6 space-y-4 sm:space-y-8">
         
         {/* 
           Location Selector Component
@@ -126,10 +126,10 @@ export default function Dashboard() {
         />
 
         {/* 
-          Dashboard Grid Layout
+          Dashboard Grid Layout - Mobile Responsive
           Two-column responsive grid for procedure analytics and practice insights
         */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-8">
 
           {/* 
             Top Revenue Procedures Component
