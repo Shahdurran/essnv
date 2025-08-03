@@ -73,43 +73,25 @@ export default function KeyMetricsTrendsChart({ selectedLocationId }: KeyMetrics
   });
 
   /**
-   * Process chart data based on selected metric and time period
+   * Process chart data - server already filters by time period
    */
   const processChartData = (): RevenueDataPoint[] => {
-    if (!revenueData.length) {
-      // Generate mock data for development
-      return generateRevenueTimeSeriesData(24, 420000);
-    }
-
-    // Filter data based on time period
-    let filteredData = revenueData;
-    const now = new Date();
-    
-    if (selectedTimePeriod === "1yr") {
-      const oneYearAgo = new Date(now.getFullYear() - 1, now.getMonth(), now.getDate());
-      filteredData = revenueData.filter((item: RevenueDataPoint) => new Date(item.date) >= oneYearAgo);
-    } else if (selectedTimePeriod === "2yr") {
-      const twoYearsAgo = new Date(now.getFullYear() - 2, now.getMonth(), now.getDate());
-      filteredData = revenueData.filter((item: RevenueDataPoint) => new Date(item.date) >= twoYearsAgo);
-    }
-    // 5yr shows all available data
-
-    return filteredData;
+    // Server already provides filtered data based on selectedTimePeriod via API queryKey
+    // No need to filter again on the client side
+    return revenueData;
   };
 
   /**
    * Get chart configuration based on selected metric
    */
   const getChartConfig = (data: RevenueDataPoint[]): ChartConfiguration<'line'> => {
-    const labels = data.map((item: RevenueDataPoint) => 
-      item.monthName || new Date(item.month).toLocaleDateString('en-US', { month: 'short', year: 'numeric' })
-    );
+    const labels = data.map((item: RevenueDataPoint) => {
+      // Create proper date from month string (YYYY-MM format)
+      const date = new Date(item.month + '-01');
+      return date.toLocaleDateString('en-US', { month: 'short', year: 'numeric' });
+    });
 
-    // Split data into actual and projected
-    const actualData = data.filter((item: RevenueDataPoint) => !item.isProjected);
-    const projectedData = data.filter((item: RevenueDataPoint) => item.isProjected);
-
-    // Get values based on selected metric
+    // Get values based on selected metric for all data points
     const getMetricValue = (item: RevenueDataPoint): number => {
       switch (selectedMetric) {
         case 'revenue':
@@ -123,8 +105,20 @@ export default function KeyMetricsTrendsChart({ selectedLocationId }: KeyMetrics
       }
     };
 
-    const actualValues = actualData.map(getMetricValue);
-    const projectedValues = projectedData.map(getMetricValue);
+    // Separate actual and projected values while maintaining labels alignment
+    const actualValues: (number | null)[] = [];
+    const projectedValues: (number | null)[] = [];
+    
+    data.forEach((item: RevenueDataPoint) => {
+      const value = getMetricValue(item);
+      if (item.isProjected) {
+        actualValues.push(null);
+        projectedValues.push(value);
+      } else {
+        actualValues.push(value);
+        projectedValues.push(null);
+      }
+    });
 
     // Chart configuration
     const config: ChartConfiguration<'line'> = {
