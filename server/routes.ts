@@ -74,13 +74,28 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Filter data based on period - include projections beyond current date
       let filteredData = revenueData;
       if (period === '1yr') {
-        // Show 13 months: start from 12 months ago, go through current + 1 future month
-        filteredData = revenueData.slice(-13);
+        // Show exactly 13 months: Sept 2024 through Sept 2025 (12 historical + current Aug + 1 future Sept)
+        // Find August 2025 (current month) and include 12 months before + 1 month after
+        const currentMonthIndex = revenueData.findIndex(item => item.month === '2025-08');
+        if (currentMonthIndex >= 0) {
+          const startIndex = Math.max(0, currentMonthIndex - 11); // 11 months before August
+          const endIndex = Math.min(revenueData.length - 1, currentMonthIndex + 1); // Include September only
+          filteredData = revenueData.slice(startIndex, endIndex + 1);
+        } else {
+          filteredData = revenueData.slice(-13);
+        }
       } else if (period === '2yr') {
-        // Show 25 months: start from 24 months ago, go through current + 1 future month  
-        filteredData = revenueData.slice(-25);
+        // Show exactly 25 months: similar logic for 2 years
+        const currentMonthIndex = revenueData.findIndex(item => item.month === '2025-08');
+        if (currentMonthIndex >= 0) {
+          const startIndex = Math.max(0, currentMonthIndex - 23); // 23 months before August
+          const endIndex = Math.min(revenueData.length - 1, currentMonthIndex + 1); // Include September only
+          filteredData = revenueData.slice(startIndex, endIndex + 1);
+        } else {
+          filteredData = revenueData.slice(-25);
+        }
       } else if (period === '5yr') {
-        // Show 61 months: full historical + projections
+        // Show 61 months: full historical + limited projections
         filteredData = revenueData.slice(-61);
       }
       

@@ -109,17 +109,6 @@ export default function KeyMetricsTrendsChart({ selectedLocationId }: KeyMetrics
     const actualValues: (number | null)[] = [];
     const projectedValues: (number | null)[] = [];
     
-    // Debug logging for projection boundary
-    console.log('Chart data boundary check:');
-    // Show July specifically plus the last 4 months
-    const julyIndex = data.findIndex(item => item.month === '2025-07');
-    if (julyIndex >= 0) {
-      console.log(`July 2025 specifically: ${data[julyIndex].month}: isProjected=${data[julyIndex].isProjected}, value=${getMetricValue(data[julyIndex])}`);
-    }
-    data.slice(-5).forEach((item: RevenueDataPoint) => {
-      console.log(`${item.month}: isProjected=${item.isProjected}, value=${getMetricValue(item)}`);
-    });
-
     data.forEach((item: RevenueDataPoint) => {
       const value = getMetricValue(item);
       if (item.isProjected) {
@@ -130,11 +119,6 @@ export default function KeyMetricsTrendsChart({ selectedLocationId }: KeyMetrics
         projectedValues.push(null);
       }
     });
-
-    // Debug final arrays
-    console.log('Final chart arrays (last 3):');
-    console.log('Actual values:', actualValues.slice(-3));
-    console.log('Projected values:', projectedValues.slice(-3));
 
     // Chart configuration with separate datasets
     const config: ChartConfiguration<'line'> = {
