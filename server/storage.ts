@@ -401,8 +401,13 @@ export class MemStorage implements IStorage {
     // Set current date to August 2025
     const currentDate = new Date(2025, 7, 3); // August 3, 2025 (month is 0-indexed)
     
-    // Generate 62 months of data: 60 historical + 2 future projection months
-    for (let i = 59; i >= -2; i--) {
+    // Generate data dynamically based on current date
+    // Current date is August 3, 2025 - so current month is August (completed data through July)
+    const currentMonth = currentDate.getMonth(); // August = 7
+    const currentYear = currentDate.getFullYear(); // 2025
+    
+    // Generate 60 months historical + 3 months future projections
+    for (let i = 59; i >= -3; i--) {
       const date = new Date(currentDate);
       date.setMonth(date.getMonth() - i);
       
@@ -412,9 +417,11 @@ export class MemStorage implements IStorage {
       // Add seasonal variation (higher in spring/summer for cosmetic procedures)
       const seasonalFactor = 1 + 0.15 * Math.sin(((date.getMonth() + 3) / 12) * 2 * Math.PI);
       
-      // Add monthly variation (±20% for historical, ±10% for projected)
-      // July 2025 and earlier should be actual data, August 2025 and later should be projected
-      const isProjected = (date.getFullYear() > 2025) || (date.getFullYear() === 2025 && date.getMonth() >= 7); // August (month 7) 2025 and later are projected
+      // Dynamic projection boundary: current month and later are projected
+      // If current date is August 3, 2025, then August+ should be projected (we have complete data through July)
+      const monthStr = date.toISOString().slice(0, 7);
+      const isProjected = (date.getFullYear() > currentYear) || 
+                         (date.getFullYear() === currentYear && date.getMonth() >= currentMonth);
       const monthlyVariation = isProjected ? 
         (Math.random() * 0.2 - 0.1) : // Smaller variation for projections
         (Math.random() * 0.4 - 0.2);  // Larger variation for historical data

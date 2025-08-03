@@ -73,30 +73,33 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       // Filter data based on period - include projections beyond current date
       let filteredData = revenueData;
+      // Dynamic filtering based on current date and projection needs
+      const now = new Date(2025, 7, 3); // August 3, 2025
+      const currentMonthStr = now.toISOString().slice(0, 7); // "2025-08"
+      
       if (period === '1yr') {
-        // Show exactly 13 months: Sept 2024 through Sept 2025 (12 historical + current Aug + 1 future Sept)
-        // Find August 2025 (current month) and include 12 months before + 1 month after
-        const currentMonthIndex = revenueData.findIndex(item => item.month === '2025-08');
-        if (currentMonthIndex >= 0) {
-          const startIndex = Math.max(0, currentMonthIndex - 11); // 11 months before August
-          const endIndex = Math.min(revenueData.length - 1, currentMonthIndex + 1); // Include September only
+        // Show 13 months: 12 historical + current + 1 future projection
+        const currentIndex = revenueData.findIndex(item => item.month === currentMonthStr);
+        if (currentIndex >= 0) {
+          const startIndex = Math.max(0, currentIndex - 11); // 11 months before current
+          const endIndex = Math.min(revenueData.length - 1, currentIndex + 2); // Include 2 future months
           filteredData = revenueData.slice(startIndex, endIndex + 1);
         } else {
           filteredData = revenueData.slice(-13);
         }
       } else if (period === '2yr') {
-        // Show exactly 25 months: similar logic for 2 years
-        const currentMonthIndex = revenueData.findIndex(item => item.month === '2025-08');
-        if (currentMonthIndex >= 0) {
-          const startIndex = Math.max(0, currentMonthIndex - 23); // 23 months before August
-          const endIndex = Math.min(revenueData.length - 1, currentMonthIndex + 1); // Include September only
+        // Show 25 months: 24 historical + current + 1 future projection
+        const currentIndex = revenueData.findIndex(item => item.month === currentMonthStr);
+        if (currentIndex >= 0) {
+          const startIndex = Math.max(0, currentIndex - 23); // 23 months before current
+          const endIndex = Math.min(revenueData.length - 1, currentIndex + 2); // Include 2 future months
           filteredData = revenueData.slice(startIndex, endIndex + 1);
         } else {
           filteredData = revenueData.slice(-25);
         }
       } else if (period === '5yr') {
-        // Show 61 months: full historical + limited projections
-        filteredData = revenueData.slice(-61);
+        // Show all available data with projections
+        filteredData = revenueData;
       }
       
       res.json(filteredData);
