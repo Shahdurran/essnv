@@ -15,6 +15,7 @@ import {
   LinearScale,
   PointElement,
   LineElement,
+  LineController,
   Title,
   Tooltip,
   Legend,
@@ -22,12 +23,13 @@ import {
   type Chart
 } from 'chart.js';
 
-// Register Chart.js components
+// Register Chart.js components including LineController
 ChartJS.register(
   CategoryScale,
   LinearScale,
   PointElement,
   LineElement,
+  LineController,
   Title,
   Tooltip,
   Legend
@@ -126,7 +128,7 @@ export default function KeyMetricsTrendsChart({ selectedLocationId }: KeyMetrics
 
     // Chart configuration
     const config: ChartConfiguration<'line'> = {
-      type: 'line',
+      type: 'line' as const,
       data: {
         labels,
         datasets: [

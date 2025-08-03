@@ -39,16 +39,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // ============================================================================
 
   /**
-   * GET /api/analytics/top-procedures - Get top revenue-generating procedures
-   * Query params: locationId (optional), category (medical|cosmetic|all)
+   * GET /api/analytics/top-procedures/:locationId/:category - Get top revenue-generating procedures
+   * Path params: locationId (or 'all'), category (medical|cosmetic|all)
    */
-  app.get("/api/analytics/top-procedures", async (req, res) => {
+  app.get("/api/analytics/top-procedures/:locationId/:category", async (req, res) => {
     try {
-      const { locationId, category } = req.query;
+      const { locationId, category } = req.params;
+      const finalLocationId = locationId === 'all' ? undefined : locationId;
       const procedureCategory = category === 'all' ? undefined : category as 'medical' | 'cosmetic';
       
       const topProcedures = await storage.getTopRevenueProcedures(
-        locationId as string, 
+        finalLocationId, 
         procedureCategory
       );
       
@@ -60,14 +61,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   /**
-   * GET /api/analytics/revenue-trends - Get monthly revenue trend data
-   * Query params: locationId (optional), period (1yr|2yr|5yr)
+   * GET /api/analytics/revenue-trends/:locationId/:period - Get monthly revenue trend data
+   * Path params: locationId (or 'all'), period (1yr|2yr|5yr)
    */
-  app.get("/api/analytics/revenue-trends", async (req, res) => {
+  app.get("/api/analytics/revenue-trends/:locationId/:period", async (req, res) => {
     try {
-      const { locationId, period } = req.query;
+      const { locationId, period } = req.params;
+      const finalLocationId = locationId === 'all' ? undefined : locationId;
       
-      const revenueData = await storage.getMonthlyRevenueData(locationId as string);
+      const revenueData = await storage.getMonthlyRevenueData(finalLocationId);
       
       // Filter data based on period
       let filteredData = revenueData;
@@ -85,14 +87,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   /**
-   * GET /api/analytics/insurance-breakdown - Get insurance payer analysis
-   * Query params: locationId (optional)
+   * GET /api/analytics/insurance-breakdown/:locationId - Get insurance payer analysis
+   * Path params: locationId (or 'all')
    */
-  app.get("/api/analytics/insurance-breakdown", async (req, res) => {
+  app.get("/api/analytics/insurance-breakdown/:locationId", async (req, res) => {
     try {
-      const { locationId } = req.query;
+      const { locationId } = req.params;
+      const finalLocationId = locationId === 'all' ? undefined : locationId;
       
-      const insuranceData = await storage.getInsurancePayerBreakdown(locationId as string);
+      const insuranceData = await storage.getInsurancePayerBreakdown(finalLocationId);
       res.json(insuranceData);
     } catch (error) {
       console.error("Error fetching insurance breakdown:", error);
@@ -101,14 +104,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   /**
-   * GET /api/analytics/projections - Get patient volume and revenue projections
-   * Query params: locationId (optional)
+   * GET /api/analytics/projections/:locationId - Get patient volume and revenue projections
+   * Path params: locationId (or 'all')
    */
-  app.get("/api/analytics/projections", async (req, res) => {
+  app.get("/api/analytics/projections/:locationId", async (req, res) => {
     try {
-      const { locationId } = req.query;
+      const { locationId } = req.params;
+      const finalLocationId = locationId === 'all' ? undefined : locationId;
       
-      const projections = await storage.getPatientVolumeProjections(locationId as string);
+      const projections = await storage.getPatientVolumeProjections(finalLocationId);
       res.json(projections);
     } catch (error) {
       console.error("Error fetching projections:", error);
@@ -117,16 +121,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   /**
-   * GET /api/analytics/key-metrics - Get key performance indicators
-   * Query params: locationId (optional)
+   * GET /api/analytics/key-metrics/:locationId - Get key performance indicators
+   * Path params: locationId (or 'all')
    */
-  app.get("/api/analytics/key-metrics", async (req, res) => {
+  app.get("/api/analytics/key-metrics/:locationId", async (req, res) => {
     try {
-      const { locationId } = req.query;
+      const { locationId } = req.params;
+      const finalLocationId = locationId === 'all' ? undefined : locationId;
       
       // Calculate key metrics from available data
-      const revenueData = await storage.getMonthlyRevenueData(locationId as string);
-      const insuranceData = await storage.getInsurancePayerBreakdown(locationId as string);
+      const revenueData = await storage.getMonthlyRevenueData(finalLocationId);
+      const insuranceData = await storage.getInsurancePayerBreakdown(finalLocationId);
       
       const currentMonth = revenueData[revenueData.length - 1];
       const previousMonth = revenueData[revenueData.length - 2];
