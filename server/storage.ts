@@ -401,7 +401,8 @@ export class MemStorage implements IStorage {
     // Set current date to August 2025
     const currentDate = new Date(2025, 7, 3); // August 3, 2025 (month is 0-indexed)
     
-    for (let i = 59; i >= 0; i--) {
+    // Generate historical actual data (60 months back to July 2025)
+    for (let i = 59; i >= 1; i--) {
       const date = new Date(currentDate);
       date.setMonth(date.getMonth() - i);
       
@@ -416,8 +417,31 @@ export class MemStorage implements IStorage {
       
       const revenue = Math.round(baseRevenue * growthFactor * seasonalFactor * (1 + monthlyVariation));
       
-      // Add some projected data for the most recent months to show actual vs projected
-      const isProjected = i <= 3; // Last 3 months are projections (May, June, July, August 2025)
+      months.push({
+        month: date.toISOString().slice(0, 7), // YYYY-MM format
+        revenue: revenue,
+        patientCount: Math.round(revenue / 340), // Average revenue per patient
+        arDays: 25 + Math.round(Math.random() * 15), // AR days 25-40
+        date: date,
+        isProjected: false // Historical data is not projected
+      });
+    }
+    
+    // Generate projected data for current and future months (August, September, October 2025)
+    for (let i = 0; i <= 2; i++) {
+      const date = new Date(currentDate);
+      date.setMonth(date.getMonth() + i);
+      
+      // Use latest growth trend for projections
+      const growthFactor = Math.pow(1.08, 59 / 12);
+      
+      // Add seasonal variation
+      const seasonalFactor = 1 + 0.15 * Math.sin(((date.getMonth() + 3) / 12) * 2 * Math.PI);
+      
+      // Add monthly variation for projections (smaller variation for projections)
+      const monthlyVariation = (Math.random() * 0.2 - 0.1);
+      
+      const revenue = Math.round(baseRevenue * growthFactor * seasonalFactor * (1 + monthlyVariation));
       
       months.push({
         month: date.toISOString().slice(0, 7), // YYYY-MM format
@@ -425,7 +449,7 @@ export class MemStorage implements IStorage {
         patientCount: Math.round(revenue / 340), // Average revenue per patient
         arDays: 25 + Math.round(Math.random() * 15), // AR days 25-40
         date: date,
-        isProjected: isProjected
+        isProjected: true // Current and future months are projections
       });
     }
     
