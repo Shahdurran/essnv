@@ -13,6 +13,11 @@ import {
   UserCheck,
   Flag
 } from "lucide-react";
+import type { KeyMetrics, InsurancePayerData } from "../../../shared/schema";
+
+interface PracticeInsightsProps {
+  selectedLocationId: string;
+}
 
 /**
  * PracticeInsights Component
@@ -32,12 +37,12 @@ import {
  * @param {Object} props - Component properties
  * @param {string} props.selectedLocationId - Currently selected location for filtering
  */
-export default function PracticeInsights({ selectedLocationId }) {
+export default function PracticeInsights({ selectedLocationId }: PracticeInsightsProps) {
 
   /**
    * Fetch key performance metrics from API
    */
-  const { data: keyMetrics = {}, isLoading: metricsLoading, error: metricsError } = useQuery({
+  const { data: keyMetrics = {} as KeyMetrics, isLoading: metricsLoading, error: metricsError } = useQuery<KeyMetrics>({
     queryKey: ['/api/analytics/key-metrics', selectedLocationId],
     staleTime: 1 * 60 * 1000, // Cache for 1 minute for real-time feel
   });
@@ -45,7 +50,7 @@ export default function PracticeInsights({ selectedLocationId }) {
   /**
    * Fetch insurance payer breakdown from API
    */
-  const { data: insuranceData = [], isLoading: insuranceLoading, error: insuranceError } = useQuery({
+  const { data: insuranceData = [], isLoading: insuranceLoading, error: insuranceError } = useQuery<InsurancePayerData[]>({
     queryKey: ['/api/analytics/insurance-breakdown', selectedLocationId],
     staleTime: 5 * 60 * 1000, // Cache for 5 minutes
   });
@@ -55,7 +60,7 @@ export default function PracticeInsights({ selectedLocationId }) {
    * @param {number} value - The numeric value to format
    * @returns {string} Formatted number string
    */
-  const formatNumber = (value) => {
+  const formatNumber = (value: number): string => {
     if (value >= 1000000) {
       return `${(value / 1000000).toFixed(1)}M`;
     } else if (value >= 1000) {
@@ -69,7 +74,7 @@ export default function PracticeInsights({ selectedLocationId }) {
    * @param {number} value - The currency value
    * @returns {string} Formatted currency string
    */
-  const formatCurrency = (value) => {
+  const formatCurrency = (value: number): string => {
     if (value >= 1000000) {
       return `$${(value / 1000000).toFixed(1)}M`;
     } else if (value >= 1000) {
@@ -83,7 +88,7 @@ export default function PracticeInsights({ selectedLocationId }) {
    * @param {string} growthRate - Growth rate string (e.g., "+8.2%")
    * @returns {JSX.Element} Growth indicator component
    */
-  const getGrowthIndicator = (growthRate) => {
+  const getGrowthIndicator = (growthRate: string) => {
     if (!growthRate) return null;
     
     const isPositive = growthRate.startsWith('+');
@@ -110,7 +115,7 @@ export default function PracticeInsights({ selectedLocationId }) {
    * @param {string} payerName - Name of the insurance payer
    * @returns {JSX.Element} Appropriate icon component
    */
-  const getPayerIcon = (payerName) => {
+  const getPayerIcon = (payerName: string) => {
     const iconMap = {
       "Blue Cross Blue Shield": Shield,
       "Aetna": Heart,
@@ -121,7 +126,7 @@ export default function PracticeInsights({ selectedLocationId }) {
       "default": Shield
     };
     
-    const IconComponent = iconMap[payerName] || iconMap.default;
+    const IconComponent = iconMap[payerName as keyof typeof iconMap] || iconMap.default;
     return IconComponent;
   };
 
@@ -130,7 +135,7 @@ export default function PracticeInsights({ selectedLocationId }) {
    * @param {string} payerName - Name of the insurance payer
    * @returns {string} CSS class for color
    */
-  const getPayerColor = (payerName) => {
+  const getPayerColor = (payerName: string): string => {
     const colorMap = {
       "Blue Cross Blue Shield": "text-blue-600 bg-blue-100",
       "Aetna": "text-red-600 bg-red-100",
@@ -141,7 +146,7 @@ export default function PracticeInsights({ selectedLocationId }) {
       "default": "text-gray-600 bg-gray-100"
     };
     
-    return colorMap[payerName] || colorMap.default;
+    return colorMap[payerName as keyof typeof colorMap] || colorMap.default;
   };
 
   /**

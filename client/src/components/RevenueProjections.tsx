@@ -9,6 +9,11 @@ import {
   ArrowUpRight,
   Target
 } from "lucide-react";
+import type { ProjectionData } from "../../../shared/schema";
+
+interface RevenueProjectionsProps {
+  selectedLocationId: string;
+}
 
 /**
  * RevenueProjections Component
@@ -28,12 +33,12 @@ import {
  * @param {Object} props - Component properties
  * @param {string} props.selectedLocationId - Currently selected location for filtering
  */
-export default function RevenueProjections({ selectedLocationId }) {
+export default function RevenueProjections({ selectedLocationId }: RevenueProjectionsProps) {
 
   /**
    * Fetch revenue and patient volume projections from API
    */
-  const { data: projections = [], isLoading, error } = useQuery({
+  const { data: projections = [], isLoading, error } = useQuery<ProjectionData[]>({
     queryKey: ['/api/analytics/projections', selectedLocationId],
     staleTime: 10 * 60 * 1000, // Cache for 10 minutes since projections don't change frequently
   });
@@ -43,7 +48,7 @@ export default function RevenueProjections({ selectedLocationId }) {
    * @param {number} value - The currency value
    * @returns {string} Formatted currency string
    */
-  const formatCurrency = (value) => {
+  const formatCurrency = (value: number): string => {
     if (value >= 1000000) {
       return `$${(value / 1000000).toFixed(1)}M`;
     } else if (value >= 1000) {
@@ -57,7 +62,7 @@ export default function RevenueProjections({ selectedLocationId }) {
    * @param {number} value - The numeric value to format
    * @returns {string} Formatted number string
    */
-  const formatNumber = (value) => {
+  const formatNumber = (value: number): string => {
     if (value >= 1000) {
       return `${(value / 1000).toFixed(1)}K`;
     }
@@ -69,7 +74,7 @@ export default function RevenueProjections({ selectedLocationId }) {
    * @param {number} confidence - Confidence level (0-1)
    * @returns {Object} Color class and label
    */
-  const getConfidenceLevel = (confidence) => {
+  const getConfidenceLevel = (confidence: number): { color: string; label: string } => {
     if (confidence >= 0.9) {
       return { color: 'text-green-600 bg-green-50', label: 'High' };
     } else if (confidence >= 0.75) {
@@ -84,7 +89,7 @@ export default function RevenueProjections({ selectedLocationId }) {
    * @param {number} index - Index of the projection card
    * @returns {string} CSS gradient class
    */
-  const getGradientBackground = (index) => {
+  const getGradientBackground = (index: number): string => {
     const gradients = [
       'bg-gradient-to-br from-blue-50 to-blue-100 border-blue-200',
       'bg-gradient-to-br from-green-50 to-green-100 border-green-200',
@@ -102,7 +107,7 @@ export default function RevenueProjections({ selectedLocationId }) {
    * @param {number} index - Index of the projection card
    * @returns {string} CSS text color class
    */
-  const getTextColor = (index) => {
+  const getTextColor = (index: number): string => {
     const colors = [
       'text-blue-700',
       'text-green-700', 
@@ -120,7 +125,7 @@ export default function RevenueProjections({ selectedLocationId }) {
    * @param {string} growthRate - Growth rate string (e.g., "+15.3%")
    * @returns {number} Numeric growth rate
    */
-  const parseGrowthRate = (growthRate) => {
+  const parseGrowthRate = (growthRate: string): number => {
     if (!growthRate) return 0;
     return parseFloat(growthRate.replace('%', '').replace('+', ''));
   };

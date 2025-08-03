@@ -13,6 +13,13 @@ import {
   UserCheck,
   Stethoscope
 } from "lucide-react";
+import type { ProcedureAnalytics } from "../../../shared/schema";
+
+interface TopRevenueProceduresProps {
+  selectedLocationId: string;
+  selectedCategory: string;
+  onCategoryChange: (category: string) => void;
+}
 
 /**
  * TopRevenueProcedures Component
@@ -38,13 +45,13 @@ export default function TopRevenueProcedures({
   selectedLocationId, 
   selectedCategory, 
   onCategoryChange 
-}) {
+}: TopRevenueProceduresProps) {
 
   /**
    * Fetch top revenue procedures from API
    * Includes location and category filtering
    */
-  const { data: procedures = [], isLoading, error } = useQuery({
+  const { data: procedures = [], isLoading, error } = useQuery<ProcedureAnalytics[]>({
     queryKey: ['/api/analytics/top-procedures', selectedLocationId, selectedCategory],
     staleTime: 2 * 60 * 1000, // Cache for 2 minutes for fresh analytics
   });
@@ -53,7 +60,7 @@ export default function TopRevenueProcedures({
    * Handle procedure category filter change
    * @param {string} category - The selected category (medical|cosmetic|all)
    */
-  const handleCategoryChange = (category) => {
+  const handleCategoryChange = (category: string): void => {
     onCategoryChange(category);
   };
 
@@ -62,7 +69,7 @@ export default function TopRevenueProcedures({
    * @param {string} cptCode - The CPT code or procedure identifier
    * @returns {JSX.Element} The appropriate icon component
    */
-  const getProcedureIcon = (cptCode) => {
+  const getProcedureIcon = (cptCode: string) => {
     const iconMap = {
       // Mohs surgery procedures
       "17311": Activity,
@@ -97,7 +104,7 @@ export default function TopRevenueProcedures({
       "default": UserCheck
     };
     
-    const IconComponent = iconMap[cptCode] || iconMap.default;
+    const IconComponent = iconMap[cptCode as keyof typeof iconMap] || iconMap.default;
     return IconComponent;
   };
 
@@ -106,14 +113,14 @@ export default function TopRevenueProcedures({
    * @param {string} category - The procedure category
    * @returns {string} CSS class for background color
    */
-  const getProcedureColor = (category) => {
+  const getProcedureColor = (category: string): string => {
     const colorMap = {
       medical: "bg-blue-500",
       cosmetic: "bg-purple-500",
       default: "bg-teal-500"
     };
     
-    return colorMap[category] || colorMap.default;
+    return colorMap[category as keyof typeof colorMap] || colorMap.default;
   };
 
   /**
@@ -121,7 +128,7 @@ export default function TopRevenueProcedures({
    * @param {number} revenue - Revenue amount in dollars
    * @returns {string} Formatted revenue string
    */
-  const formatRevenue = (revenue) => {
+  const formatRevenue = (revenue: number): string => {
     if (revenue >= 1000000) {
       return `$${(revenue / 1000000).toFixed(1)}M`;
     } else if (revenue >= 1000) {
@@ -135,7 +142,7 @@ export default function TopRevenueProcedures({
    * @param {string} growth - Growth percentage string
    * @returns {JSX.Element} Formatted growth badge
    */
-  const formatGrowth = (growth) => {
+  const formatGrowth = (growth: string) => {
     const isPositive = growth.startsWith('+');
     const isNegative = growth.startsWith('-');
     
