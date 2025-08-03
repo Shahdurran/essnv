@@ -5,6 +5,8 @@ import KeyMetricsTrendsChart from "@/components/KeyMetricsTrendsChart";
 import TopRevenueProcedures from "@/components/TopRevenueProcedures";
 import PracticeInsights from "@/components/PracticeInsights";
 import RevenueProjections from "@/components/RevenueProjections";
+import mdsLogo from "@assets/MDS Logo_1754254040718.png";
+import drRaoPhoto from "@assets/image_1754253968575.png";
 
 /**
  * Main Dashboard Component for MDS AI Analytics
@@ -63,7 +65,7 @@ export default function Dashboard() {
             {/* Brand and Logo Section */}
             <div className="flex items-center space-x-4">
               <img 
-                src="/attached_assets/MDS Logo_1754254040718.png" 
+                src={mdsLogo} 
                 alt="MDS Medical & Dental Solutions Logo" 
                 className="w-12 h-12 object-contain"
               />
@@ -80,7 +82,7 @@ export default function Dashboard() {
                 <p className="text-xs text-gray-600">Practice Owner</p>
               </div>
               <img 
-                src="/attached_assets/image_1754253968575.png" 
+                src={drRaoPhoto} 
                 alt="Dr. Babar K. Rao" 
                 className="w-10 h-10 rounded-full object-cover border-2 border-blue-100"
               />
