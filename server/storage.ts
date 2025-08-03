@@ -398,8 +398,11 @@ export class MemStorage implements IStorage {
     }
     
     // Generate 60 months (5 years) of historical data for proper time period filtering
+    // Set current date to August 2025
+    const currentDate = new Date(2025, 7, 3); // August 3, 2025 (month is 0-indexed)
+    
     for (let i = 59; i >= 0; i--) {
-      const date = new Date();
+      const date = new Date(currentDate);
       date.setMonth(date.getMonth() - i);
       
       // Add growth trend (8% annual growth over 5 years)
@@ -414,7 +417,7 @@ export class MemStorage implements IStorage {
       const revenue = Math.round(baseRevenue * growthFactor * seasonalFactor * (1 + monthlyVariation));
       
       // Add some projected data for the most recent months to show actual vs projected
-      const isProjected = i <= 3; // Last 3 months are projections
+      const isProjected = i <= 3; // Last 3 months are projections (May, June, July, August 2025)
       
       months.push({
         month: date.toISOString().slice(0, 7), // YYYY-MM format
@@ -489,8 +492,11 @@ export class MemStorage implements IStorage {
       }, 0);
     }
     
+    // Use August 2025 as current date for projections
+    const currentDate = new Date(2025, 7, 3); // August 3, 2025 (month is 0-indexed)
+    
     for (let i = 1; i <= 6; i++) {
-      const date = new Date();
+      const date = new Date(currentDate);
       date.setMonth(date.getMonth() + i);
       const growthRate = 0.08 + (i * 0.02); // Increasing growth rate
       const seasonalFactor = 1 + 0.15 * Math.sin(((date.getMonth() + 3) / 12) * 2 * Math.PI); // Peak in spring/summer
