@@ -17,6 +17,7 @@ import {
   MessageSquare,
   Loader2
 } from "lucide-react";
+import drRaoPhoto from "@assets/image_1754326344792.png";
 
 /**
  * AIBusinessAssistant Component
@@ -477,7 +478,7 @@ export default function AIBusinessAssistant({ selectedLocationId }) {
               {message.type === 'user' && (
                 <div className="w-6 h-6 sm:w-8 sm:h-8 rounded-lg overflow-hidden flex-shrink-0 ml-2 sm:ml-3">
                   <img 
-                    src="/attached_assets/image_1754326344792.png" 
+                    src={drRaoPhoto} 
                     alt="Dr. Babar K. Rao"
                     className="w-full h-full object-cover"
                   />
