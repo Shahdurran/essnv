@@ -46,6 +46,7 @@ export default function AIBusinessAssistant({ selectedLocationId }) {
   
   // Ref for auto-scrolling chat messages
   const messagesEndRef = useRef(null);
+  const messagesContainerRef = useRef(null);
   
   // Static user ID for demo purposes (in production, this would come from auth)
   const userId = "dr-rao-demo";
@@ -84,7 +85,9 @@ export default function AIBusinessAssistant({ selectedLocationId }) {
    * Scroll chat container to bottom
    */
   const scrollToBottom = () => {
-    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+    if (messagesContainerRef.current) {
+      messagesContainerRef.current.scrollTop = messagesContainerRef.current.scrollHeight;
+    }
   };
 
   /**
@@ -240,7 +243,7 @@ export default function AIBusinessAssistant({ selectedLocationId }) {
       <div className="p-4 sm:p-6">
         
         {/* Messages Container - Mobile Responsive */}
-        <div className="h-60 sm:h-80 overflow-y-auto mb-4 sm:mb-6 space-y-3 sm:space-y-4">
+        <div ref={messagesContainerRef} className="h-60 sm:h-80 overflow-y-auto mb-4 sm:mb-6 space-y-3 sm:space-y-4">
           {messages.map((message) => (
             <div
               key={message.id}
