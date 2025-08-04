@@ -6,6 +6,7 @@ import InsuranceClaimsTracker from "@/components/InsuranceClaimsTracker";
 import TopRevenueProcedures from "@/components/TopRevenueProcedures";
 import PracticeInsights from "@/components/PracticeInsights";
 import RevenueProjections from "@/components/RevenueProjections";
+import PatientBillingAnalytics from "@/components/PatientBillingAnalytics";
 import mdsLogo from "@assets/MDS Logo_1754254040718.png";
 import drRaoPhoto from "@assets/image_1754253968575.png";
 
@@ -168,6 +169,15 @@ export default function Dashboard() {
         {/* <RevenueProjections 
           selectedLocationId={selectedLocationId}
         /> */}
+
+        {/* 
+          Patient Billing Analytics Component
+          Full-width widget at bottom of dashboard for patient payment insights
+          Tracks overdue balances, collection rates, and aging breakdown
+        */}
+        <PatientBillingAnalytics 
+          selectedLocationId={selectedLocationId}
+        />
 
       </div>
     </div>

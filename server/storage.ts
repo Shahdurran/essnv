@@ -568,6 +568,246 @@ export class MemStorage implements IStorage {
     ];
   }
 
+  // Patient Billing Analytics Data
+  async getPatientBillingData(locationId: string, timeRange: string): Promise<{
+    totalOutstanding: number;
+    totalOutstandingTrend: number;
+    collectionRate: number;
+    collectionRateTrend: number;
+    agingBreakdown: {
+      days0to30: number;
+      days31to60: number;
+      days61to90: number;
+      days90plus: number;
+    };
+    topOverdueAccounts: {
+      patientId: string;
+      patientName: string;
+      balance: number;
+      daysOverdue: number;
+      actionStatus: 'Uncontacted' | 'Reminder Sent' | 'Payment Plan' | 'Collection Agency';
+    }[];
+  }> {
+    // Calculate scaling factor based on time range (similar to insurance claims)
+    const scalingFactor = timeRange === '30' ? 0.3 : timeRange === '60' ? 0.6 : 1.0;
+    
+    // Base patient billing data by location
+    const baseData = {
+      'all': {
+        totalOutstanding: Math.round(145750 * scalingFactor),
+        totalOutstandingTrend: -8.5, // Negative trend is good (decreasing outstanding)
+        collectionRate: 87.3,
+        collectionRateTrend: 2.1,
+        agingBreakdown: {
+          days0to30: Math.round(45200 * scalingFactor),
+          days31to60: Math.round(38900 * scalingFactor),
+          days61to90: Math.round(32150 * scalingFactor),
+          days90plus: Math.round(29500 * scalingFactor)
+        },
+        topOverdueAccounts: [
+          {
+            patientId: 'PT-2024-8901',
+            patientName: 'Sarah M. Johnson',
+            balance: Math.round(4850 * scalingFactor),
+            daysOverdue: 127,
+            actionStatus: 'Collection Agency' as const
+          },
+          {
+            patientId: 'PT-2024-7563',
+            patientName: 'Michael R. Chen',
+            balance: Math.round(3275 * scalingFactor),
+            daysOverdue: 89,
+            actionStatus: 'Reminder Sent' as const
+          },
+          {
+            patientId: 'PT-2024-9102',
+            patientName: 'Jennifer L. Davis',
+            balance: Math.round(2960 * scalingFactor),
+            daysOverdue: 156,
+            actionStatus: 'Payment Plan' as const
+          }
+        ]
+      },
+      'manhattan-ny': {
+        totalOutstanding: Math.round(52100 * scalingFactor),
+        totalOutstandingTrend: -12.3,
+        collectionRate: 89.1,
+        collectionRateTrend: 3.2,
+        agingBreakdown: {
+          days0to30: Math.round(18200 * scalingFactor),
+          days31to60: Math.round(14900 * scalingFactor),
+          days61to90: Math.round(11800 * scalingFactor),
+          days90plus: Math.round(7200 * scalingFactor)
+        },
+        topOverdueAccounts: [
+          {
+            patientId: 'PT-NY-8901',
+            patientName: 'Alexandra Wong',
+            balance: Math.round(5200 * scalingFactor),
+            daysOverdue: 134,
+            actionStatus: 'Collection Agency' as const
+          },
+          {
+            patientId: 'PT-NY-7821',
+            patientName: 'David Rodriguez',
+            balance: Math.round(3450 * scalingFactor),
+            daysOverdue: 98,
+            actionStatus: 'Reminder Sent' as const
+          },
+          {
+            patientId: 'PT-NY-9156',
+            patientName: 'Lisa Thompson',
+            balance: Math.round(2890 * scalingFactor),
+            daysOverdue: 145,
+            actionStatus: 'Payment Plan' as const
+          }
+        ]
+      },
+      'atlantic-highlands-nj': {
+        totalOutstanding: Math.round(31800 * scalingFactor),
+        totalOutstandingTrend: -6.7,
+        collectionRate: 85.4,
+        collectionRateTrend: 1.8,
+        agingBreakdown: {
+          days0to30: Math.round(11200 * scalingFactor),
+          days31to60: Math.round(9800 * scalingFactor),
+          days61to90: Math.round(6900 * scalingFactor),
+          days90plus: Math.round(3900 * scalingFactor)
+        },
+        topOverdueAccounts: [
+          {
+            patientId: 'PT-AH-5632',
+            patientName: 'Robert Kim',
+            balance: Math.round(3100 * scalingFactor),
+            daysOverdue: 112,
+            actionStatus: 'Reminder Sent' as const
+          },
+          {
+            patientId: 'PT-AH-7890',
+            patientName: 'Maria Gonzalez',
+            balance: Math.round(2750 * scalingFactor),
+            daysOverdue: 156,
+            actionStatus: 'Collection Agency' as const
+          },
+          {
+            patientId: 'PT-AH-4521',
+            patientName: 'James Wilson',
+            balance: Math.round(2480 * scalingFactor),
+            daysOverdue: 78,
+            actionStatus: 'Payment Plan' as const
+          }
+        ]
+      },
+      'woodbridge-nj': {
+        totalOutstanding: Math.round(25900 * scalingFactor),
+        totalOutstandingTrend: -4.2,
+        collectionRate: 86.8,
+        collectionRateTrend: 2.5,
+        agingBreakdown: {
+          days0to30: Math.round(9200 * scalingFactor),
+          days31to60: Math.round(7800 * scalingFactor),
+          days61to90: Math.round(5400 * scalingFactor),
+          days90plus: Math.round(3500 * scalingFactor)
+        },
+        topOverdueAccounts: [
+          {
+            patientId: 'PT-WB-3421',
+            patientName: 'Susan Miller',
+            balance: Math.round(2890 * scalingFactor),
+            daysOverdue: 123,
+            actionStatus: 'Reminder Sent' as const
+          },
+          {
+            patientId: 'PT-WB-6754',
+            patientName: 'Thomas Lee',
+            balance: Math.round(2650 * scalingFactor),
+            daysOverdue: 89,
+            actionStatus: 'Payment Plan' as const
+          },
+          {
+            patientId: 'PT-WB-8901',
+            patientName: 'Rachel Brown',
+            balance: Math.round(2340 * scalingFactor),
+            daysOverdue: 167,
+            actionStatus: 'Collection Agency' as const
+          }
+        ]
+      },
+      'fresno-ca': {
+        totalOutstanding: Math.round(23700 * scalingFactor),
+        totalOutstandingTrend: -7.8,
+        collectionRate: 88.2,
+        collectionRateTrend: 1.9,
+        agingBreakdown: {
+          days0to30: Math.round(8900 * scalingFactor),
+          days31to60: Math.round(7200 * scalingFactor),
+          days61to90: Math.round(4800 * scalingFactor),
+          days90plus: Math.round(2800 * scalingFactor)
+        },
+        topOverdueAccounts: [
+          {
+            patientId: 'PT-FR-5612',
+            patientName: 'Carlos Hernandez',
+            balance: Math.round(3200 * scalingFactor),
+            daysOverdue: 145,
+            actionStatus: 'Collection Agency' as const
+          },
+          {
+            patientId: 'PT-FR-7834',
+            patientName: 'Angela Smith',
+            balance: Math.round(2890 * scalingFactor),
+            daysOverdue: 102,
+            actionStatus: 'Reminder Sent' as const
+          },
+          {
+            patientId: 'PT-FR-9012',
+            patientName: 'Kevin Johnson',
+            balance: Math.round(2550 * scalingFactor),
+            daysOverdue: 87,
+            actionStatus: 'Payment Plan' as const
+          }
+        ]
+      },
+      'hanford-ca': {
+        totalOutstanding: Math.round(12250 * scalingFactor),
+        totalOutstandingTrend: -3.1,
+        collectionRate: 84.7,
+        collectionRateTrend: 1.2,
+        agingBreakdown: {
+          days0to30: Math.round(4700 * scalingFactor),
+          days31to60: Math.round(3900 * scalingFactor),
+          days61to90: Math.round(2350 * scalingFactor),
+          days90plus: Math.round(1300 * scalingFactor)
+        },
+        topOverdueAccounts: [
+          {
+            patientId: 'PT-HF-2341',
+            patientName: 'Patricia Davis',
+            balance: Math.round(1890 * scalingFactor),
+            daysOverdue: 134,
+            actionStatus: 'Reminder Sent' as const
+          },
+          {
+            patientId: 'PT-HF-5672',
+            patientName: 'Mark Anderson',
+            balance: Math.round(1650 * scalingFactor),
+            daysOverdue: 78,
+            actionStatus: 'Payment Plan' as const
+          },
+          {
+            patientId: 'PT-HF-8903',
+            patientName: 'Nicole Taylor',
+            balance: Math.round(1420 * scalingFactor),
+            daysOverdue: 156,
+            actionStatus: 'Collection Agency' as const
+          }
+        ]
+      }
+    };
+
+    return baseData[locationId as keyof typeof baseData] || baseData['all'];
+  }
+
   async getInsuranceClaimsData(locationId: string, startDate?: Date, endDate?: Date): Promise<any[]> {
     // Get all locations to map by name since IDs are dynamic
     const allLocations = await this.getAllPracticeLocations();

@@ -181,6 +181,26 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   /**
+   * Patient Billing Analytics endpoint
+   */
+  app.get('/api/analytics/patient-billing/:locationId', async (req, res) => {
+    try {
+      const { locationId } = req.params;
+      const { timeRange = '30' } = req.query;
+      
+      const data = await storage.getPatientBillingData(
+        locationId, 
+        timeRange as string
+      );
+      
+      res.json(data);
+    } catch (error) {
+      console.error('Error fetching patient billing data:', error);
+      res.status(500).json({ error: 'Failed to fetch patient billing data' });
+    }
+  });
+
+  /**
    * GET /api/analytics/insurance-claims/:locationId - Get insurance claims breakdown by status
    * Path params: locationId (or 'all')
    * Query params: startDate, endDate (ISO date strings)

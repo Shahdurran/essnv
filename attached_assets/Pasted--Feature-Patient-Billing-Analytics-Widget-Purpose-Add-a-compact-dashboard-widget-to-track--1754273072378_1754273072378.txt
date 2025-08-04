@@ -1,0 +1,73 @@
+# Feature: Patient Billing Analytics Widget
+
+## Purpose
+Add a compact dashboard widget to track **patient payment insights**, distinct from insurance revenue data. This widget helps business owners monitor out-of-pocket payment performance and overdue balances.
+
+---
+
+## Widget Requirements
+
+### Metrics to Display:
+
+1. **Total Outstanding Patient Balance**
+   - Single dollar amount
+   - Optional trend indicator: ↑/↓ vs. previous month
+
+2. **Balance Aging Breakdown**
+   - Display as a mini bar or donut chart
+   - Aging buckets:
+     - 0–30 days
+     - 31–60 days
+     - 61–90 days
+     - 90+ days
+
+3. **Collection Rate (Patients Only)**
+   - Percentage of patient-billed amount successfully collected
+   - Display as a percentage with optional trend
+
+4. **Top 3 Overdue Accounts**
+   - Display patient name or ID and balance owed
+   - Include action status tag (e.g. `Uncontacted`, `Reminder Sent`)
+
+---
+
+## Filters
+
+- **Location Selector** (same behavior as other widgets)
+- **Time Range Filter** with the following options:
+  - Last 30 days
+  - Last 60 days
+  - Last 90 days
+
+---
+
+## Layout & Placement
+
+- This widget should be placed at the **bottom of the main dashboard UI**
+- It should span the **full width of the page**
+- It should match the **visual size and layout** of the *Insurance Claims Tracker* component
+
+---
+
+## Mock Data Instructions
+
+### 1. Enrich Mock Data for Patient Billing
+- Create a separate dataset for **patient payments**, distinct from insurance revenue
+- Include:
+  - Payment date
+  - Patient ID
+  - Location
+  - Payment method (optional)
+  - Billed amount vs. collected amount
+  - Outstanding balances
+  - Date of statement sent
+  - Reminder history (if any)
+
+### 2. Ensure System-Wide Data Consistency
+- All widgets should pull from **enriched mock datasets**
+  - Insurance-based revenue widgets → use updated **insurance claim data**
+  - Patient Billing widget → use **new patient payment data**
+- Ensure consistency across:
+  - Time periods
+  - Locations
+  - Procedure codes (if relevant)
