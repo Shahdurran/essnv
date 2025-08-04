@@ -75,34 +75,23 @@ export default function AIBusinessAssistant({ selectedLocationId }) {
   }, []);
 
   /**
-   * Smart scrolling for chat messages - follow streaming responses naturally
+   * Handle scrolling for non-streaming messages (user messages and completed AI responses)
    */
   useEffect(() => {
     if (!messagesContainerRef.current || messages.length === 0) return;
     
     const lastMessage = messages[messages.length - 1];
     
-    // If it's a new AI message that just started streaming, scroll to show the AI message start
-    if (lastMessage.type === 'ai' && lastMessage.isStreaming && lastMessage.content === '') {
-      const aiMessageElements = messagesContainerRef.current.querySelectorAll('[data-message-type="ai"]');
-      const lastAiMessage = aiMessageElements[aiMessageElements.length - 1];
-      if (lastAiMessage) {
-        // Scroll to show the AI message with some context above it
-        const containerRect = messagesContainerRef.current.getBoundingClientRect();
-        const messageRect = lastAiMessage.getBoundingClientRect();
-        const relativeTop = messageRect.top - containerRect.top;
-        
-        // Keep some context by showing the message 20% down from the top of the container
-        const targetScrollTop = messagesContainerRef.current.scrollTop + relativeTop - (containerRect.height * 0.2);
-        messagesContainerRef.current.scrollTo({ top: targetScrollTop, behavior: "smooth" });
-        return;
-      }
+    // For user messages, scroll to bottom immediately
+    if (lastMessage.type === 'user') {
+      messagesContainerRef.current.scrollTo({ 
+        top: messagesContainerRef.current.scrollHeight, 
+        behavior: "smooth" 
+      });
     }
     
-    // For streaming AI messages, the scrolling is handled in simulateTypingEffect for better real-time tracking
-    
-    // For user messages and completed AI messages, scroll to bottom
-    if (!lastMessage.isStreaming) {
+    // For completed AI messages (not streaming), scroll to bottom
+    if (lastMessage.type === 'ai' && !lastMessage.isStreaming && lastMessage.content.length > 0) {
       setTimeout(() => {
         if (messagesContainerRef.current) {
           messagesContainerRef.current.scrollTo({ 
@@ -205,7 +194,7 @@ export default function AIBusinessAssistant({ selectedLocationId }) {
   };
 
   /**
-   * Simulate typing effect for AI responses with streaming and real-time scrolling
+   * Simulate typing effect for AI responses with real-time scroll tracking
    * @param {string} messageId - The message ID to update
    * @param {string} fullText - The complete response text
    * @param {object} responseData - Additional response data
@@ -217,6 +206,7 @@ export default function AIBusinessAssistant({ selectedLocationId }) {
     for (let i = 0; i < words.length; i++) {
       currentText += (i > 0 ? ' ' : '') + words[i];
       
+      // Update the message content
       setMessages(prev => prev.map(msg => 
         msg.id === messageId 
           ? {
@@ -227,26 +217,39 @@ export default function AIBusinessAssistant({ selectedLocationId }) {
           : msg
       ));
       
+      // Wait for DOM update, then scroll to follow the text
+      await new Promise(resolve => {
+        requestAnimationFrame(() => {
+          if (messagesContainerRef.current) {
+            const container = messagesContainerRef.current;
+            const currentMessageElement = container.querySelector(`[data-message-id="${messageId}"]`);
+            
+            if (currentMessageElement) {
+              // Get the actual content element within the message
+              const contentElement = currentMessageElement.querySelector('.prose') || currentMessageElement;
+              
+              // Calculate the position where we want to scroll to keep the "typing cursor" visible
+              const containerRect = container.getBoundingClientRect();
+              const contentRect = contentElement.getBoundingClientRect();
+              
+              // Calculate how much of the content is below the visible area
+              const contentBottom = contentRect.bottom - containerRect.top;
+              const containerHeight = containerRect.height;
+              
+              // If content is growing beyond visible area, scroll to keep the bottom in view
+              if (contentBottom > containerHeight - 50) { // 50px margin from bottom
+                const scrollTarget = container.scrollTop + (contentBottom - containerHeight + 50);
+                container.scrollTop = scrollTarget;
+              }
+            }
+          }
+          resolve();
+        });
+      });
+      
       // Add variable delay between words for natural typing effect
       const delay = 30 + Math.random() * 40; // 30-70ms per word
       await new Promise(resolve => setTimeout(resolve, delay));
-      
-      // Real-time scrolling to follow the growing content
-      if (messagesContainerRef.current) {
-        const container = messagesContainerRef.current;
-        const isUserNearBottom = container.scrollHeight - container.scrollTop - container.clientHeight < 100;
-        
-        // Only auto-scroll if user hasn't manually scrolled up
-        if (isUserNearBottom) {
-          // Smoothly scroll to show the latest content
-          requestAnimationFrame(() => {
-            container.scrollTo({ 
-              top: container.scrollHeight, 
-              behavior: "auto" // Use auto for smooth real-time following
-            });
-          });
-        }
-      }
     }
     
     // Mark streaming as complete
