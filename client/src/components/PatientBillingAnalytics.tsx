@@ -95,7 +95,7 @@ export default function PatientBillingAnalytics({ selectedLocationId }: PatientB
       <div className="bg-white rounded-lg border border-gray-200 p-4">
         <div className="animate-pulse">
           <div className="h-5 bg-gray-300 rounded w-1/3 mb-3"></div>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div className="space-y-4">
             <div className="h-20 bg-gray-300 rounded"></div>
             <div className="h-20 bg-gray-300 rounded"></div>
             <div className="h-20 bg-gray-300 rounded"></div>
@@ -149,8 +149,8 @@ export default function PatientBillingAnalytics({ selectedLocationId }: PatientB
         </div>
       </div>
 
-      {/* Simplified Metrics Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+      {/* Simplified Metrics - Vertical Layout */}
+      <div className="space-y-4">
         
         {/* Total Revenue from Patient Payments */}
         <div className="bg-green-50 rounded-lg p-4 border border-green-200">
