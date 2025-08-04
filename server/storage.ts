@@ -568,58 +568,67 @@ export class MemStorage implements IStorage {
     ];
   }
 
-  async getInsuranceClaimsData(locationId: string): Promise<any[]> {
+  async getInsuranceClaimsData(locationId: string, startDate?: Date, endDate?: Date): Promise<any[]> {
     // Get all locations to map by name since IDs are dynamic
     const allLocations = await this.getAllPracticeLocations();
     const locationMap = new Map(allLocations.map(loc => [loc.name, loc.id]));
     
+    // Generate date-filtered claims data based on current date and filter range
+    const now = new Date();
+    const defaultStartDate = startDate || new Date(now.getFullYear(), now.getMonth() - 1, now.getDate()); // Default: last month
+    const defaultEndDate = endDate || now;
+    
+    // Calculate date-based scaling factor (how much of total data to show based on date range)
+    const totalDaysInRange = Math.ceil((defaultEndDate.getTime() - defaultStartDate.getTime()) / (1000 * 60 * 60 * 24));
+    const scalingFactor = Math.min(1, Math.max(0.1, totalDaysInRange / 365)); // Scale between 10% and 100%
+    
     // Location-specific claims data with realistic volumes for dermatology practice
-    // Total claims across all locations: ~9,596 (aligned with patient volume)
+    // Data will be scaled based on selected date range
     const locationClaimsDataByName = {
       // Manhattan, NY - Highest volume, premium cosmetic procedures
       'Manhattan, NY': [
         {
           status: 'Submitted' as const,
-          totalClaims: 1567,
-          totalAmount: 2194800,
+          totalClaims: Math.round(1567 * scalingFactor),
+          totalAmount: Math.round(2194800 * scalingFactor),
           providers: [
-            { name: 'Blue Cross Blue Shield', claimCount: 578, amount: 809200 },
-            { name: 'Aetna', claimCount: 392, amount: 548800 },
-            { name: 'United Healthcare', claimCount: 314, amount: 439600 },
-            { name: 'Cigna', claimCount: 283, amount: 397200 }
+            { name: 'Blue Cross Blue Shield', claimCount: Math.round(578 * scalingFactor), amount: Math.round(809200 * scalingFactor) },
+            { name: 'Aetna', claimCount: Math.round(392 * scalingFactor), amount: Math.round(548800 * scalingFactor) },
+            { name: 'United Healthcare', claimCount: Math.round(314 * scalingFactor), amount: Math.round(439600 * scalingFactor) },
+            { name: 'Cigna', claimCount: Math.round(283 * scalingFactor), amount: Math.round(397200 * scalingFactor) }
           ]
         },
         {
           status: 'Paid' as const,
-          totalClaims: 2845,
-          totalAmount: 3983000,
+          totalClaims: Math.round(2845 * scalingFactor),
+          totalAmount: Math.round(3983000 * scalingFactor),
           providers: [
-            { name: 'Blue Cross Blue Shield', claimCount: 1048, amount: 1467200 },
-            { name: 'Aetna', claimCount: 711, amount: 995400 },
-            { name: 'United Healthcare', claimCount: 569, amount: 796600 },
-            { name: 'Cigna', claimCount: 517, amount: 723800 }
+            { name: 'Blue Cross Blue Shield', claimCount: Math.round(1048 * scalingFactor), amount: Math.round(1467200 * scalingFactor) },
+            { name: 'Aetna', claimCount: Math.round(711 * scalingFactor), amount: Math.round(995400 * scalingFactor) },
+            { name: 'United Healthcare', claimCount: Math.round(569 * scalingFactor), amount: Math.round(796600 * scalingFactor) },
+            { name: 'Cigna', claimCount: Math.round(517 * scalingFactor), amount: Math.round(723800 * scalingFactor) }
           ]
         },
         {
           status: 'Pending' as const,
-          totalClaims: 892,
-          totalAmount: 1247800,
+          totalClaims: Math.round(892 * scalingFactor),
+          totalAmount: Math.round(1247800 * scalingFactor),
           providers: [
-            { name: 'Blue Cross Blue Shield', claimCount: 324, amount: 453600 },
-            { name: 'Aetna', claimCount: 289, amount: 404600 },
-            { name: 'United Healthcare', claimCount: 167, amount: 233800 },
-            { name: 'Cigna', claimCount: 112, amount: 155800 }
+            { name: 'Blue Cross Blue Shield', claimCount: Math.round(324 * scalingFactor), amount: Math.round(453600 * scalingFactor) },
+            { name: 'Aetna', claimCount: Math.round(289 * scalingFactor), amount: Math.round(404600 * scalingFactor) },
+            { name: 'United Healthcare', claimCount: Math.round(167 * scalingFactor), amount: Math.round(233800 * scalingFactor) },
+            { name: 'Cigna', claimCount: Math.round(112 * scalingFactor), amount: Math.round(155800 * scalingFactor) }
           ]
         },
         {
           status: 'Denied' as const,
-          totalClaims: 234,
-          totalAmount: 327600,
+          totalClaims: Math.round(234 * scalingFactor),
+          totalAmount: Math.round(327600 * scalingFactor),
           providers: [
-            { name: 'Blue Cross Blue Shield', claimCount: 89, amount: 124600 },
-            { name: 'Aetna', claimCount: 67, amount: 93800 },
-            { name: 'United Healthcare', claimCount: 45, amount: 63000 },
-            { name: 'Cigna', claimCount: 33, amount: 46200 }
+            { name: 'Blue Cross Blue Shield', claimCount: Math.round(89 * scalingFactor), amount: Math.round(124600 * scalingFactor) },
+            { name: 'Aetna', claimCount: Math.round(67 * scalingFactor), amount: Math.round(93800 * scalingFactor) },
+            { name: 'United Healthcare', claimCount: Math.round(45 * scalingFactor), amount: Math.round(63000 * scalingFactor) },
+            { name: 'Cigna', claimCount: Math.round(33 * scalingFactor), amount: Math.round(46200 * scalingFactor) }
           ]
         }
       ],
@@ -628,46 +637,46 @@ export class MemStorage implements IStorage {
       'Atlantic Highlands, NJ': [
         {
           status: 'Submitted' as const,
-          totalClaims: 1203,
-          totalAmount: 1323300,
+          totalClaims: Math.round(1203 * scalingFactor),
+          totalAmount: Math.round(1323300 * scalingFactor),
           providers: [
-            { name: 'Blue Cross Blue Shield', claimCount: 421, amount: 463100 },
-            { name: 'Horizon Blue Cross', claimCount: 289, amount: 317900 },
-            { name: 'Aetna', claimCount: 265, amount: 291500 },
-            { name: 'Medicare', claimCount: 228, amount: 250800 }
+            { name: 'Blue Cross Blue Shield', claimCount: Math.round(421 * scalingFactor), amount: Math.round(463100 * scalingFactor) },
+            { name: 'Horizon Blue Cross', claimCount: Math.round(289 * scalingFactor), amount: Math.round(317900 * scalingFactor) },
+            { name: 'Aetna', claimCount: Math.round(265 * scalingFactor), amount: Math.round(291500 * scalingFactor) },
+            { name: 'Medicare', claimCount: Math.round(228 * scalingFactor), amount: Math.round(250800 * scalingFactor) }
           ]
         },
         {
           status: 'Paid' as const,
-          totalClaims: 2177,
-          totalAmount: 2394700,
+          totalClaims: Math.round(2177 * scalingFactor),
+          totalAmount: Math.round(2394700 * scalingFactor),
           providers: [
-            { name: 'Blue Cross Blue Shield', claimCount: 762, amount: 838200 },
-            { name: 'Horizon Blue Cross', claimCount: 523, amount: 575300 },
-            { name: 'Aetna', claimCount: 479, amount: 526900 },
-            { name: 'Medicare', claimCount: 413, amount: 454300 }
+            { name: 'Blue Cross Blue Shield', claimCount: Math.round(762 * scalingFactor), amount: Math.round(838200 * scalingFactor) },
+            { name: 'Horizon Blue Cross', claimCount: Math.round(523 * scalingFactor), amount: Math.round(575300 * scalingFactor) },
+            { name: 'Aetna', claimCount: Math.round(479 * scalingFactor), amount: Math.round(526900 * scalingFactor) },
+            { name: 'Medicare', claimCount: Math.round(413 * scalingFactor), amount: Math.round(454300 * scalingFactor) }
           ]
         },
         {
           status: 'Pending' as const,
-          totalClaims: 567,
-          totalAmount: 623700,
+          totalClaims: Math.round(567 * scalingFactor),
+          totalAmount: Math.round(623700 * scalingFactor),
           providers: [
-            { name: 'Blue Cross Blue Shield', claimCount: 189, amount: 207900 },
-            { name: 'Horizon Blue Cross', claimCount: 156, amount: 171600 },
-            { name: 'Aetna', claimCount: 123, amount: 135300 },
-            { name: 'Medicare', claimCount: 99, amount: 108900 }
+            { name: 'Blue Cross Blue Shield', claimCount: Math.round(189 * scalingFactor), amount: Math.round(207900 * scalingFactor) },
+            { name: 'Horizon Blue Cross', claimCount: Math.round(156 * scalingFactor), amount: Math.round(171600 * scalingFactor) },
+            { name: 'Aetna', claimCount: Math.round(123 * scalingFactor), amount: Math.round(135300 * scalingFactor) },
+            { name: 'Medicare', claimCount: Math.round(99 * scalingFactor), amount: Math.round(108900 * scalingFactor) }
           ]
         },
         {
           status: 'Denied' as const,
-          totalClaims: 178,
-          totalAmount: 195800,
+          totalClaims: Math.round(178 * scalingFactor),
+          totalAmount: Math.round(195800 * scalingFactor),
           providers: [
-            { name: 'Blue Cross Blue Shield', claimCount: 67, amount: 73700 },
-            { name: 'Horizon Blue Cross', claimCount: 45, amount: 49500 },
-            { name: 'Aetna', claimCount: 34, amount: 37400 },
-            { name: 'Medicare', claimCount: 32, amount: 35200 }
+            { name: 'Blue Cross Blue Shield', claimCount: Math.round(67 * scalingFactor), amount: Math.round(73700 * scalingFactor) },
+            { name: 'Horizon Blue Cross', claimCount: Math.round(45 * scalingFactor), amount: Math.round(49500 * scalingFactor) },
+            { name: 'Aetna', claimCount: Math.round(34 * scalingFactor), amount: Math.round(37400 * scalingFactor) },
+            { name: 'Medicare', claimCount: Math.round(32 * scalingFactor), amount: Math.round(35200 * scalingFactor) }
           ]
         }
       ],
@@ -676,46 +685,46 @@ export class MemStorage implements IStorage {
       'Woodbridge, NJ': [
         {
           status: 'Submitted' as const,
-          totalClaims: 987,
-          totalAmount: 888300,
+          totalClaims: Math.round(987 * scalingFactor),
+          totalAmount: Math.round(888300 * scalingFactor),
           providers: [
-            { name: 'Horizon Blue Cross', claimCount: 345, amount: 310500 },
-            { name: 'Blue Cross Blue Shield', claimCount: 278, amount: 250200 },
-            { name: 'Medicare', claimCount: 198, amount: 178200 },
-            { name: 'Aetna', claimCount: 166, amount: 149400 }
+            { name: 'Horizon Blue Cross', claimCount: Math.round(345 * scalingFactor), amount: Math.round(310500 * scalingFactor) },
+            { name: 'Blue Cross Blue Shield', claimCount: Math.round(278 * scalingFactor), amount: Math.round(250200 * scalingFactor) },
+            { name: 'Medicare', claimCount: Math.round(198 * scalingFactor), amount: Math.round(178200 * scalingFactor) },
+            { name: 'Aetna', claimCount: Math.round(166 * scalingFactor), amount: Math.round(149400 * scalingFactor) }
           ]
         },
         {
           status: 'Paid' as const,
-          totalClaims: 1789,
-          totalAmount: 1610100,
+          totalClaims: Math.round(1789 * scalingFactor),
+          totalAmount: Math.round(1610100 * scalingFactor),
           providers: [
-            { name: 'Horizon Blue Cross', claimCount: 625, amount: 562500 },
-            { name: 'Blue Cross Blue Shield', claimCount: 504, amount: 453600 },
-            { name: 'Medicare', claimCount: 358, amount: 322200 },
-            { name: 'Aetna', claimCount: 302, amount: 271800 }
+            { name: 'Horizon Blue Cross', claimCount: Math.round(625 * scalingFactor), amount: Math.round(562500 * scalingFactor) },
+            { name: 'Blue Cross Blue Shield', claimCount: Math.round(504 * scalingFactor), amount: Math.round(453600 * scalingFactor) },
+            { name: 'Medicare', claimCount: Math.round(358 * scalingFactor), amount: Math.round(322200 * scalingFactor) },
+            { name: 'Aetna', claimCount: Math.round(302 * scalingFactor), amount: Math.round(271800 * scalingFactor) }
           ]
         },
         {
           status: 'Pending' as const,
-          totalClaims: 445,
-          totalAmount: 400500,
+          totalClaims: Math.round(445 * scalingFactor),
+          totalAmount: Math.round(400500 * scalingFactor),
           providers: [
-            { name: 'Horizon Blue Cross', claimCount: 167, amount: 150300 },
-            { name: 'Blue Cross Blue Shield', claimCount: 123, amount: 110700 },
-            { name: 'Medicare', claimCount: 89, amount: 80100 },
-            { name: 'Aetna', claimCount: 66, amount: 59400 }
+            { name: 'Horizon Blue Cross', claimCount: Math.round(167 * scalingFactor), amount: Math.round(150300 * scalingFactor) },
+            { name: 'Blue Cross Blue Shield', claimCount: Math.round(123 * scalingFactor), amount: Math.round(110700 * scalingFactor) },
+            { name: 'Medicare', claimCount: Math.round(89 * scalingFactor), amount: Math.round(80100 * scalingFactor) },
+            { name: 'Aetna', claimCount: Math.round(66 * scalingFactor), amount: Math.round(59400 * scalingFactor) }
           ]
         },
         {
           status: 'Denied' as const,
-          totalClaims: 145,
-          totalAmount: 130500,
+          totalClaims: Math.round(145 * scalingFactor),
+          totalAmount: Math.round(130500 * scalingFactor),
           providers: [
-            { name: 'Horizon Blue Cross', claimCount: 56, amount: 50400 },
-            { name: 'Blue Cross Blue Shield', claimCount: 43, amount: 38700 },
-            { name: 'Medicare', claimCount: 28, amount: 25200 },
-            { name: 'Aetna', claimCount: 18, amount: 16200 }
+            { name: 'Horizon Blue Cross', claimCount: Math.round(56 * scalingFactor), amount: Math.round(50400 * scalingFactor) },
+            { name: 'Blue Cross Blue Shield', claimCount: Math.round(43 * scalingFactor), amount: Math.round(38700 * scalingFactor) },
+            { name: 'Medicare', claimCount: Math.round(28 * scalingFactor), amount: Math.round(25200 * scalingFactor) },
+            { name: 'Aetna', claimCount: Math.round(18 * scalingFactor), amount: Math.round(16200 * scalingFactor) }
           ]
         }
       ],
@@ -724,46 +733,46 @@ export class MemStorage implements IStorage {
       'Fresno, CA': [
         {
           status: 'Submitted' as const,
-          totalClaims: 1356,
-          totalAmount: 1491600,
+          totalClaims: Math.round(1356 * scalingFactor),
+          totalAmount: Math.round(1491600 * scalingFactor),
           providers: [
-            { name: 'Kaiser Permanente', claimCount: 487, amount: 535700 },
-            { name: 'Blue Cross Blue Shield', claimCount: 352, amount: 387200 },
-            { name: 'Aetna', claimCount: 298, amount: 327800 },
-            { name: 'Medicare', claimCount: 219, amount: 240900 }
+            { name: 'Kaiser Permanente', claimCount: Math.round(487 * scalingFactor), amount: Math.round(535700 * scalingFactor) },
+            { name: 'Blue Cross Blue Shield', claimCount: Math.round(352 * scalingFactor), amount: Math.round(387200 * scalingFactor) },
+            { name: 'Aetna', claimCount: Math.round(298 * scalingFactor), amount: Math.round(327800 * scalingFactor) },
+            { name: 'Medicare', claimCount: Math.round(219 * scalingFactor), amount: Math.round(240900 * scalingFactor) }
           ]
         },
         {
           status: 'Paid' as const,
-          totalClaims: 2456,
-          totalAmount: 2701600,
+          totalClaims: Math.round(2456 * scalingFactor),
+          totalAmount: Math.round(2701600 * scalingFactor),
           providers: [
-            { name: 'Kaiser Permanente', claimCount: 882, amount: 970200 },
-            { name: 'Blue Cross Blue Shield', claimCount: 637, amount: 700700 },
-            { name: 'Aetna', claimCount: 540, amount: 594000 },
-            { name: 'Medicare', claimCount: 397, amount: 436700 }
+            { name: 'Kaiser Permanente', claimCount: Math.round(882 * scalingFactor), amount: Math.round(970200 * scalingFactor) },
+            { name: 'Blue Cross Blue Shield', claimCount: Math.round(637 * scalingFactor), amount: Math.round(700700 * scalingFactor) },
+            { name: 'Aetna', claimCount: Math.round(540 * scalingFactor), amount: Math.round(594000 * scalingFactor) },
+            { name: 'Medicare', claimCount: Math.round(397 * scalingFactor), amount: Math.round(436700 * scalingFactor) }
           ]
         },
         {
           status: 'Pending' as const,
-          totalClaims: 678,
-          totalAmount: 745800,
+          totalClaims: Math.round(678 * scalingFactor),
+          totalAmount: Math.round(745800 * scalingFactor),
           providers: [
-            { name: 'Kaiser Permanente', claimCount: 243, amount: 267300 },
-            { name: 'Blue Cross Blue Shield', claimCount: 189, amount: 207900 },
-            { name: 'Aetna', claimCount: 134, amount: 147400 },
-            { name: 'Medicare', claimCount: 112, amount: 123200 }
+            { name: 'Kaiser Permanente', claimCount: Math.round(243 * scalingFactor), amount: Math.round(267300 * scalingFactor) },
+            { name: 'Blue Cross Blue Shield', claimCount: Math.round(189 * scalingFactor), amount: Math.round(207900 * scalingFactor) },
+            { name: 'Aetna', claimCount: Math.round(134 * scalingFactor), amount: Math.round(147400 * scalingFactor) },
+            { name: 'Medicare', claimCount: Math.round(112 * scalingFactor), amount: Math.round(123200 * scalingFactor) }
           ]
         },
         {
           status: 'Denied' as const,
-          totalClaims: 198,
-          totalAmount: 217800,
+          totalClaims: Math.round(198 * scalingFactor),
+          totalAmount: Math.round(217800 * scalingFactor),
           providers: [
-            { name: 'Kaiser Permanente', claimCount: 78, amount: 85800 },
-            { name: 'Blue Cross Blue Shield', claimCount: 56, amount: 61600 },
-            { name: 'Aetna', claimCount: 38, amount: 41800 },
-            { name: 'Medicare', claimCount: 26, amount: 28600 }
+            { name: 'Kaiser Permanente', claimCount: Math.round(78 * scalingFactor), amount: Math.round(85800 * scalingFactor) },
+            { name: 'Blue Cross Blue Shield', claimCount: Math.round(56 * scalingFactor), amount: Math.round(61600 * scalingFactor) },
+            { name: 'Aetna', claimCount: Math.round(38 * scalingFactor), amount: Math.round(41800 * scalingFactor) },
+            { name: 'Medicare', claimCount: Math.round(26 * scalingFactor), amount: Math.round(28600 * scalingFactor) }
           ]
         }
       ],
@@ -772,46 +781,46 @@ export class MemStorage implements IStorage {
       'Hanford, CA': [
         {
           status: 'Submitted' as const,
-          totalClaims: 723,
-          totalAmount: 578400,
+          totalClaims: Math.round(723 * scalingFactor),
+          totalAmount: Math.round(578400 * scalingFactor),
           providers: [
-            { name: 'Kaiser Permanente', claimCount: 267, amount: 213600 },
-            { name: 'Blue Cross Blue Shield', claimCount: 189, amount: 151200 },
-            { name: 'Medicare', claimCount: 145, amount: 116000 },
-            { name: 'Aetna', claimCount: 122, amount: 97600 }
+            { name: 'Kaiser Permanente', claimCount: Math.round(267 * scalingFactor), amount: Math.round(213600 * scalingFactor) },
+            { name: 'Blue Cross Blue Shield', claimCount: Math.round(189 * scalingFactor), amount: Math.round(151200 * scalingFactor) },
+            { name: 'Medicare', claimCount: Math.round(145 * scalingFactor), amount: Math.round(116000 * scalingFactor) },
+            { name: 'Aetna', claimCount: Math.round(122 * scalingFactor), amount: Math.round(97600 * scalingFactor) }
           ]
         },
         {
           status: 'Paid' as const,
-          totalClaims: 1308,
-          totalAmount: 1046400,
+          totalClaims: Math.round(1308 * scalingFactor),
+          totalAmount: Math.round(1046400 * scalingFactor),
           providers: [
-            { name: 'Kaiser Permanente', claimCount: 483, amount: 386400 },
-            { name: 'Blue Cross Blue Shield', claimCount: 342, amount: 273600 },
-            { name: 'Medicare', claimCount: 262, amount: 209600 },
-            { name: 'Aetna', claimCount: 221, amount: 176800 }
+            { name: 'Kaiser Permanente', claimCount: Math.round(483 * scalingFactor), amount: Math.round(386400 * scalingFactor) },
+            { name: 'Blue Cross Blue Shield', claimCount: Math.round(342 * scalingFactor), amount: Math.round(273600 * scalingFactor) },
+            { name: 'Medicare', claimCount: Math.round(262 * scalingFactor), amount: Math.round(209600 * scalingFactor) },
+            { name: 'Aetna', claimCount: Math.round(221 * scalingFactor), amount: Math.round(176800 * scalingFactor) }
           ]
         },
         {
           status: 'Pending' as const,
-          totalClaims: 334,
-          totalAmount: 267200,
+          totalClaims: Math.round(334 * scalingFactor),
+          totalAmount: Math.round(267200 * scalingFactor),
           providers: [
-            { name: 'Kaiser Permanente', claimCount: 123, amount: 98400 },
-            { name: 'Blue Cross Blue Shield', claimCount: 89, amount: 71200 },
-            { name: 'Medicare', claimCount: 67, amount: 53600 },
-            { name: 'Aetna', claimCount: 55, amount: 44000 }
+            { name: 'Kaiser Permanente', claimCount: Math.round(123 * scalingFactor), amount: Math.round(98400 * scalingFactor) },
+            { name: 'Blue Cross Blue Shield', claimCount: Math.round(89 * scalingFactor), amount: Math.round(71200 * scalingFactor) },
+            { name: 'Medicare', claimCount: Math.round(67 * scalingFactor), amount: Math.round(53600 * scalingFactor) },
+            { name: 'Aetna', claimCount: Math.round(55 * scalingFactor), amount: Math.round(44000 * scalingFactor) }
           ]
         },
         {
           status: 'Denied' as const,
-          totalClaims: 89,
-          totalAmount: 71200,
+          totalClaims: Math.round(89 * scalingFactor),
+          totalAmount: Math.round(71200 * scalingFactor),
           providers: [
-            { name: 'Kaiser Permanente', claimCount: 34, amount: 27200 },
-            { name: 'Blue Cross Blue Shield', claimCount: 23, amount: 18400 },
-            { name: 'Medicare', claimCount: 18, amount: 14400 },
-            { name: 'Aetna', claimCount: 14, amount: 11200 }
+            { name: 'Kaiser Permanente', claimCount: Math.round(34 * scalingFactor), amount: Math.round(27200 * scalingFactor) },
+            { name: 'Blue Cross Blue Shield', claimCount: Math.round(23 * scalingFactor), amount: Math.round(18400 * scalingFactor) },
+            { name: 'Medicare', claimCount: Math.round(18 * scalingFactor), amount: Math.round(14400 * scalingFactor) },
+            { name: 'Aetna', claimCount: Math.round(14 * scalingFactor), amount: Math.round(11200 * scalingFactor) }
           ]
         }
       ]

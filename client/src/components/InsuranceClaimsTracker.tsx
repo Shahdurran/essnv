@@ -40,19 +40,41 @@ interface InsuranceClaimsTrackerProps {
  */
 export default function InsuranceClaimsTracker({ selectedLocationId }: InsuranceClaimsTrackerProps) {
 
-  // State for date filtering
-  const [dateRange, setDateRange] = useState({
-    start: null as Date | null,
-    end: null as Date | null,
-    preset: "last-month"
+  // State for date filtering - Initialize with "last-month" preset
+  const [dateRange, setDateRange] = useState(() => {
+    const end = new Date();
+    const start = new Date();
+    start.setMonth(start.getMonth() - 1);
+    
+    return {
+      start,
+      end,
+      preset: "last-month"
+    };
   });
 
   /**
    * Fetch insurance claims data from API
-   * Includes location-based filtering
+   * Includes location-based and date-based filtering
    */
   const { data: claimsData = [], isLoading, error } = useQuery<ClaimsBreakdown[]>({
-    queryKey: ['/api/analytics/insurance-claims', selectedLocationId],
+    queryKey: ['/api/analytics/insurance-claims', selectedLocationId, dateRange.start, dateRange.end],
+    queryFn: async () => {
+      const params = new URLSearchParams();
+      if (dateRange.start) {
+        params.append('startDate', dateRange.start.toISOString());
+      }
+      if (dateRange.end) {
+        params.append('endDate', dateRange.end.toISOString());
+      }
+      
+      const url = `/api/analytics/insurance-claims/${selectedLocationId}?${params.toString()}`;
+      const response = await fetch(url);
+      if (!response.ok) {
+        throw new Error('Failed to fetch claims data');
+      }
+      return response.json();
+    },
     staleTime: 2 * 60 * 1000, // Cache for 2 minutes for fresh claims data
   });
 
@@ -249,6 +271,7 @@ export default function InsuranceClaimsTracker({ selectedLocationId }: Insurance
         <DateFilter 
           onDateRangeChange={handleDateRangeChange}
           className="mb-6"
+          initialPreset="last-month"
         />
 
         {/* Claims Buckets Grid - Updated to 4 columns for 4 status buckets */}

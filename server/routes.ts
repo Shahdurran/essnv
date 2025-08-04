@@ -183,11 +183,25 @@ export async function registerRoutes(app: Express): Promise<Server> {
   /**
    * GET /api/analytics/insurance-claims/:locationId - Get insurance claims breakdown by status
    * Path params: locationId (or 'all')
+   * Query params: startDate, endDate (ISO date strings)
    */
   app.get("/api/analytics/insurance-claims/:locationId", async (req, res) => {
     try {
       const { locationId } = req.params;
-      const claimsData = await storage.getInsuranceClaimsData(locationId);
+      const { startDate, endDate } = req.query;
+      
+      // Parse date parameters if provided
+      let parsedStartDate: Date | undefined;
+      let parsedEndDate: Date | undefined;
+      
+      if (startDate && typeof startDate === 'string') {
+        parsedStartDate = new Date(startDate);
+      }
+      if (endDate && typeof endDate === 'string') {
+        parsedEndDate = new Date(endDate);
+      }
+      
+      const claimsData = await storage.getInsuranceClaimsData(locationId, parsedStartDate, parsedEndDate);
       res.json(claimsData);
     } catch (error) {
       console.error('Error fetching insurance claims data:', error);
