@@ -270,7 +270,9 @@ export default function PracticeInsights({ selectedLocationId }: PracticeInsight
             <p className="text-2xl font-bold text-blue-700">
               {formatNumber(keyMetrics.monthlyPatients)}
             </p>
-            <p className="text-sm text-blue-600">Monthly Patients</p>
+            <p className="text-sm text-blue-600">
+              {timeRange === '1' ? 'Monthly Patients' : `Patients (${timeRange}M)`}
+            </p>
           </div>
           
           {/* Monthly Revenue */}
@@ -282,7 +284,9 @@ export default function PracticeInsights({ selectedLocationId }: PracticeInsight
             <p className="text-2xl font-bold text-green-700">
               {formatCurrency(keyMetrics.monthlyRevenue)}
             </p>
-            <p className="text-sm text-green-600">Monthly Revenue</p>
+            <p className="text-sm text-green-600">
+              {timeRange === '1' ? 'Monthly Revenue' : `Revenue (${timeRange}M)`}
+            </p>
           </div>
           
           {/* Average AR Days */}

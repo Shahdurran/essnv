@@ -420,7 +420,7 @@ export class MemStorage implements IStorage {
         cptCode: proc.cptCode,
         description: proc.description,
         category: proc.category,
-        revenue: Math.round(parseFloat(proc.basePrice || "0") * 45 * locationMultiplier * timeMultiplier), // Scale by time range
+        revenue: Math.round(parseFloat(proc.basePrice || "0") * 2.5 * locationMultiplier * timeMultiplier), // Realistic scaling: base price * 2.5 procedures per month
         growth: ((Math.random() * 30 - 5) * (locationId ? 1 : 0.8) * (timeRange > 6 ? 0.9 : 1.1)).toFixed(1) // Longer periods show more stable growth
       }));
   }

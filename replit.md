@@ -1,8 +1,12 @@
 # MDS AI Analytics - Rao Dermatology Business Intelligence Platform
 
-## Version 2.0 - Enhanced UI and Data Integrity Release
+## Version 2.1 - AI Assistant Enhancements and Data Scaling Fixes
 **Release Date:** August 4, 2025  
 **Status:** Completed and Ready for Deployment
+
+## Version 2.0 - Enhanced UI and Data Integrity Release
+**Release Date:** August 4, 2025  
+**Status:** Archived - Replaced by Version 2.1
 
 ## Version 1.0 - Production Ready Release
 **Release Date:** August 3, 2025  
@@ -12,7 +16,39 @@
 
 MDS AI Analytics is a comprehensive AI-powered business analytics dashboard designed specifically for Rao Dermatology's multi-location practice management. The platform provides real-time insights, forecasting, and natural language analytics queries through an AI business assistant powered by OpenAI GPT-4o. The application serves 5 practice locations and offers comprehensive analytics for both medical and cosmetic dermatology procedures, including revenue projections, patient volume analysis, insurance breakdown, and key performance indicators.
 
-## Version 2.0 Features Completed
+## Version 2.1 Features Completed
+
+- ✅ **MAJOR: Enhanced AI Assistant with Intelligent Data Routing** (August 4, 2025)
+  - AI now extracts location and time context from questions (e.g., "Manhattan denial reasons")
+  - Smart routing based on query content rather than just UI selections
+  - Enhanced OpenAI integration with location and time parameters
+  - Improved natural language understanding for location-specific queries
+
+- ✅ **NEW: Streaming UI with Realistic Typing Animation** (August 4, 2025)
+  - Word-by-word typing effect with natural delays (30-70ms per word)
+  - Visual streaming indicators during AI response generation
+  - Improved user experience with realistic chat behavior
+  - Auto-scrolling and proper message state management
+
+- ✅ **CRITICAL: Fixed Top Revenue Procedures Data Scaling** (August 4, 2025)
+  - Reduced unrealistic revenue scaling from 45x to 2.5x base price multiplier
+  - Realistic procedure volume assumptions (2.5 procedures per month average)
+  - Proper time range scaling maintains logical data relationships
+  - All revenue figures now align with actual dermatology practice metrics
+
+- ✅ **UI Enhancement: Dynamic Practice Insights Labels** (August 4, 2025)
+  - "Monthly Patients" becomes "Patients (3M)" for 3-month periods
+  - "Monthly Revenue" becomes "Revenue (6M)" for 6-month periods
+  - Time-appropriate labeling across all time range selections
+  - Maintains clarity for both monthly and multi-month analytics
+
+- ✅ **Enhanced Mobile Responsiveness Optimization** (August 4, 2025)
+  - All components adapt smoothly to different screen sizes
+  - Responsive typography and spacing adjustments
+  - Touch-optimized interface elements
+  - Improved mobile chat interface for AI Assistant
+
+## Version 2.0 Features (Inherited)
 
 - ✅ **MAJOR: Fixed AI Assistant Technical Issues** (August 4, 2025)
   - Resolved missing `getDenialReasonsData()` function causing AI connection failures
