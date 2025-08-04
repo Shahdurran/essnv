@@ -252,15 +252,117 @@ export default function AIBusinessAssistant({ selectedLocationId }) {
       await new Promise(resolve => setTimeout(resolve, delay));
     }
     
-    // Mark streaming as complete
+    // Mark main response streaming as complete
     setMessages(prev => prev.map(msg => 
       msg.id === messageId 
         ? { ...msg, isStreaming: false }
         : msg
     ));
     
+    // If there's additional response data (recommendations, key metrics), stream them separately
+    if (responseData && (responseData.recommendations || responseData.key_metrics)) {
+      await streamAdditionalSections(messageId, responseData);
+    }
+    
     setIsTyping(false);
     setIsLoading(false);
+  };
+
+  /**
+   * Stream additional sections (recommendations, key metrics) after main response
+   * @param {string} messageId - The message ID to update
+   * @param {object} responseData - The response data containing additional sections
+   */
+  const streamAdditionalSections = async (messageId, responseData) => {
+    let additionalContent = '';
+    
+    // Build the additional content sections
+    if (responseData.recommendations && responseData.recommendations.length > 0) {
+      additionalContent += '\n\n**Recommendations:**\n';
+      responseData.recommendations.forEach(rec => {
+        additionalContent += `• ${rec}\n`;
+      });
+    }
+    
+    if (responseData.key_metrics) {
+      additionalContent += '\n\n**Key Metrics:**\n';
+      Object.entries(responseData.key_metrics).forEach(([key, value]) => {
+        const formattedKey = key.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
+        additionalContent += `• ${formattedKey}: ${value}\n`;
+      });
+    }
+    
+    if (additionalContent.trim()) {
+      // Get current message content
+      const currentMessage = messages.find(msg => msg.id === messageId);
+      if (!currentMessage) return;
+      
+      const baseContent = currentMessage.content;
+      const words = additionalContent.trim().split(' ');
+      let streamedContent = '';
+      
+      // Mark as streaming additional content
+      setMessages(prev => prev.map(msg => 
+        msg.id === messageId 
+          ? { ...msg, isStreaming: true }
+          : msg
+      ));
+      
+      // Stream each word of the additional content
+      for (let i = 0; i < words.length; i++) {
+        streamedContent += (i > 0 ? ' ' : '') + words[i];
+        
+        setMessages(prev => prev.map(msg => 
+          msg.id === messageId 
+            ? {
+                ...msg,
+                content: baseContent + streamedContent,
+                isStreaming: i < words.length - 1
+              }
+            : msg
+        ));
+        
+        // Wait for DOM update and handle scrolling
+        await new Promise(resolve => {
+          requestAnimationFrame(() => {
+            if (messagesContainerRef.current) {
+              const container = messagesContainerRef.current;
+              const currentMessageElement = container.querySelector(`[data-message-id="${messageId}"]`);
+              
+              if (currentMessageElement) {
+                const contentElement = currentMessageElement.querySelector('.prose') || currentMessageElement;
+                const containerRect = container.getBoundingClientRect();
+                const contentRect = contentElement.getBoundingClientRect();
+                const contentBottom = contentRect.bottom - containerRect.top;
+                const containerHeight = containerRect.height;
+                
+                if (contentBottom > containerHeight - 50) {
+                  const scrollTarget = container.scrollTop + (contentBottom - containerHeight + 50);
+                  container.scrollTop = scrollTarget;
+                }
+              }
+            }
+            resolve();
+          });
+        });
+        
+        // Add delay between words
+        const delay = 25 + Math.random() * 25; // Slightly faster for additional sections
+        await new Promise(resolve => setTimeout(resolve, delay));
+      }
+      
+      // Mark streaming as complete and add response data
+      setMessages(prev => prev.map(msg => 
+        msg.id === messageId 
+          ? {
+              ...msg,
+              content: baseContent + streamedContent,
+              isStreaming: false,
+              responseData: responseData
+            }
+          : msg
+      ));
+    }
   };
 
   /**
