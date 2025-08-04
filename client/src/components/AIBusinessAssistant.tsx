@@ -264,7 +264,16 @@ export default function AIBusinessAssistant({ selectedLocationId }) {
                     : 'bg-gray-50 text-gray-800 rounded-tl-sm'
                 }`}
               >
-                <p className="whitespace-pre-wrap">{message.content}</p>
+                <div 
+                  className="prose prose-sm max-w-none whitespace-pre-wrap"
+                  dangerouslySetInnerHTML={{
+                    __html: message.content
+                      .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+                      .replace(/\*(.*?)\*/g, '<em>$1</em>')
+                      .replace(/`(.*?)`/g, '<code class="bg-gray-100 px-1 rounded text-sm">$1</code>')
+                      .replace(/\n/g, '<br>')
+                  }}
+                />
                 
                 {/* Show recommendations if available */}
                 {message.recommendations && message.recommendations.length > 0 && (
