@@ -579,17 +579,6 @@ export class MemStorage implements IStorage {
       // Manhattan, NY - Highest volume, premium cosmetic procedures
       'Manhattan, NY': [
         {
-          status: 'Pending' as const,
-          totalClaims: 892,
-          totalAmount: 1247800,
-          providers: [
-            { name: 'Blue Cross Blue Shield', claimCount: 324, amount: 453600 },
-            { name: 'Aetna', claimCount: 289, amount: 404600 },
-            { name: 'United Healthcare', claimCount: 167, amount: 233800 },
-            { name: 'Cigna', claimCount: 112, amount: 155800 }
-          ]
-        },
-        {
           status: 'Submitted' as const,
           totalClaims: 1567,
           totalAmount: 2194800,
@@ -598,6 +587,28 @@ export class MemStorage implements IStorage {
             { name: 'Aetna', claimCount: 392, amount: 548800 },
             { name: 'United Healthcare', claimCount: 314, amount: 439600 },
             { name: 'Cigna', claimCount: 283, amount: 397200 }
+          ]
+        },
+        {
+          status: 'Paid' as const,
+          totalClaims: 2845,
+          totalAmount: 3983000,
+          providers: [
+            { name: 'Blue Cross Blue Shield', claimCount: 1048, amount: 1467200 },
+            { name: 'Aetna', claimCount: 711, amount: 995400 },
+            { name: 'United Healthcare', claimCount: 569, amount: 796600 },
+            { name: 'Cigna', claimCount: 517, amount: 723800 }
+          ]
+        },
+        {
+          status: 'Pending' as const,
+          totalClaims: 892,
+          totalAmount: 1247800,
+          providers: [
+            { name: 'Blue Cross Blue Shield', claimCount: 324, amount: 453600 },
+            { name: 'Aetna', claimCount: 289, amount: 404600 },
+            { name: 'United Healthcare', claimCount: 167, amount: 233800 },
+            { name: 'Cigna', claimCount: 112, amount: 155800 }
           ]
         },
         {
@@ -616,17 +627,6 @@ export class MemStorage implements IStorage {
       // Atlantic Highlands, NJ - Balanced medical/cosmetic mix
       'Atlantic Highlands, NJ': [
         {
-          status: 'Pending' as const,
-          totalClaims: 567,
-          totalAmount: 623700,
-          providers: [
-            { name: 'Blue Cross Blue Shield', claimCount: 189, amount: 207900 },
-            { name: 'Horizon Blue Cross', claimCount: 156, amount: 171600 },
-            { name: 'Aetna', claimCount: 123, amount: 135300 },
-            { name: 'Medicare', claimCount: 99, amount: 108900 }
-          ]
-        },
-        {
           status: 'Submitted' as const,
           totalClaims: 1203,
           totalAmount: 1323300,
@@ -635,6 +635,28 @@ export class MemStorage implements IStorage {
             { name: 'Horizon Blue Cross', claimCount: 289, amount: 317900 },
             { name: 'Aetna', claimCount: 265, amount: 291500 },
             { name: 'Medicare', claimCount: 228, amount: 250800 }
+          ]
+        },
+        {
+          status: 'Paid' as const,
+          totalClaims: 2177,
+          totalAmount: 2394700,
+          providers: [
+            { name: 'Blue Cross Blue Shield', claimCount: 762, amount: 838200 },
+            { name: 'Horizon Blue Cross', claimCount: 523, amount: 575300 },
+            { name: 'Aetna', claimCount: 479, amount: 526900 },
+            { name: 'Medicare', claimCount: 413, amount: 454300 }
+          ]
+        },
+        {
+          status: 'Pending' as const,
+          totalClaims: 567,
+          totalAmount: 623700,
+          providers: [
+            { name: 'Blue Cross Blue Shield', claimCount: 189, amount: 207900 },
+            { name: 'Horizon Blue Cross', claimCount: 156, amount: 171600 },
+            { name: 'Aetna', claimCount: 123, amount: 135300 },
+            { name: 'Medicare', claimCount: 99, amount: 108900 }
           ]
         },
         {
@@ -653,17 +675,6 @@ export class MemStorage implements IStorage {
       // Woodbridge, NJ - Growing location, medical focus
       'Woodbridge, NJ': [
         {
-          status: 'Pending' as const,
-          totalClaims: 445,
-          totalAmount: 400500,
-          providers: [
-            { name: 'Horizon Blue Cross', claimCount: 167, amount: 150300 },
-            { name: 'Blue Cross Blue Shield', claimCount: 123, amount: 110700 },
-            { name: 'Medicare', claimCount: 89, amount: 80100 },
-            { name: 'Aetna', claimCount: 66, amount: 59400 }
-          ]
-        },
-        {
           status: 'Submitted' as const,
           totalClaims: 987,
           totalAmount: 888300,
@@ -672,6 +683,28 @@ export class MemStorage implements IStorage {
             { name: 'Blue Cross Blue Shield', claimCount: 278, amount: 250200 },
             { name: 'Medicare', claimCount: 198, amount: 178200 },
             { name: 'Aetna', claimCount: 166, amount: 149400 }
+          ]
+        },
+        {
+          status: 'Paid' as const,
+          totalClaims: 1789,
+          totalAmount: 1610100,
+          providers: [
+            { name: 'Horizon Blue Cross', claimCount: 625, amount: 562500 },
+            { name: 'Blue Cross Blue Shield', claimCount: 504, amount: 453600 },
+            { name: 'Medicare', claimCount: 358, amount: 322200 },
+            { name: 'Aetna', claimCount: 302, amount: 271800 }
+          ]
+        },
+        {
+          status: 'Pending' as const,
+          totalClaims: 445,
+          totalAmount: 400500,
+          providers: [
+            { name: 'Horizon Blue Cross', claimCount: 167, amount: 150300 },
+            { name: 'Blue Cross Blue Shield', claimCount: 123, amount: 110700 },
+            { name: 'Medicare', claimCount: 89, amount: 80100 },
+            { name: 'Aetna', claimCount: 66, amount: 59400 }
           ]
         },
         {
@@ -690,17 +723,6 @@ export class MemStorage implements IStorage {
       // Fresno, CA - Established location, diverse patient base
       'Fresno, CA': [
         {
-          status: 'Pending' as const,
-          totalClaims: 678,
-          totalAmount: 745800,
-          providers: [
-            { name: 'Kaiser Permanente', claimCount: 243, amount: 267300 },
-            { name: 'Blue Cross Blue Shield', claimCount: 189, amount: 207900 },
-            { name: 'Aetna', claimCount: 134, amount: 147400 },
-            { name: 'Medicare', claimCount: 112, amount: 123200 }
-          ]
-        },
-        {
           status: 'Submitted' as const,
           totalClaims: 1356,
           totalAmount: 1491600,
@@ -709,6 +731,28 @@ export class MemStorage implements IStorage {
             { name: 'Blue Cross Blue Shield', claimCount: 352, amount: 387200 },
             { name: 'Aetna', claimCount: 298, amount: 327800 },
             { name: 'Medicare', claimCount: 219, amount: 240900 }
+          ]
+        },
+        {
+          status: 'Paid' as const,
+          totalClaims: 2456,
+          totalAmount: 2701600,
+          providers: [
+            { name: 'Kaiser Permanente', claimCount: 882, amount: 970200 },
+            { name: 'Blue Cross Blue Shield', claimCount: 637, amount: 700700 },
+            { name: 'Aetna', claimCount: 540, amount: 594000 },
+            { name: 'Medicare', claimCount: 397, amount: 436700 }
+          ]
+        },
+        {
+          status: 'Pending' as const,
+          totalClaims: 678,
+          totalAmount: 745800,
+          providers: [
+            { name: 'Kaiser Permanente', claimCount: 243, amount: 267300 },
+            { name: 'Blue Cross Blue Shield', claimCount: 189, amount: 207900 },
+            { name: 'Aetna', claimCount: 134, amount: 147400 },
+            { name: 'Medicare', claimCount: 112, amount: 123200 }
           ]
         },
         {
@@ -727,17 +771,6 @@ export class MemStorage implements IStorage {
       // Hanford, CA - Newest location, building patient volume
       'Hanford, CA': [
         {
-          status: 'Pending' as const,
-          totalClaims: 334,
-          totalAmount: 267200,
-          providers: [
-            { name: 'Kaiser Permanente', claimCount: 123, amount: 98400 },
-            { name: 'Blue Cross Blue Shield', claimCount: 89, amount: 71200 },
-            { name: 'Medicare', claimCount: 67, amount: 53600 },
-            { name: 'Aetna', claimCount: 55, amount: 44000 }
-          ]
-        },
-        {
           status: 'Submitted' as const,
           totalClaims: 723,
           totalAmount: 578400,
@@ -746,6 +779,28 @@ export class MemStorage implements IStorage {
             { name: 'Blue Cross Blue Shield', claimCount: 189, amount: 151200 },
             { name: 'Medicare', claimCount: 145, amount: 116000 },
             { name: 'Aetna', claimCount: 122, amount: 97600 }
+          ]
+        },
+        {
+          status: 'Paid' as const,
+          totalClaims: 1308,
+          totalAmount: 1046400,
+          providers: [
+            { name: 'Kaiser Permanente', claimCount: 483, amount: 386400 },
+            { name: 'Blue Cross Blue Shield', claimCount: 342, amount: 273600 },
+            { name: 'Medicare', claimCount: 262, amount: 209600 },
+            { name: 'Aetna', claimCount: 221, amount: 176800 }
+          ]
+        },
+        {
+          status: 'Pending' as const,
+          totalClaims: 334,
+          totalAmount: 267200,
+          providers: [
+            { name: 'Kaiser Permanente', claimCount: 123, amount: 98400 },
+            { name: 'Blue Cross Blue Shield', claimCount: 89, amount: 71200 },
+            { name: 'Medicare', claimCount: 67, amount: 53600 },
+            { name: 'Aetna', claimCount: 55, amount: 44000 }
           ]
         },
         {
@@ -774,32 +829,40 @@ export class MemStorage implements IStorage {
       return locationClaimsDataByName[targetLocationName];
     }
 
-    // Aggregate all locations for 'all' view
-    const aggregatedData = [
-      { status: 'Pending' as const, totalClaims: 0, totalAmount: 0, providers: new Map() },
-      { status: 'Submitted' as const, totalClaims: 0, totalAmount: 0, providers: new Map() },
-      { status: 'Denied' as const, totalClaims: 0, totalAmount: 0, providers: new Map() }
-    ];
+    // Aggregate all locations for 'all' view - Updated for 4 status buckets
+    const statusOrder = ['Submitted', 'Paid', 'Pending', 'Denied'] as const;
+    const aggregatedData = statusOrder.map(status => ({
+      status,
+      totalClaims: 0,
+      totalAmount: 0,
+      providers: new Map()
+    }));
 
     // Aggregate data from all locations
     Object.values(locationClaimsDataByName).forEach(locationData => {
-      locationData.forEach((bucket, index) => {
-        aggregatedData[index].totalClaims += bucket.totalClaims;
-        aggregatedData[index].totalAmount += bucket.totalAmount;
-        
-        bucket.providers.forEach(provider => {
-          const existingProvider = aggregatedData[index].providers.get(provider.name);
-          if (existingProvider) {
-            existingProvider.claimCount += provider.claimCount;
-            existingProvider.amount += provider.amount;
-          } else {
-            aggregatedData[index].providers.set(provider.name, {
-              name: provider.name,
-              claimCount: provider.claimCount,
-              amount: provider.amount
+      locationData.forEach(bucket => {
+        // Find the corresponding aggregated bucket by status
+        const aggregatedBucket = aggregatedData.find(agg => agg.status === bucket.status);
+        if (aggregatedBucket && bucket.totalClaims !== undefined && bucket.totalAmount !== undefined) {
+          aggregatedBucket.totalClaims += bucket.totalClaims;
+          aggregatedBucket.totalAmount += bucket.totalAmount;
+          
+          if (bucket.providers && Array.isArray(bucket.providers)) {
+            bucket.providers.forEach(provider => {
+              const existingProvider = aggregatedBucket.providers.get(provider.name);
+              if (existingProvider) {
+                existingProvider.claimCount += provider.claimCount;
+                existingProvider.amount += provider.amount;
+              } else {
+                aggregatedBucket.providers.set(provider.name, {
+                  name: provider.name,
+                  claimCount: provider.claimCount,
+                  amount: provider.amount
+                });
+              }
             });
           }
-        });
+        }
       });
     });
 

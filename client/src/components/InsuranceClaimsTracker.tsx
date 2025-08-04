@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -8,8 +9,10 @@ import {
   FileText,
   TrendingUp,
   AlertTriangle,
-  CheckCircle2
+  CheckCircle2,
+  DollarSign
 } from "lucide-react";
+import DateFilter from "./DateFilter";
 import type { ClaimsBreakdown } from "../../../shared/schema";
 
 interface InsuranceClaimsTrackerProps {
@@ -19,15 +22,16 @@ interface InsuranceClaimsTrackerProps {
 /**
  * InsuranceClaimsTracker Component
  * 
- * Displays insurance claim statuses organized into buckets (Pending, Submitted, Denied).
+ * Displays insurance claim statuses organized into 4 buckets (Submitted, Paid, Pending, Denied).
  * Each bucket shows breakdown by insurance provider with claim counts and amounts.
- * Includes location-based filtering that matches other dashboard components.
+ * Includes location-based filtering and unified date filtering.
  * 
  * Features:
- * - Three status buckets: Pending, Submitted, Denied
- * - Insurance provider breakdown within each bucket
+ * - Four status buckets: Submitted, Paid, Pending, Denied
+ * - Insurance provider breakdown within each bucket (scrollable)
  * - Real-time claim counts and dollar amounts
  * - Location filtering integration 
+ * - Unified date filtering with presets and custom range
  * - Professional medical claim management UI
  * - Responsive design matching dashboard specifications
  * 
@@ -35,6 +39,13 @@ interface InsuranceClaimsTrackerProps {
  * @param {string} props.selectedLocationId - Currently selected location for filtering
  */
 export default function InsuranceClaimsTracker({ selectedLocationId }: InsuranceClaimsTrackerProps) {
+
+  // State for date filtering
+  const [dateRange, setDateRange] = useState({
+    start: null as Date | null,
+    end: null as Date | null,
+    preset: "last-month"
+  });
 
   /**
    * Fetch insurance claims data from API
@@ -46,14 +57,25 @@ export default function InsuranceClaimsTracker({ selectedLocationId }: Insurance
   });
 
   /**
+   * Handle date range changes from DateFilter
+   * @param {Date|null} startDate - Start date
+   * @param {Date|null} endDate - End date  
+   * @param {string} preset - Selected preset
+   */
+  const handleDateRangeChange = (startDate: Date | null, endDate: Date | null, preset: string) => {
+    setDateRange({ start: startDate, end: endDate, preset });
+  };
+
+  /**
    * Get appropriate icon for each claim status
-   * @param {string} status - The claim status (Pending|Submitted|Denied)
+   * @param {string} status - The claim status (Submitted|Paid|Pending|Denied)
    * @returns {JSX.Element} The appropriate icon component
    */
   const getStatusIcon = (status: string) => {
     const iconMap = {
-      'Pending': Clock,
       'Submitted': Send,
+      'Paid': CheckCircle2,
+      'Pending': Clock,
       'Denied': XCircle
     };
     
@@ -68,19 +90,26 @@ export default function InsuranceClaimsTracker({ selectedLocationId }: Insurance
    */
   const getStatusColors = (status: string) => {
     const colorMap = {
+      'Submitted': {
+        bg: 'bg-blue-50',
+        border: 'border-blue-200',
+        text: 'text-blue-800',
+        icon: 'text-blue-600',
+        badge: 'bg-blue-100 text-blue-800'
+      },
+      'Paid': {
+        bg: 'bg-green-50',
+        border: 'border-green-200',
+        text: 'text-green-800',
+        icon: 'text-green-600',
+        badge: 'bg-green-100 text-green-800'
+      },
       'Pending': {
         bg: 'bg-yellow-50',
         border: 'border-yellow-200',
         text: 'text-yellow-800',
         icon: 'text-yellow-600',
         badge: 'bg-yellow-100 text-yellow-800'
-      },
-      'Submitted': {
-        bg: 'bg-blue-50', 
-        border: 'border-blue-200',
-        text: 'text-blue-800',
-        icon: 'text-blue-600',
-        badge: 'bg-blue-100 text-blue-800'
       },
       'Denied': {
         bg: 'bg-red-50',
@@ -216,8 +245,14 @@ export default function InsuranceClaimsTracker({ selectedLocationId }: Insurance
           </div>
         </div>
 
-        {/* Claims Buckets Grid */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        {/* Date Filter */}
+        <DateFilter 
+          onDateRangeChange={handleDateRangeChange}
+          className="mb-6"
+        />
+
+        {/* Claims Buckets Grid - Updated to 4 columns for 4 status buckets */}
+        <div className="grid grid-cols-1 lg:grid-cols-4 gap-4">
           {claimsData.map((bucket) => {
             const StatusIcon = getStatusIcon(bucket.status);
             const colors = getStatusColors(bucket.status);
