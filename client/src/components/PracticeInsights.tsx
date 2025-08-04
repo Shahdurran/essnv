@@ -238,83 +238,85 @@ export default function PracticeInsights({ selectedLocationId }: PracticeInsight
           <h3 className="text-lg font-semibold text-gray-900">Practice Insights</h3>
         </div>
 
-        {/* Time Range Filter */}
-        <div className="flex items-center gap-2 mb-6">
-          <span className="text-sm font-medium text-gray-700">Time Range:</span>
-          {['1', '3', '6', '12'].map((months) => (
-            <Button
-              key={months}
-              variant="ghost"
-              size="sm"
-              className={`px-3 py-1 text-sm rounded transition-colors ${
-                timeRange === months
-                  ? 'bg-blue-600 text-white'
-                  : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-              }`}
-              onClick={() => setTimeRange(months)}
-            >
-              {months === '1' ? '1 Month' : months === '3' ? '3 Months' : months === '6' ? '6 Months' : '1 Year'}
-            </Button>
-          ))}
+        {/* Time Range Filter - Mobile Responsive */}
+        <div className="flex flex-col space-y-2 mb-6 sm:flex-row sm:items-center sm:space-y-0 sm:gap-2">
+          <span className="text-sm font-medium text-gray-700 flex-shrink-0">Time Range:</span>
+          <div className="grid grid-cols-2 gap-2 sm:flex sm:gap-2">
+            {['1', '3', '6', '12'].map((months) => (
+              <Button
+                key={months}
+                variant="ghost"
+                size="sm"
+                className={`px-2 py-1 text-xs sm:px-3 sm:text-sm rounded transition-colors ${
+                  timeRange === months
+                    ? 'bg-blue-600 text-white'
+                    : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                }`}
+                onClick={() => setTimeRange(months)}
+              >
+                {months === '1' ? '1 Month' : months === '3' ? '3 Months' : months === '6' ? '6 Months' : '1 Year'}
+              </Button>
+            ))}
+          </div>
         </div>
         
-        {/* Key Metrics Grid */}
-        <div className="grid grid-cols-2 gap-4 mb-6">
+        {/* Key Metrics Grid - Mobile Responsive */}
+        <div className="grid grid-cols-1 gap-3 mb-6 sm:grid-cols-2 sm:gap-4">
           
           {/* Monthly Patients */}
-          <div className="bg-gradient-to-br from-blue-50 to-blue-100 p-4 rounded-lg">
+          <div className="bg-gradient-to-br from-blue-50 to-blue-100 p-3 sm:p-4 rounded-lg">
             <div className="flex items-center justify-between mb-2">
-              <Users className="h-5 w-5 text-blue-600" />
+              <Users className="h-4 w-4 sm:h-5 sm:w-5 text-blue-600 flex-shrink-0" />
               {getGrowthIndicator(keyMetrics.patientGrowth)}
             </div>
-            <p className="text-2xl font-bold text-blue-700">
+            <p className="text-xl sm:text-2xl font-bold text-blue-700">
               {formatNumber(keyMetrics.monthlyPatients)}
             </p>
-            <p className="text-sm text-blue-600">
+            <p className="text-xs sm:text-sm text-blue-600">
               {timeRange === '1' ? 'Monthly Patients' : `Patients (${timeRange}M)`}
             </p>
           </div>
           
           {/* Monthly Revenue */}
-          <div className="bg-gradient-to-br from-green-50 to-green-100 p-4 rounded-lg">
+          <div className="bg-gradient-to-br from-green-50 to-green-100 p-3 sm:p-4 rounded-lg">
             <div className="flex items-center justify-between mb-2">
-              <DollarSign className="h-5 w-5 text-green-600" />
+              <DollarSign className="h-4 w-4 sm:h-5 sm:w-5 text-green-600 flex-shrink-0" />
               {getGrowthIndicator(keyMetrics.revenueGrowth)}
             </div>
-            <p className="text-2xl font-bold text-green-700">
+            <p className="text-xl sm:text-2xl font-bold text-green-700">
               {formatCurrency(keyMetrics.monthlyRevenue)}
             </p>
-            <p className="text-sm text-green-600">
+            <p className="text-xs sm:text-sm text-green-600">
               {timeRange === '1' ? 'Monthly Revenue' : `Revenue (${timeRange}M)`}
             </p>
           </div>
           
           {/* Average AR Days */}
-          <div className="bg-gradient-to-br from-teal-50 to-teal-100 p-4 rounded-lg">
+          <div className="bg-gradient-to-br from-teal-50 to-teal-100 p-3 sm:p-4 rounded-lg">
             <div className="flex items-center justify-between mb-2">
-              <Clock className="h-5 w-5 text-teal-600" />
+              <Clock className="h-4 w-4 sm:h-5 sm:w-5 text-teal-600 flex-shrink-0" />
               <Badge variant="secondary" className="text-xs text-red-600 bg-red-50">
                 -2.1 days
               </Badge>
             </div>
-            <p className="text-2xl font-bold text-teal-700">
+            <p className="text-xl sm:text-2xl font-bold text-teal-700">
               {keyMetrics.arDays || '28.4'}
             </p>
-            <p className="text-sm text-teal-600">Avg AR Days</p>
+            <p className="text-xs sm:text-sm text-teal-600">Avg AR Days</p>
           </div>
           
           {/* Clean Claims Rate */}
-          <div className="bg-gradient-to-br from-purple-50 to-purple-100 p-4 rounded-lg">
+          <div className="bg-gradient-to-br from-purple-50 to-purple-100 p-3 sm:p-4 rounded-lg">
             <div className="flex items-center justify-between mb-2">
-              <Percent className="h-5 w-5 text-purple-600" />
+              <Percent className="h-4 w-4 sm:h-5 sm:w-5 text-purple-600 flex-shrink-0" />
               <Badge variant="secondary" className="text-xs text-green-600 bg-green-50">
                 +3.2%
               </Badge>
             </div>
-            <p className="text-2xl font-bold text-purple-700">
+            <p className="text-xl sm:text-2xl font-bold text-purple-700">
               {keyMetrics.cleanClaimRate || '94.2'}%
             </p>
-            <p className="text-sm text-purple-600">Clean Claims</p>
+            <p className="text-xs sm:text-sm text-purple-600">Clean Claims</p>
           </div>
         </div>
 
@@ -338,16 +340,16 @@ export default function PracticeInsights({ selectedLocationId }: PracticeInsight
                 
                 return (
                   <div key={payer.name || index} className="flex items-center justify-between">
-                    <div className="flex items-center space-x-3">
-                      <div className={`w-8 h-8 rounded-lg flex items-center justify-center ${colorClass}`}>
-                        <IconComponent className="h-4 w-4" />
+                    <div className="flex items-center space-x-3 min-w-0 flex-1">
+                      <div className={`w-7 h-7 sm:w-8 sm:h-8 rounded-lg flex items-center justify-center flex-shrink-0 ${colorClass}`}>
+                        <IconComponent className="h-3 w-3 sm:h-4 sm:w-4" />
                       </div>
-                      <span className="text-sm font-medium text-gray-900">
+                      <span className="text-xs sm:text-sm font-medium text-gray-900 truncate">
                         {payer.name}
                       </span>
                     </div>
-                    <div className="text-right">
-                      <p className="text-sm font-semibold text-gray-900">
+                    <div className="text-right flex-shrink-0">
+                      <p className="text-xs sm:text-sm font-semibold text-gray-900">
                         {payer.percentage?.toFixed(1) || '0.0'}%
                       </p>
                       <p className="text-xs text-gray-600">

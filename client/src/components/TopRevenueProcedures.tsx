@@ -244,24 +244,24 @@ export default function TopRevenueProcedures({
     <Card className="bg-white rounded-xl shadow-sm border border-gray-200">
       <CardContent className="p-6">
         
-        {/* Header with Category Toggle */}
-        <div className="flex items-center justify-between mb-4">
-          <div>
+        {/* Header with Category Toggle - Mobile Responsive */}
+        <div className="flex flex-col space-y-4 mb-4 sm:flex-row sm:items-center sm:justify-between sm:space-y-0">
+          <div className="min-w-0">
             <h3 className="text-lg font-semibold text-gray-900 flex items-center">
-              <DollarSign className="h-5 w-5 mr-2 text-primary" />
-              Top Revenue Procedures
+              <DollarSign className="h-5 w-5 mr-2 text-primary flex-shrink-0" />
+              <span className="truncate">Top Revenue Procedures</span>
             </h3>
-            <p className="text-gray-600">Highest performing services by revenue</p>
+            <p className="text-sm text-gray-600 mt-1">Highest performing services by revenue</p>
           </div>
           
-          {/* Procedure Type Toggle */}
-          <div className="flex bg-gray-100 rounded-lg p-1">
+          {/* Procedure Type Toggle - Mobile Optimized */}
+          <div className="flex bg-gray-100 rounded-lg p-1 self-start sm:self-auto">
             {['medical', 'cosmetic', 'all'].map((category) => (
               <Button
                 key={category}
                 variant="ghost"
                 size="sm"
-                className={`px-3 py-1 text-sm font-medium rounded transition-colors ${
+                className={`px-2 py-1 text-xs sm:px-3 sm:text-sm font-medium rounded transition-colors ${
                   selectedCategory === category
                     ? 'bg-white text-primary shadow-sm'
                     : 'text-gray-600 hover:text-gray-900'
@@ -274,24 +274,26 @@ export default function TopRevenueProcedures({
           </div>
         </div>
 
-        {/* Time Range Filter */}
-        <div className="flex items-center gap-2 mb-6">
-          <span className="text-sm font-medium text-gray-700">Time Range:</span>
-          {['1', '3', '6', '12'].map((months) => (
-            <Button
-              key={months}
-              variant="ghost"
-              size="sm"
-              className={`px-3 py-1 text-sm rounded transition-colors ${
-                timeRange === months
-                  ? 'bg-blue-600 text-white'
-                  : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-              }`}
-              onClick={() => setTimeRange(months)}
-            >
-              {months === '1' ? '1 Month' : months === '3' ? '3 Months' : months === '6' ? '6 Months' : '1 Year'}
-            </Button>
-          ))}
+        {/* Time Range Filter - Mobile Responsive */}
+        <div className="flex flex-col space-y-2 mb-6 sm:flex-row sm:items-center sm:space-y-0 sm:gap-2">
+          <span className="text-sm font-medium text-gray-700 flex-shrink-0">Time Range:</span>
+          <div className="grid grid-cols-2 gap-2 sm:flex sm:gap-2">
+            {['1', '3', '6', '12'].map((months) => (
+              <Button
+                key={months}
+                variant="ghost"
+                size="sm"
+                className={`px-2 py-1 text-xs sm:px-3 sm:text-sm rounded transition-colors ${
+                  timeRange === months
+                    ? 'bg-blue-600 text-white'
+                    : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                }`}
+                onClick={() => setTimeRange(months)}
+              >
+                {months === '1' ? '1 Month' : months === '3' ? '3 Months' : months === '6' ? '6 Months' : '1 Year'}
+              </Button>
+            ))}
+          </div>
         </div>
 
         {/* Procedures List - Scrollable Container (shows 5 items max) */}
@@ -316,26 +318,26 @@ export default function TopRevenueProcedures({
                 return (
                   <div 
                     key={procedure.cptCode || index} 
-                    className="flex items-center justify-between p-4 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors"
+                    className="flex flex-col space-y-3 p-3 sm:p-4 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors sm:flex-row sm:items-center sm:justify-between sm:space-y-0"
                   >
-                    <div className="flex items-center space-x-4">
+                    <div className="flex items-start space-x-3 sm:items-center sm:space-x-4 min-w-0">
                       {/* Procedure Icon */}
-                      <div className={`w-10 h-10 ${colorClass} rounded-lg flex items-center justify-center`}>
-                        <IconComponent className="h-5 w-5 text-white" />
+                      <div className={`w-8 h-8 sm:w-10 sm:h-10 ${colorClass} rounded-lg flex items-center justify-center flex-shrink-0`}>
+                        <IconComponent className="h-4 w-4 sm:h-5 sm:w-5 text-white" />
                       </div>
                       
                       {/* Procedure Details */}
-                      <div>
-                        <h4 className="font-medium text-gray-900">
+                      <div className="min-w-0 flex-1">
+                        <h4 className="font-medium text-gray-900 text-sm sm:text-base truncate">
                           {procedure.description || `${procedure.cptCode} Procedure`}
                         </h4>
-                        <div className="flex items-center space-x-2 mt-1">
-                          <p className="text-sm text-gray-600">
+                        <div className="flex flex-col space-y-1 mt-1 sm:flex-row sm:items-center sm:space-y-0 sm:space-x-2">
+                          <p className="text-xs sm:text-sm text-gray-600">
                             CPT: {procedure.cptCode}
                           </p>
                           <Badge 
                             variant="outline" 
-                            className={`text-xs ${
+                            className={`text-xs self-start ${
                               procedure.category === 'medical' 
                                 ? 'text-blue-600 border-blue-200' 
                                 : 'text-purple-600 border-purple-200'
@@ -347,12 +349,12 @@ export default function TopRevenueProcedures({
                       </div>
                     </div>
                     
-                    {/* Revenue and Growth */}
-                    <div className="text-right">
-                      <p className="font-semibold text-gray-900">
+                    {/* Revenue and Growth - Mobile Stacked */}
+                    <div className="flex items-center justify-between sm:flex-col sm:text-right sm:justify-start">
+                      <p className="font-semibold text-gray-900 text-sm sm:text-base">
                         {formatRevenue(procedure.revenue || 0)}
                       </p>
-                      <div className="flex items-center space-x-2 mt-1">
+                      <div className="flex items-center space-x-1 sm:space-x-2 mt-0 sm:mt-1">
                         {formatGrowth(procedure.growth || 0)}
                         <TrendingUp className="h-3 w-3 text-green-500" />
                       </div>

@@ -15,6 +15,12 @@
     overflow-x: hidden;
   }
   
+  /* Additional mobile responsiveness fixes */
+  * {
+    min-width: 0; /* Prevent flex/grid items from overflowing */
+    box-sizing: border-box;
+  }
+  
   /* Ensure charts and canvases are responsive */
   canvas {
     max-width: 100% !important;
@@ -41,6 +47,30 @@
   .mobile-tap-target {
     min-height: 44px;
     min-width: 44px;
+  }
+  
+  /* Custom scrollbar styles for components with overflow */
+  .scrollbar-thin {
+    scrollbar-width: thin;
+  }
+  
+  .scrollbar-thin::-webkit-scrollbar {
+    width: 4px;
+    height: 4px;
+  }
+  
+  .scrollbar-thumb-gray-300::-webkit-scrollbar-thumb {
+    background-color: rgb(209 213 219);
+    border-radius: 2px;
+  }
+  
+  .scrollbar-track-gray-100::-webkit-scrollbar-track {
+    background-color: rgb(243 244 246);
+  }
+  
+  /* Prevent text from breaking layout on small screens */
+  .text-truncate-mobile {
+    @apply truncate sm:text-clip;
   }
 }
 

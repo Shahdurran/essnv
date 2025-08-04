@@ -57,7 +57,7 @@ export default function Dashboard() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-gray-50 overflow-x-hidden">
       {/* 
         Header Section - Mobile Responsive
         Displays practice branding and user information matching the design
@@ -66,11 +66,11 @@ export default function Dashboard() {
         <div className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center h-14 sm:h-16">
             {/* Brand and Logo Section - Mobile Optimized */}
-            <div className="flex items-center space-x-2 sm:space-x-4">
+            <div className="flex items-center space-x-2 sm:space-x-4 min-w-0 flex-1">
               <img 
                 src={mdsLogo} 
                 alt="MDS Medical & Dental Solutions Logo" 
-                className="w-8 h-8 sm:w-12 sm:h-12 object-contain"
+                className="w-8 h-8 sm:w-12 sm:h-12 object-contain flex-shrink-0"
               />
               <div className="min-w-0 flex-1">
                 <h1 className="text-sm sm:text-xl font-bold text-gray-900 truncate">MDS AI Analytics</h1>
@@ -79,7 +79,7 @@ export default function Dashboard() {
             </div>
             
             {/* User Profile Section - Mobile Optimized */}
-            <div className="flex items-center space-x-2 sm:space-x-4">
+            <div className="flex items-center space-x-2 sm:space-x-4 flex-shrink-0">
               <div className="text-right hidden sm:block">
                 <p className="text-sm font-medium text-gray-900">Dr. Babar K. Rao</p>
                 <p className="text-xs text-gray-600">Practice Owner</p>
@@ -141,7 +141,7 @@ export default function Dashboard() {
           Dashboard Grid Layout - Mobile Responsive
           Two-column responsive grid for procedure analytics and practice insights
         */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-8">
+        <div className="grid grid-cols-1 gap-4 sm:gap-6 lg:grid-cols-2 lg:gap-8">
 
           {/* 
             Top Revenue Procedures Component
@@ -175,7 +175,7 @@ export default function Dashboard() {
           Bottom Row - Billing and AR Analytics (50/50 Layout)
           Two-column responsive grid for billing analytics and AR aging
         */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-8">
+        <div className="grid grid-cols-1 gap-4 sm:gap-6 lg:grid-cols-2 lg:gap-8">
           
           {/* 
             Patient Billing Analytics Component
