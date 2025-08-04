@@ -75,20 +75,32 @@ export default function AIBusinessAssistant({ selectedLocationId }) {
   }, []);
 
   /**
-   * Auto-scroll to bottom when new messages are added
+   * Smart scrolling for chat messages - scroll to start of new AI messages, then follow streaming
    */
   useEffect(() => {
-    scrollToBottom();
-  }, [messages]);
-
-  /**
-   * Scroll chat container to bottom
-   */
-  const scrollToBottom = () => {
-    if (messagesContainerRef.current) {
-      messagesContainerRef.current.scrollTop = messagesContainerRef.current.scrollHeight;
+    if (!messagesContainerRef.current || messages.length === 0) return;
+    
+    const lastMessage = messages[messages.length - 1];
+    
+    // If it's a new AI message that just started streaming, scroll to the start of it
+    if (lastMessage.type === 'ai' && lastMessage.isStreaming && lastMessage.content === '') {
+      const aiMessageElements = messagesContainerRef.current.querySelectorAll('[data-message-type="ai"]');
+      const lastAiMessage = aiMessageElements[aiMessageElements.length - 1];
+      if (lastAiMessage) {
+        lastAiMessage.scrollIntoView({ behavior: "smooth", block: "start" });
+        return;
+      }
     }
-  };
+    
+    // For user messages and completed AI messages, scroll to bottom normally
+    if (!lastMessage.isStreaming) {
+      setTimeout(() => {
+        if (messagesContainerRef.current) {
+          messagesContainerRef.current.scrollTop = messagesContainerRef.current.scrollHeight;
+        }
+      }, 100);
+    }
+  }, [messages]);
 
   /**
    * Handle sending a message to the AI assistant
@@ -292,6 +304,8 @@ export default function AIBusinessAssistant({ selectedLocationId }) {
             <div
               key={message.id}
               className={`flex ${message.type === 'user' ? 'justify-end' : 'justify-start'}`}
+              data-message-type={message.type}
+              data-message-id={message.id}
             >
               {message.type === 'ai' && (
                 <div className="w-6 h-6 sm:w-8 sm:h-8 bg-blue-100 rounded-lg flex items-center justify-center flex-shrink-0 mr-2 sm:mr-3">

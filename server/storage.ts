@@ -633,8 +633,8 @@ export class MemStorage implements IStorage {
     const timeStabilityFactor = timeRange > 6 ? 0.8 : 1.2; // Longer periods show more stable metrics
     
     return {
-      monthlyPatients: Math.round((isAllLocations ? 2450 : 2450 * locationWeight) + (Math.random() * 200 - 100) * timeStabilityFactor),
-      monthlyRevenue: Math.round((baseRevenue + (Math.random() * baseRevenue * 0.1 - baseRevenue * 0.05)) * timeRange / timeRange), // Average monthly over time range
+      monthlyPatients: Math.round(((isAllLocations ? 2450 : 2450 * locationWeight) + (Math.random() * 200 - 100) * timeStabilityFactor) * timeRange),
+      monthlyRevenue: Math.round((baseRevenue + (Math.random() * baseRevenue * 0.1 - baseRevenue * 0.05)) * timeRange), // Scale by time range
       arDays: Math.round((25 + (Math.random() * 10 - 5) * timeStabilityFactor) * 10) / 10,
       cleanClaimRate: Math.round((100 - denialRate + (Math.random() * 4 - 2) * timeStabilityFactor) * 10) / 10,
       patientGrowth: ((8 + (Math.random() * 20 - 10)) * timeStabilityFactor).toFixed(1),
