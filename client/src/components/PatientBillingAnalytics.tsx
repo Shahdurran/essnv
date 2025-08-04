@@ -23,7 +23,7 @@ interface PatientBillingAnalyticsProps {
 }
 
 interface PatientBillingData {
-  totalRevenue: number; // Total amount paid by patients in selected time period
+  totalRevenue: number; // Total amount billed to patients (paid + outstanding)
   totalPaid: number; // Portion of billed-to-patients that has been collected
   totalOutstanding: number; // Portion of billed-to-patients that remains unpaid
 }
@@ -162,7 +162,7 @@ export default function PatientBillingAnalytics({ selectedLocationId }: PatientB
             <p className="text-2xl font-bold text-gray-900">
               {formatCurrency(billingData?.totalRevenue || 0)}
             </p>
-            <p className="text-xs text-gray-600">Patient payments received</p>
+            <p className="text-xs text-gray-600">Total amount billed to patients</p>
           </div>
         </div>
 

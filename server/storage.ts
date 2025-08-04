@@ -578,40 +578,47 @@ export class MemStorage implements IStorage {
     const scalingFactor = timeRange === '1' ? 0.25 : timeRange === '3' ? 0.75 : timeRange === '6' ? 1.0 : 3.0;
     
     // Base patient billing data by location (20% of total practice revenue)
+    // Logic: Total Revenue = Total Paid + Total Outstanding
     const baseData = {
       'all': {
-        totalRevenue: Math.round(285000 * scalingFactor), // Revenue from patient payments
         totalPaid: Math.round(345000 * scalingFactor), // Total collected from patients 
-        totalOutstanding: Math.round(72000 * scalingFactor) // Outstanding patient balances
+        totalOutstanding: Math.round(72000 * scalingFactor), // Outstanding patient balances
+        get totalRevenue() { return this.totalPaid + this.totalOutstanding; } // Total billed = paid + outstanding
       },
       'manhattan-ny': {
-        totalRevenue: Math.round(125000 * scalingFactor),
         totalPaid: Math.round(148000 * scalingFactor),
-        totalOutstanding: Math.round(28500 * scalingFactor)
+        totalOutstanding: Math.round(28500 * scalingFactor),
+        get totalRevenue() { return this.totalPaid + this.totalOutstanding; }
       },
       'atlantic-highlands-nj': {
-        totalRevenue: Math.round(68000 * scalingFactor),
         totalPaid: Math.round(82000 * scalingFactor),
-        totalOutstanding: Math.round(18200 * scalingFactor)
+        totalOutstanding: Math.round(18200 * scalingFactor),
+        get totalRevenue() { return this.totalPaid + this.totalOutstanding; }
       },
       'woodbridge-nj': {
-        totalRevenue: Math.round(52000 * scalingFactor),
         totalPaid: Math.round(61000 * scalingFactor),
-        totalOutstanding: Math.round(14500 * scalingFactor)
+        totalOutstanding: Math.round(14500 * scalingFactor),
+        get totalRevenue() { return this.totalPaid + this.totalOutstanding; }
       },
       'fresno-ca': {
-        totalRevenue: Math.round(58000 * scalingFactor),
         totalPaid: Math.round(69000 * scalingFactor),
-        totalOutstanding: Math.round(16800 * scalingFactor)
+        totalOutstanding: Math.round(16800 * scalingFactor),
+        get totalRevenue() { return this.totalPaid + this.totalOutstanding; }
       },
       'hanford-ca': {
-        totalRevenue: Math.round(28000 * scalingFactor),
         totalPaid: Math.round(34000 * scalingFactor),
-        totalOutstanding: Math.round(8900 * scalingFactor)
+        totalOutstanding: Math.round(8900 * scalingFactor),
+        get totalRevenue() { return this.totalPaid + this.totalOutstanding; }
       }
     };
 
-    return baseData[locationId as keyof typeof baseData] || baseData['all'];
+    const data = baseData[locationId as keyof typeof baseData] || baseData['all'];
+    // Convert getter to actual value for API response
+    return {
+      totalRevenue: data.totalRevenue,
+      totalPaid: data.totalPaid,
+      totalOutstanding: data.totalOutstanding
+    };
   }
 
   async getInsuranceClaimsData(locationId: string, startDate?: Date, endDate?: Date): Promise<any[]> {

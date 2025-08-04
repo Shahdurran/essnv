@@ -24,6 +24,13 @@ MDS AI Analytics is a comprehensive AI-powered business analytics dashboard desi
   - Functional date filtering with preset ranges (Last Month, 3 Months, 6 Months, Year)
   - Date-based data scaling for realistic mock data behavior
   - Enhanced AI assistant with claims denial context
+- ✅ **NEW: Simplified Patient Billing Analytics Widget** (August 4, 2025)
+  - High-level metrics only: Total Revenue, Total Paid, Total Outstanding
+  - Correct mathematical logic: Total Revenue = Total Paid + Total Outstanding
+  - Time range filtering (1 Month, 3 Months, 6 Months, 1 Year)
+  - PHI-free design with business-focused metrics only
+  - Color-coded metric cards for visual clarity
+  - Maintains 20% patient revenue / 80% insurance revenue split
 
 ## User Preferences
 
