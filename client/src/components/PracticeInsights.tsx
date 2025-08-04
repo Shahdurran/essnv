@@ -1,6 +1,8 @@
+import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { 
   Users, 
   DollarSign, 
@@ -39,11 +41,21 @@ interface PracticeInsightsProps {
  */
 export default function PracticeInsights({ selectedLocationId }: PracticeInsightsProps) {
 
+  // State for time range filtering - default to 1 month
+  const [timeRange, setTimeRange] = useState("1");
+
   /**
    * Fetch key performance metrics from API
    */
   const { data: keyMetrics = {} as KeyMetrics, isLoading: metricsLoading, error: metricsError } = useQuery<KeyMetrics>({
-    queryKey: ['/api/analytics/key-metrics', selectedLocationId],
+    queryKey: ['/api/analytics/key-metrics', selectedLocationId, timeRange],
+    queryFn: async () => {
+      const response = await fetch(`/api/analytics/key-metrics/${selectedLocationId}?timeRange=${timeRange}`);
+      if (!response.ok) {
+        throw new Error('Failed to fetch key metrics data');
+      }
+      return response.json();
+    },
     staleTime: 1 * 60 * 1000, // Cache for 1 minute for real-time feel
   });
 
@@ -51,7 +63,14 @@ export default function PracticeInsights({ selectedLocationId }: PracticeInsight
    * Fetch insurance payer breakdown from API
    */
   const { data: insuranceData = [], isLoading: insuranceLoading, error: insuranceError } = useQuery<InsurancePayerData[]>({
-    queryKey: ['/api/analytics/insurance-breakdown', selectedLocationId],
+    queryKey: ['/api/analytics/insurance-breakdown', selectedLocationId, timeRange],
+    queryFn: async () => {
+      const response = await fetch(`/api/analytics/insurance-breakdown/${selectedLocationId}?timeRange=${timeRange}`);
+      if (!response.ok) {
+        throw new Error('Failed to fetch insurance breakdown data');
+      }
+      return response.json();
+    },
     staleTime: 5 * 60 * 1000, // Cache for 5 minutes
   });
 
@@ -215,7 +234,29 @@ export default function PracticeInsights({ selectedLocationId }: PracticeInsight
       <CardContent className="p-6">
         
         {/* Header */}
-        <h3 className="text-lg font-semibold text-gray-900 mb-6">Practice Insights</h3>
+        <div className="flex items-center justify-between mb-4">
+          <h3 className="text-lg font-semibold text-gray-900">Practice Insights</h3>
+        </div>
+
+        {/* Time Range Filter */}
+        <div className="flex items-center gap-2 mb-6">
+          <span className="text-sm font-medium text-gray-700">Time Range:</span>
+          {['1', '3', '6', '12'].map((months) => (
+            <Button
+              key={months}
+              variant="ghost"
+              size="sm"
+              className={`px-3 py-1 text-sm rounded transition-colors ${
+                timeRange === months
+                  ? 'bg-blue-600 text-white'
+                  : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+              }`}
+              onClick={() => setTimeRange(months)}
+            >
+              {months === '1' ? '1 Month' : months === '3' ? '3 Months' : months === '6' ? '6 Months' : '1 Year'}
+            </Button>
+          ))}
+        </div>
         
         {/* Key Metrics Grid */}
         <div className="grid grid-cols-2 gap-4 mb-6">

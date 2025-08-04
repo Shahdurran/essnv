@@ -61,10 +61,11 @@ export interface IStorage {
   createPerformanceMetric(metric: InsertPerformanceMetric): Promise<PerformanceMetric>;
 
   // Analytics aggregation methods
-  getTopRevenueProcedures(locationId?: string, category?: 'medical' | 'cosmetic'): Promise<any[]>;
+  getTopRevenueProcedures(locationId?: string, category?: 'medical' | 'cosmetic', timeRangeMonths?: number): Promise<any[]>;
   getMonthlyRevenueData(locationId?: string): Promise<any[]>;
-  getInsurancePayerBreakdown(locationId?: string): Promise<any[]>;
+  getInsurancePayerBreakdown(locationId?: string, timeRangeMonths?: number): Promise<any[]>;
   getPatientVolumeProjections(locationId?: string): Promise<any[]>;
+  getKeyMetrics(locationId?: string, timeRangeMonths?: number): Promise<any>;
   getDenialReasonsData(): any;
 }
 
@@ -393,9 +394,10 @@ export class MemStorage implements IStorage {
   }
 
   // Analytics aggregation methods
-  async getTopRevenueProcedures(locationId?: string, category?: 'medical' | 'cosmetic'): Promise<any[]> {
+  async getTopRevenueProcedures(locationId?: string, category?: 'medical' | 'cosmetic', timeRangeMonths?: number): Promise<any[]> {
     const procedures = Array.from(this.procedures.values());
     const locations = Array.from(this.practiceLocations.values());
+    const timeRange = timeRangeMonths || 1;
     
     // Get location multiplier for realistic data scaling
     let locationMultiplier = 1;
@@ -407,6 +409,9 @@ export class MemStorage implements IStorage {
       locationMultiplier = locations.length;
     }
 
+    // Time range multiplier affects revenue totals
+    const timeMultiplier = timeRange; // Linear scaling for time periods
+
     return procedures
       .filter(proc => !category || proc.category === category)
       .sort((a, b) => parseFloat(b.basePrice || "0") - parseFloat(a.basePrice || "0"))
@@ -415,8 +420,8 @@ export class MemStorage implements IStorage {
         cptCode: proc.cptCode,
         description: proc.description,
         category: proc.category,
-        revenue: Math.round(parseFloat(proc.basePrice || "0") * 45 * locationMultiplier), // Scale by locations
-        growth: ((Math.random() * 30 - 5) * (locationId ? 1 : 0.8)).toFixed(1) // Slightly lower growth for aggregated data
+        revenue: Math.round(parseFloat(proc.basePrice || "0") * 45 * locationMultiplier * timeMultiplier), // Scale by time range
+        growth: ((Math.random() * 30 - 5) * (locationId ? 1 : 0.8) * (timeRange > 6 ? 0.9 : 1.1)).toFixed(1) // Longer periods show more stable growth
       }));
   }
 
@@ -473,8 +478,9 @@ export class MemStorage implements IStorage {
     return months;
   }
 
-  async getInsurancePayerBreakdown(locationId?: string): Promise<any[]> {
+  async getInsurancePayerBreakdown(locationId?: string, timeRangeMonths?: number): Promise<any[]> {
     const locations = Array.from(this.practiceLocations.values());
+    const timeRange = timeRangeMonths || 1;
     
     // Base insurance data with location-specific variations
     const baseInsuranceData = [
@@ -503,13 +509,17 @@ export class MemStorage implements IStorage {
       }, 0);
     }
 
+    // Time range affects revenue totals and AR trends
+    const timeMultiplier = timeRange;
+    const timeStabilityFactor = timeRange > 6 ? 0.9 : 1.1; // Longer periods show more stability
+
     return baseInsuranceData.map(payer => ({
       name: payer.name,
       percentage: locationId ? 
-        payer.percentage * (0.9 + Math.random() * 0.2) : // Single location variation
+        payer.percentage * (0.9 + Math.random() * 0.2) * timeStabilityFactor : // Single location variation with time stability
         payer.percentage, // All locations keeps base percentages
-      arDays: payer.arDays * (0.9 + Math.random() * 0.2), // Small AR variation
-      revenue: Math.round(payer.baseRevenue * multiplier)
+      arDays: payer.arDays * (0.9 + Math.random() * 0.2) * timeStabilityFactor, // AR days stabilize over longer periods
+      revenue: Math.round(payer.baseRevenue * multiplier * timeMultiplier)
     }));
   }
 
@@ -599,7 +609,7 @@ export class MemStorage implements IStorage {
   }
 
   // CENTRALIZED KEY METRICS using Master Data Consistency
-  async getKeyMetrics(locationId?: string): Promise<{
+  async getKeyMetrics(locationId?: string, timeRangeMonths?: number): Promise<{
     monthlyPatients: number;
     monthlyRevenue: number;
     arDays: number;
@@ -609,6 +619,7 @@ export class MemStorage implements IStorage {
   }> {
     const isAllLocations = !locationId || locationId === 'all';
     const locationWeight = isAllLocations ? 1.0 : this.masterData.locationWeights[locationId as keyof typeof this.masterData.locationWeights] || 0.1;
+    const timeRange = timeRangeMonths || 1;
     
     // Calculate metrics from master data with realistic variations
     const baseRevenue = this.masterData.baseMonthlyRevenue.totalRevenue * locationWeight;
@@ -618,13 +629,16 @@ export class MemStorage implements IStorage {
     const paidPercentage = (baseClaims.paid / baseClaims.totalSubmitted) * 100;
     const denialRate = (baseClaims.denied / baseClaims.totalSubmitted) * 100;
     
+    // Time range affects averages and growth patterns
+    const timeStabilityFactor = timeRange > 6 ? 0.8 : 1.2; // Longer periods show more stable metrics
+    
     return {
-      monthlyPatients: Math.round((isAllLocations ? 2450 : 2450 * locationWeight) + (Math.random() * 200 - 100)),
-      monthlyRevenue: Math.round(baseRevenue + (Math.random() * baseRevenue * 0.1 - baseRevenue * 0.05)),
-      arDays: Math.round((25 + (Math.random() * 10 - 5)) * 10) / 10,
-      cleanClaimRate: Math.round((100 - denialRate) * 10) / 10,
-      patientGrowth: (8 + (Math.random() * 20 - 10)).toFixed(1),
-      revenueGrowth: (12 + (Math.random() * 15 - 7.5)).toFixed(1)
+      monthlyPatients: Math.round((isAllLocations ? 2450 : 2450 * locationWeight) + (Math.random() * 200 - 100) * timeStabilityFactor),
+      monthlyRevenue: Math.round((baseRevenue + (Math.random() * baseRevenue * 0.1 - baseRevenue * 0.05)) * timeRange / timeRange), // Average monthly over time range
+      arDays: Math.round((25 + (Math.random() * 10 - 5) * timeStabilityFactor) * 10) / 10,
+      cleanClaimRate: Math.round((100 - denialRate + (Math.random() * 4 - 2) * timeStabilityFactor) * 10) / 10,
+      patientGrowth: ((8 + (Math.random() * 20 - 10)) * timeStabilityFactor).toFixed(1),
+      revenueGrowth: ((12 + (Math.random() * 15 - 7.5)) * timeStabilityFactor).toFixed(1)
     };
   }
 

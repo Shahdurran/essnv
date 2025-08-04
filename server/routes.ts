@@ -11,6 +11,55 @@ const openai = new OpenAI({
 });
 
 /**
+ * Extract location context from AI query text
+ */
+function extractLocationFromQuery(query: string, defaultLocation: string): string {
+  const queryLower = query.toLowerCase();
+  
+  // Check for specific location mentions
+  if (queryLower.includes('manhattan') || queryLower.includes('new york') || queryLower.includes('ny')) {
+    return 'manhattan-ny';
+  }
+  if (queryLower.includes('atlantic') || queryLower.includes('highlands')) {
+    return 'atlantic-highlands-nj';
+  }
+  if (queryLower.includes('woodbridge')) {
+    return 'woodbridge-nj';
+  }
+  if (queryLower.includes('fresno')) {
+    return 'fresno-ca';
+  }
+  if (queryLower.includes('hanford')) {
+    return 'hanford-ca';
+  }
+  
+  return defaultLocation;
+}
+
+/**
+ * Extract time range context from AI query text
+ */
+function extractTimeRangeFromQuery(query: string, defaultTimeRange: string): string {
+  const queryLower = query.toLowerCase();
+  
+  // Check for time period mentions
+  if (queryLower.includes('last month') || queryLower.includes('past month') || queryLower.includes('1 month')) {
+    return '1';
+  }
+  if (queryLower.includes('last 3 months') || queryLower.includes('past 3 months') || queryLower.includes('quarter')) {
+    return '3';
+  }
+  if (queryLower.includes('last 6 months') || queryLower.includes('past 6 months') || queryLower.includes('half year')) {
+    return '6';
+  }
+  if (queryLower.includes('last year') || queryLower.includes('past year') || queryLower.includes('12 months') || queryLower.includes('annual')) {
+    return '12';
+  }
+  
+  return defaultTimeRange;
+}
+
+/**
  * Register all API routes for the MDS AI Analytics platform
  * This includes routes for analytics data, AI assistant, and practice management
  */
@@ -41,16 +90,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
   /**
    * GET /api/analytics/top-procedures/:locationId/:category - Get top revenue-generating procedures
    * Path params: locationId (or 'all'), category (medical|cosmetic|all)
+   * Query params: timeRange (1|3|6|12 months)
    */
   app.get("/api/analytics/top-procedures/:locationId/:category", async (req, res) => {
     try {
       const { locationId, category } = req.params;
+      const { timeRange = '1' } = req.query;
       const finalLocationId = locationId === 'all' ? undefined : locationId;
       const procedureCategory = category === 'all' ? undefined : category as 'medical' | 'cosmetic';
       
       const topProcedures = await storage.getTopRevenueProcedures(
         finalLocationId, 
-        procedureCategory
+        procedureCategory,
+        parseInt(timeRange as string)
       );
       
       res.json(topProcedures);
@@ -116,9 +168,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get("/api/analytics/insurance-breakdown/:locationId", async (req, res) => {
     try {
       const { locationId } = req.params;
+      const { timeRange = '1' } = req.query;
       const finalLocationId = locationId === 'all' ? undefined : locationId;
       
-      const insuranceData = await storage.getInsurancePayerBreakdown(finalLocationId);
+      const insuranceData = await storage.getInsurancePayerBreakdown(finalLocationId, parseInt(timeRange as string));
       res.json(insuranceData);
     } catch (error) {
       console.error("Error fetching insurance breakdown:", error);
@@ -146,14 +199,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
   /**
    * GET /api/analytics/key-metrics/:locationId - Get key performance indicators
    * Path params: locationId (or 'all')
+   * Query params: timeRange (1|3|6|12 months)
    */
   app.get("/api/analytics/key-metrics/:locationId", async (req, res) => {
     try {
       const { locationId } = req.params;
+      const { timeRange = '1' } = req.query;
       const finalLocationId = locationId === 'all' ? undefined : locationId;
       
-      // Use centralized data consistency engine for key metrics
-      const metrics = await storage.getKeyMetrics(finalLocationId);
+      // Use centralized data consistency engine for key metrics with time range
+      const metrics = await storage.getKeyMetrics(finalLocationId, parseInt(timeRange as string));
       
       res.json(metrics);
     } catch (error) {
@@ -233,24 +288,29 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // ============================================================================
 
   /**
-   * POST /api/ai/query - Submit a query to the AI business assistant
-   * Body: { query: string, userId?: string }
+   * POST /api/ai/query - Submit a query to the AI business assistant with enhanced routing
+   * Body: { query: string, userId?: string, locationId?: string, timeRange?: string }
    */
   app.post("/api/ai/query", async (req, res) => {
     try {
-      const { query, userId } = req.body;
+      const { query, userId, locationId = 'all', timeRange = '1' } = req.body;
       
       if (!query || typeof query !== 'string') {
         return res.status(400).json({ message: "Query is required and must be a string" });
       }
 
-      // Get current practice data to provide comprehensive context to AI
-      const currentMetrics = await storage.getMonthlyRevenueData();
-      const topProcedures = await storage.getTopRevenueProcedures();
-      const insuranceData = await storage.getInsurancePayerBreakdown();
-      const projections = await storage.getPatientVolumeProjections();
+      // Parse location and time context from query if not provided explicitly
+      const finalLocationId = extractLocationFromQuery(query, locationId);
+      const finalTimeRange = extractTimeRangeFromQuery(query, timeRange);
+
+      // Get contextual practice data based on query location and time parameters
+      const currentMetrics = await storage.getMonthlyRevenueData(finalLocationId);
+      const topProcedures = await storage.getTopRevenueProcedures(finalLocationId, undefined, parseInt(finalTimeRange));
+      const insuranceData = await storage.getInsurancePayerBreakdown(finalLocationId, parseInt(finalTimeRange));
+      const keyMetrics = await storage.getKeyMetrics(finalLocationId, parseInt(finalTimeRange));
+      const projections = await storage.getPatientVolumeProjections(finalLocationId);
       const locations = await storage.getAllPracticeLocations();
-      const claimsData = await storage.getInsuranceClaimsData('all');
+      const claimsData = await storage.getInsuranceClaimsData(finalLocationId === 'all' ? 'all' : finalLocationId);
       const denialReasons = storage.getDenialReasonsData();
 
       // Prepare comprehensive context for the AI assistant with all available practice data
@@ -263,15 +323,23 @@ PRACTICE OVERVIEW:
 - Total Staff: 47 employees across all locations
 - Years in Operation: 18 years
 
-CURRENT FINANCIAL DATA:
+CURRENT FINANCIAL DATA (${finalLocationId === 'all' ? 'All Locations' : 'Selected Location'} - ${finalTimeRange} Month${finalTimeRange !== '1' ? 's' : ''}):
 Revenue Trends (Last 12 Months):
 ${currentMetrics.map(m => `- ${m.month}: $${m.revenue.toLocaleString()} (${m.patientCount} patients)`).join('\n')}
 
-Top Revenue Procedures:
-${topProcedures.map(p => `- ${p.description} (${p.cptCode}): $${p.revenue.toLocaleString()}/month, Growth: ${p.growth}%`).join('\n')}
+Key Performance Metrics:
+- Monthly Patients: ${keyMetrics.monthlyPatients.toLocaleString()}
+- Monthly Revenue: $${keyMetrics.monthlyRevenue.toLocaleString()}
+- AR Days: ${keyMetrics.arDays}
+- Clean Claim Rate: ${keyMetrics.cleanClaimRate}%
+- Patient Growth: ${keyMetrics.patientGrowth}%
+- Revenue Growth: ${keyMetrics.revenueGrowth}%
 
-Insurance Payer Mix:
-${insuranceData.map(i => `- ${i.name}: ${i.percentage}% of revenue, AR Days: ${i.arDays}, Monthly Revenue: $${i.revenue.toLocaleString()}`).join('\n')}
+Top Revenue Procedures (${finalTimeRange} Month${finalTimeRange !== '1' ? 's' : ''}):
+${topProcedures.map(p => `- ${p.description} (${p.cptCode}): $${p.revenue.toLocaleString()}, Growth: ${p.growth}%`).join('\n')}
+
+Insurance Payer Mix (${finalTimeRange} Month${finalTimeRange !== '1' ? 's' : ''}):
+${insuranceData.map(i => `- ${i.name}: ${i.percentage?.toFixed(1)}% of revenue, AR Days: ${i.arDays?.toFixed(1)}, Revenue: $${i.revenue?.toLocaleString()}`).join('\n')}
 
 Insurance Claims Status:
 ${claimsData.map(status => `- ${status.status}: ${status.totalClaims} claims ($${status.totalAmount.toLocaleString()})`).join('\n')}

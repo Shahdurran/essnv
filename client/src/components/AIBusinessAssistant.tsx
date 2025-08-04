@@ -120,29 +120,35 @@ export default function AIBusinessAssistant({ selectedLocationId }) {
         contextualQuery += ` (focus on ${selectedLocationId} location data)`;
       }
 
-      // Submit query to AI assistant
-      const response = await submitAIQuery(contextualQuery, userId);
+      // Submit query to AI assistant with location and time context
+      const response = await submitAIQuery(contextualQuery, userId, selectedLocationId);
       
-      // Simulate typing delay for better UX
-      setTimeout(() => {
-        setIsTyping(false);
+      // Implement streaming typing effect
+      if (response.success) {
+        const formattedResponse = formatAIResponse(response.data);
         
-        if (response.success) {
-          const formattedResponse = formatAIResponse(response.data);
-          
-          const aiMessage = {
-            id: `ai-${Date.now()}`,
-            type: "ai",
-            content: formattedResponse.text,
-            timestamp: new Date().toISOString(),
-            queryType: formattedResponse.type,
-            recommendations: formattedResponse.recommendations,
-            metrics: formattedResponse.metrics
-          };
+        // Create AI message placeholder
+        const aiMessageId = `ai-${Date.now()}`;
+        const aiMessage = {
+          id: aiMessageId,
+          type: "ai",
+          content: "",
+          timestamp: new Date().toISOString(),
+          queryType: formattedResponse.type,
+          recommendations: formattedResponse.recommendations,
+          metrics: formattedResponse.metrics,
+          isStreaming: true
+        };
 
-          setMessages(prev => [...prev, aiMessage]);
-        } else {
-          // Handle error response
+        setMessages(prev => [...prev, aiMessage]);
+        
+        // Simulate streaming typing effect
+        await simulateTypingEffect(aiMessageId, formattedResponse.text, formattedResponse);
+        
+      } else {
+        // Handle error response with typing delay
+        setTimeout(() => {
+          setIsTyping(false);
           const errorMessage = {
             id: `ai-error-${Date.now()}`,
             type: "ai",
@@ -152,10 +158,9 @@ export default function AIBusinessAssistant({ selectedLocationId }) {
           };
 
           setMessages(prev => [...prev, errorMessage]);
-        }
-        
-        setIsLoading(false);
-      }, isQuickQuestion ? 1000 : 1500); // Shorter delay for quick questions
+          setIsLoading(false);
+        }, 800);
+      }
 
     } catch (error) {
       setIsTyping(false);
@@ -173,6 +178,45 @@ export default function AIBusinessAssistant({ selectedLocationId }) {
 
       setMessages(prev => [...prev, errorMessage]);
     }
+  };
+
+  /**
+   * Simulate typing effect for AI responses with streaming
+   * @param {string} messageId - The message ID to update
+   * @param {string} fullText - The complete response text
+   * @param {object} responseData - Additional response data
+   */
+  const simulateTypingEffect = async (messageId, fullText, responseData) => {
+    const words = fullText.split(' ');
+    let currentText = '';
+    
+    for (let i = 0; i < words.length; i++) {
+      currentText += (i > 0 ? ' ' : '') + words[i];
+      
+      setMessages(prev => prev.map(msg => 
+        msg.id === messageId 
+          ? {
+              ...msg,
+              content: currentText,
+              isStreaming: i < words.length - 1
+            }
+          : msg
+      ));
+      
+      // Add variable delay between words for natural typing effect
+      const delay = 30 + Math.random() * 40; // 30-70ms per word
+      await new Promise(resolve => setTimeout(resolve, delay));
+    }
+    
+    // Mark streaming as complete
+    setMessages(prev => prev.map(msg => 
+      msg.id === messageId 
+        ? { ...msg, isStreaming: false }
+        : msg
+    ));
+    
+    setIsTyping(false);
+    setIsLoading(false);
   };
 
   /**

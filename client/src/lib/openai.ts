@@ -12,17 +12,19 @@
  * @param {string} userId - Optional user ID for tracking query history
  * @returns {Promise<Object>} AI response with analytics insights
  */
-export async function submitAIQuery(query, userId = null) {
+export async function submitAIQuery(query: string, userId: string | null = null, locationId: string = 'all', timeRange: string = '1') {
   try {
     // Validate input parameters
     if (!query || typeof query !== 'string' || query.trim().length === 0) {
       throw new Error('Query is required and must be a non-empty string');
     }
 
-    // Prepare request payload for the AI assistant
+    // Prepare request payload for the AI assistant with enhanced routing
     const requestBody = {
       query: query.trim(),
-      userId: userId
+      userId: userId,
+      locationId: locationId || 'all',
+      timeRange: timeRange || '1'
     };
 
     // Send request to backend AI endpoint
@@ -55,7 +57,7 @@ export async function submitAIQuery(query, userId = null) {
       timestamp: new Date().toISOString()
     };
 
-  } catch (error) {
+  } catch (error: any) {
     console.error('Error submitting AI query:', error);
     
     // Return structured error response
@@ -96,7 +98,7 @@ export async function getPopularQuestions() {
       timestamp: new Date().toISOString()
     };
 
-  } catch (error) {
+  } catch (error: any) {
     console.error('Error fetching popular questions:', error);
     
     // Return fallback questions if API fails
@@ -133,7 +135,7 @@ export async function getPopularQuestions() {
  * @param {string} userId - The user ID to fetch history for
  * @returns {Promise<Array>} List of previous queries and responses
  */
-export async function getQueryHistory(userId) {
+export async function getQueryHistory(userId: string) {
   try {
     if (!userId) {
       throw new Error('User ID is required to fetch query history');
@@ -156,7 +158,7 @@ export async function getQueryHistory(userId) {
       timestamp: new Date().toISOString()
     };
 
-  } catch (error) {
+  } catch (error: any) {
     console.error('Error fetching query history:', error);
     
     return {
@@ -173,7 +175,7 @@ export async function getQueryHistory(userId) {
  * @param {Object} aiResponse - Raw AI response from the API
  * @returns {Object} Formatted response ready for UI rendering
  */
-export function formatAIResponse(aiResponse) {
+export function formatAIResponse(aiResponse: any) {
   try {
     // Extract key components from AI response
     const {

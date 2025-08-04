@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -47,12 +48,22 @@ export default function TopRevenueProcedures({
   onCategoryChange 
 }: TopRevenueProceduresProps) {
 
+  // State for time range filtering - default to 1 month
+  const [timeRange, setTimeRange] = useState("1");
+
   /**
    * Fetch top revenue procedures from API
    * Includes location and category filtering
    */
   const { data: procedures = [], isLoading, error } = useQuery<ProcedureAnalytics[]>({
-    queryKey: ['/api/analytics/top-procedures', selectedLocationId, selectedCategory],
+    queryKey: ['/api/analytics/top-procedures', selectedLocationId, selectedCategory, timeRange],
+    queryFn: async () => {
+      const response = await fetch(`/api/analytics/top-procedures/${selectedLocationId}/${selectedCategory}?timeRange=${timeRange}`);
+      if (!response.ok) {
+        throw new Error('Failed to fetch top procedures data');
+      }
+      return response.json();
+    },
     staleTime: 2 * 60 * 1000, // Cache for 2 minutes for fresh analytics
   });
 
@@ -234,7 +245,7 @@ export default function TopRevenueProcedures({
       <CardContent className="p-6">
         
         {/* Header with Category Toggle */}
-        <div className="flex items-center justify-between mb-6">
+        <div className="flex items-center justify-between mb-4">
           <div>
             <h3 className="text-lg font-semibold text-gray-900 flex items-center">
               <DollarSign className="h-5 w-5 mr-2 text-primary" />
@@ -261,6 +272,26 @@ export default function TopRevenueProcedures({
               </Button>
             ))}
           </div>
+        </div>
+
+        {/* Time Range Filter */}
+        <div className="flex items-center gap-2 mb-6">
+          <span className="text-sm font-medium text-gray-700">Time Range:</span>
+          {['1', '3', '6', '12'].map((months) => (
+            <Button
+              key={months}
+              variant="ghost"
+              size="sm"
+              className={`px-3 py-1 text-sm rounded transition-colors ${
+                timeRange === months
+                  ? 'bg-blue-600 text-white'
+                  : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+              }`}
+              onClick={() => setTimeRange(months)}
+            >
+              {months === '1' ? '1 Month' : months === '3' ? '3 Months' : months === '6' ? '6 Months' : '1 Year'}
+            </Button>
+          ))}
         </div>
 
         {/* Procedures List - Scrollable Container (shows 5 items max) */}
