@@ -181,6 +181,23 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   /**
+   * GET /api/analytics/ar-buckets/:locationId - Get AR aging buckets for outstanding claims
+   * Path params: locationId (or 'all')
+   */
+  app.get("/api/analytics/ar-buckets/:locationId", async (req, res) => {
+    try {
+      const { locationId } = req.params;
+      const finalLocationId = locationId === 'all' ? 'all' : locationId;
+      
+      const arData = await storage.getARBucketsData(finalLocationId);
+      res.json(arData);
+    } catch (error) {
+      console.error("Error fetching AR buckets data:", error);
+      res.status(500).json({ message: "Failed to fetch AR buckets data" });
+    }
+  });
+
+  /**
    * Patient Billing Analytics endpoint
    */
   app.get('/api/analytics/patient-billing/:locationId', async (req, res) => {

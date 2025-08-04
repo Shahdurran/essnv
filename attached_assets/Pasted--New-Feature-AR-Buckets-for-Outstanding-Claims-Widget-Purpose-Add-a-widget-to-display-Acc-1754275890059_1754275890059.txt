@@ -1,0 +1,64 @@
+# New Feature: AR Buckets for Outstanding Claims Widget
+
+## Purpose
+Add a widget to display **Accounts Receivable (AR) aging buckets** for **outstanding insurance claims**. This will give the business owner visibility into the aging of unpaid claims by payers.
+
+---
+
+## Widget Requirements
+
+### Metrics to Show:
+
+**Title**: AR Buckets (Outstanding Claims)
+
+**Display Format**:
+- Horizontal or vertical bar chart (or clean list) showing:
+  - `0–30 days`: $XX,XXX
+  - `31–60 days`: $XX,XXX
+  - `61–90 days`: $XX,XXX
+  - `90+ days`: $XX,XXX
+
+- Include **color coding** to visually represent urgency:
+  - Green → 0–30
+  - Yellow → 31–60
+  - Orange → 61–90
+  - Red → 90+
+
+- Display total outstanding AR amount at the top or as a bold header (optional)
+
+### Filters:
+- Time frame alignment is **not necessary**, as AR buckets are always calculated based on current aging
+- Ensure this widget supports **location-based filtering** like other components
+
+---
+
+## Layout Instructions
+
+- Place this widget **beside** the updated Patient Billing Analytics widget on the dashboard
+- Both widgets should be **half-width (50%)**
+- These two widgets should be visually grouped to form a clean bottom row on the dashboard, below the Insurance Claims Tracker
+
+---
+
+## Mock Data Instructions
+
+### 1. Create / Extend Insurance Claim Dataset
+- Include mock claim entries with:
+  - Submission date
+  - Claim amount
+  - Paid amount
+  - Status (Pending / Denied / Paid)
+  - Insurance provider
+  - Location
+- Use `submission date` to determine aging category:
+  - 0–30, 31–60, 61–90, 90+
+
+- Populate values that reflect realistic AR distributions (e.g., heavier concentration in 0–60 days, smaller in 90+)
+
+### 2. Maintain Global Data Consistency
+- This AR dataset must be aligned with the **insurance claim data** used in other components like:
+  - Insurance Claims Tracker
+  - Revenue Charts
+  - Practice Insights
+
+Ensure that **claim status and payment dates** are consistent across all mock datasets.

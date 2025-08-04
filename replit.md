@@ -31,6 +31,13 @@ MDS AI Analytics is a comprehensive AI-powered business analytics dashboard desi
   - PHI-free design with business-focused metrics only
   - Color-coded metric cards for visual clarity
   - Maintains 20% patient revenue / 80% insurance revenue split
+- ✅ **NEW: AR Buckets for Outstanding Claims Widget** (August 4, 2025)
+  - Aging analysis of unpaid insurance claims in 4 buckets: 0-30, 31-60, 61-90, 90+ days
+  - Color-coded urgency levels: Green (0-30), Yellow (31-60), Orange (61-90), Red (90+)
+  - Visual progress bars showing relative bucket amounts
+  - Summary stats for Current (0-60 days) vs Aged (60+ days) claims
+  - Location-based filtering integration with realistic AR distributions
+  - 50/50 layout positioned beside Patient Billing Analytics widget
 
 ## User Preferences
 

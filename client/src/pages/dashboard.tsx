@@ -7,6 +7,7 @@ import TopRevenueProcedures from "@/components/TopRevenueProcedures";
 import PracticeInsights from "@/components/PracticeInsights";
 import RevenueProjections from "@/components/RevenueProjections";
 import PatientBillingAnalytics from "@/components/PatientBillingAnalytics";
+import ARBucketsWidget from "@/components/ARBucketsWidget";
 import mdsLogo from "@assets/MDS Logo_1754254040718.png";
 import drRaoPhoto from "@assets/image_1754253968575.png";
 
@@ -171,13 +172,30 @@ export default function Dashboard() {
         /> */}
 
         {/* 
-          Patient Billing Analytics Component
-          Full-width widget at bottom of dashboard for patient payment insights
-          Tracks overdue balances, collection rates, and aging breakdown
+          Bottom Row - Billing and AR Analytics (50/50 Layout)
+          Two-column responsive grid for billing analytics and AR aging
         */}
-        <PatientBillingAnalytics 
-          selectedLocationId={selectedLocationId}
-        />
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-8">
+          
+          {/* 
+            Patient Billing Analytics Component
+            Half-width widget for patient payment insights
+            Tracks overdue balances, collection rates, and aging breakdown
+          */}
+          <PatientBillingAnalytics 
+            selectedLocationId={selectedLocationId}
+          />
+
+          {/* 
+            AR Buckets Widget Component
+            Half-width widget for accounts receivable aging analysis
+            Shows outstanding insurance claims by aging buckets (0-30, 31-60, 61-90, 90+ days)
+          */}
+          <ARBucketsWidget 
+            selectedLocationId={selectedLocationId}
+          />
+
+        </div>
 
       </div>
     </div>

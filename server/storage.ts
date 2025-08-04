@@ -621,6 +621,77 @@ export class MemStorage implements IStorage {
     };
   }
 
+  // AR Buckets for Outstanding Claims Data
+  async getARBucketsData(locationId: string): Promise<{
+    buckets: Array<{
+      ageRange: string;
+      amount: number;
+      claimCount: number;
+    }>;
+    totalOutstanding: number;
+  }> {
+    // Base AR data by location - represents aging of outstanding insurance claims
+    // Aging categories: 0-30 days (current), 31-60 days (getting old), 61-90 days (aged), 90+ days (very aged)
+    const baseARData = {
+      'all': {
+        buckets: [
+          { ageRange: '0-30', amount: 892000, claimCount: 1245 },    // Current claims - largest bucket
+          { ageRange: '31-60', amount: 456000, claimCount: 678 },    // Moderately aged claims 
+          { ageRange: '61-90', amount: 234000, claimCount: 387 },    // Aged claims - needs attention
+          { ageRange: '90+', amount: 156000, claimCount: 289 }       // Very aged claims - urgent collection needed
+        ]
+      },
+      'manhattan-ny': {
+        buckets: [
+          { ageRange: '0-30', amount: 385000, claimCount: 542 },
+          { ageRange: '31-60', amount: 198000, claimCount: 295 },
+          { ageRange: '61-90', amount: 101000, claimCount: 168 },
+          { ageRange: '90+', amount: 67000, claimCount: 125 }
+        ]
+      },
+      'atlantic-highlands-nj': {
+        buckets: [
+          { ageRange: '0-30', amount: 198000, claimCount: 276 },
+          { ageRange: '31-60', amount: 101000, claimCount: 150 },
+          { ageRange: '61-90', amount: 52000, claimCount: 86 },
+          { ageRange: '90+', amount: 35000, claimCount: 64 }
+        ]
+      },
+      'woodbridge-nj': {
+        buckets: [
+          { ageRange: '0-30', amount: 148000, claimCount: 207 },
+          { ageRange: '31-60', amount: 76000, claimCount: 113 },
+          { ageRange: '61-90', amount: 39000, claimCount: 65 },
+          { ageRange: '90+', amount: 26000, claimCount: 48 }
+        ]
+      },
+      'fresno-ca': {
+        buckets: [
+          { ageRange: '0-30', amount: 165000, claimCount: 230 },
+          { ageRange: '31-60', amount: 84000, claimCount: 125 },
+          { ageRange: '61-90', amount: 43000, claimCount: 71 },
+          { ageRange: '90+', amount: 29000, claimCount: 53 }
+        ]
+      },
+      'hanford-ca': {
+        buckets: [
+          { ageRange: '0-30', amount: 89000, claimCount: 124 },
+          { ageRange: '31-60', amount: 45000, claimCount: 67 },
+          { ageRange: '61-90', amount: 23000, claimCount: 38 },
+          { ageRange: '90+', amount: 15000, claimCount: 28 }
+        ]
+      }
+    };
+
+    const data = baseARData[locationId as keyof typeof baseARData] || baseARData['all'];
+    const totalOutstanding = data.buckets.reduce((sum, bucket) => sum + bucket.amount, 0);
+    
+    return {
+      buckets: data.buckets,
+      totalOutstanding
+    };
+  }
+
   async getInsuranceClaimsData(locationId: string, startDate?: Date, endDate?: Date): Promise<any[]> {
     // Get all locations to map by name since IDs are dynamic
     const allLocations = await this.getAllPracticeLocations();
