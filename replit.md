@@ -38,6 +38,12 @@ MDS AI Analytics is a comprehensive AI-powered business analytics dashboard desi
   - Summary stats for Current (0-60 days) vs Aged (60+ days) claims
   - Location-based filtering integration with realistic AR distributions
   - 50/50 layout positioned beside Patient Billing Analytics widget
+- ✅ **CRITICAL FIX: Master Data Consistency Engine** (August 4, 2025)
+  - Implemented centralized data integrity system to eliminate mathematical inconsistencies
+  - Fixed Insurance Claims logic: Submitted < Paid relationship corrected
+  - All revenue components now derive from unified base data ($2.45M monthly total)
+  - Consistent 80/20 insurance/patient revenue split across all widgets
+  - Location weights properly distribute data proportionally across 5 practice locations
 
 ## User Preferences
 

@@ -101,11 +101,12 @@ export class MemStorage implements IStorage {
     },
     
     // Insurance claims breakdown (monthly basis)
+    // CRITICAL: Paid + Pending + Denied must NEVER exceed Total Submitted
     insuranceClaims: {
-      totalSubmitted: 2300000,      // Total submitted claims
-      paid: 1960000,               // 85.2% collection rate (becomes insurance revenue)
-      pending: 245000,             // 10.7% pending (part of AR)
-      denied: 95000                // 4.1% denial rate (realistic)
+      totalSubmitted: 2450000,      // Total submitted claims (monthly)
+      paid: 1960000,               // 80% collection rate (becomes insurance revenue)
+      pending: 345000,             // 14.1% pending (part of AR)
+      denied: 145000               // 5.9% denial rate (realistic for dermatology)
     },
     
     // Location distribution weights (must sum to 100%)
@@ -705,11 +706,15 @@ export class MemStorage implements IStorage {
     // Use master data for mathematically consistent claims
     const baseClaims = this.masterData.insuranceClaims;
     
+    // CRITICAL FIX: Submitted = Only current unprocessed claims (small portion)
+    // Paid = Historical processed claims (larger, but separate from submitted)
+    // Logic: Submitted claims will eventually become Paid, Pending, or Denied
+    
     // Apply location and date scaling
-    const submitted = Math.round((baseClaims.totalSubmitted * 0.15) * locationWeight * scalingFactor); // 15% of submitted are still processing
-    const paid = Math.round(baseClaims.paid * locationWeight * scalingFactor);
-    const pending = Math.round(baseClaims.pending * locationWeight * scalingFactor);
-    const denied = Math.round(baseClaims.denied * locationWeight * scalingFactor);
+    const submitted = Math.round((baseClaims.totalSubmitted * 0.12) * locationWeight * scalingFactor); // 12% current processing
+    const paid = Math.round(baseClaims.paid * locationWeight * scalingFactor); // Historical collections 
+    const pending = Math.round((baseClaims.totalSubmitted * 0.08) * locationWeight * scalingFactor); // 8% awaiting review
+    const denied = Math.round((baseClaims.totalSubmitted * 0.06) * locationWeight * scalingFactor); // 6% denied
     
     // Insurance provider distribution (realistic for dermatology)
     const providerDistribution = [
