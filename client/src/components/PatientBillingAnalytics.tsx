@@ -119,8 +119,8 @@ export default function PatientBillingAnalytics({ selectedLocationId }: PatientB
   return (
     <div className="bg-white rounded-lg border border-gray-200 p-4">
       {/* Header Section */}
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-4">
-        <div>
+      <div className="mb-4">
+        <div className="mb-3">
           <h2 className="text-lg font-semibold text-gray-900 flex items-center">
             <DollarSign className="w-5 h-5 mr-2 text-green-600" />
             Patient Billing Analytics
@@ -131,7 +131,7 @@ export default function PatientBillingAnalytics({ selectedLocationId }: PatientB
         </div>
 
         {/* Time Range Filter */}
-        <div className="flex items-center gap-2 mt-3 sm:mt-0">
+        <div className="flex items-center gap-2">
           <span className="text-sm font-medium text-gray-700">Time Range:</span>
           {['1', '3', '6', '12'].map((months) => (
             <button
