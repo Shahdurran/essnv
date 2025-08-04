@@ -65,6 +65,7 @@ export interface IStorage {
   getMonthlyRevenueData(locationId?: string): Promise<any[]>;
   getInsurancePayerBreakdown(locationId?: string): Promise<any[]>;
   getPatientVolumeProjections(locationId?: string): Promise<any[]>;
+  getDenialReasonsData(): any;
 }
 
 /**
@@ -776,6 +777,45 @@ export class MemStorage implements IStorage {
         providers: createProviderBreakdown(denied, Math.round(denied / 1400))
       }
     ];
+  }
+
+  /**
+   * Get denial reasons data for AI assistant context
+   * Returns common denial reasons by insurance provider
+   */
+  getDenialReasonsData(): Record<string, string[]> {
+    return {
+      'Blue Cross Blue Shield': [
+        'Prior authorization required',
+        'Medical necessity not established',
+        'Duplicate claim submission'
+      ],
+      'Aetna': [
+        'Missing documentation',
+        'Procedure not covered',
+        'Exceeds benefit limits'
+      ],
+      'Medicare': [
+        'Incorrect billing codes',
+        'Treatment not medically necessary',
+        'Missing physician signature'
+      ],
+      'United Healthcare': [
+        'Prior authorization expired',
+        'Network provider requirements',
+        'Missing referral documentation'
+      ],
+      'Cigna': [
+        'Cosmetic procedure exclusion',
+        'Annual deductible not met',
+        'Pre-existing condition clause'
+      ],
+      'Horizon Blue Cross': [
+        'Coverage verification failed',
+        'Incorrect patient information',
+        'Treatment plan not approved'
+      ]
+    };
   }
 
   // Additional methods using Master Data Consistency would go here...
