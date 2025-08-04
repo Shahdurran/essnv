@@ -267,12 +267,48 @@ export default function InsuranceClaimsTracker({ selectedLocationId }: Insurance
           </div>
         </div>
 
-        {/* Date Filter */}
-        <DateFilter 
-          onDateRangeChange={handleDateRangeChange}
-          className="mb-6"
-          initialPreset="last-month"
-        />
+        {/* Date Filter - Limited presets for mock data compatibility */}
+        <div className="mb-6">
+          <div className="flex flex-wrap gap-2">
+            <span className="text-sm font-medium text-gray-700 mr-2">Filter by:</span>
+            {['Last Month', 'Last 3 Months', 'Last 6 Months', 'Last Year'].map((period) => (
+              <button
+                key={period}
+                onClick={() => {
+                  const end = new Date();
+                  const start = new Date();
+                  
+                  switch(period) {
+                    case 'Last Month':
+                      start.setMonth(start.getMonth() - 1);
+                      break;
+                    case 'Last 3 Months':
+                      start.setMonth(start.getMonth() - 3);
+                      break;
+                    case 'Last 6 Months':
+                      start.setMonth(start.getMonth() - 6);
+                      break;
+                    case 'Last Year':
+                      start.setFullYear(start.getFullYear() - 1);
+                      break;
+                  }
+                  
+                  setDateRange({ start, end, preset: period.toLowerCase().replace(' ', '-') });
+                }}
+                className={`px-3 py-1 text-sm rounded-md border transition-colors ${
+                  dateRange.preset === period.toLowerCase().replace(' ', '-')
+                    ? 'bg-primary text-white border-primary'
+                    : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50'
+                }`}
+              >
+                {period}
+              </button>
+            ))}
+          </div>
+          <p className="text-xs text-gray-500 mt-2">
+            Claims data from {dateRange.start?.toLocaleDateString()} to {dateRange.end?.toLocaleDateString()}
+          </p>
+        </div>
 
         {/* Claims Buckets Grid - Updated to 4 columns for 4 status buckets */}
         <div className="grid grid-cols-1 lg:grid-cols-4 gap-4">

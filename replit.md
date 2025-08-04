@@ -18,9 +18,11 @@ MDS AI Analytics is a comprehensive AI-powered business analytics dashboard desi
 - ✅ Location-specific data scaling and aggregation algorithms
 - ✅ Enhanced AI assistant with anti-hallucination safeguards
 - ✅ **NEW: Insurance Claims Tracker Component** (August 4, 2025)
-  - Claims organized by status: Pending, Submitted, Denied
-  - Insurance provider breakdown within each status bucket
+  - Claims organized by 4 status buckets: Submitted, Paid, Pending, Denied
+  - Insurance provider breakdown within each status bucket (scrollable)
   - Location-based filtering integration
+  - Functional date filtering with preset ranges (Last Month, 3 Months, 6 Months, Year)
+  - Date-based data scaling for realistic mock data behavior
   - Enhanced AI assistant with claims denial context
 
 ## User Preferences
