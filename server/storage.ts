@@ -569,11 +569,15 @@ export class MemStorage implements IStorage {
   }
 
   async getInsuranceClaimsData(locationId: string): Promise<any[]> {
+    // Get all locations to map by name since IDs are dynamic
+    const allLocations = await this.getAllPracticeLocations();
+    const locationMap = new Map(allLocations.map(loc => [loc.name, loc.id]));
+    
     // Location-specific claims data with realistic volumes for dermatology practice
-    // Total claims across all locations: ~12,500 (aligned with patient volume)
-    const locationClaimsData = {
+    // Total claims across all locations: ~9,596 (aligned with patient volume)
+    const locationClaimsDataByName = {
       // Manhattan, NY - Highest volume, premium cosmetic procedures
-      '343cfe44-86d4-45e3-9d91-08f29a9df100': [
+      'Manhattan, NY': [
         {
           status: 'Pending' as const,
           totalClaims: 892,
@@ -610,7 +614,7 @@ export class MemStorage implements IStorage {
       ],
 
       // Atlantic Highlands, NJ - Balanced medical/cosmetic mix
-      '24e6b987-2ef8-4a41-b05e-877a74951ff0': [
+      'Atlantic Highlands, NJ': [
         {
           status: 'Pending' as const,
           totalClaims: 567,
@@ -647,7 +651,7 @@ export class MemStorage implements IStorage {
       ],
 
       // Woodbridge, NJ - Growing location, medical focus
-      '030888af-d09f-4581-945c-23e9610b2256': [
+      'Woodbridge, NJ': [
         {
           status: 'Pending' as const,
           totalClaims: 445,
@@ -684,7 +688,7 @@ export class MemStorage implements IStorage {
       ],
 
       // Fresno, CA - Established location, diverse patient base
-      '20242e3b-b117-4196-9058-3c59e0af08c9': [
+      'Fresno, CA': [
         {
           status: 'Pending' as const,
           totalClaims: 678,
@@ -721,7 +725,7 @@ export class MemStorage implements IStorage {
       ],
 
       // Hanford, CA - Newest location, building patient volume
-      '9d79e5f7-f670-4e24-9514-ea4c76567434': [
+      'Hanford, CA': [
         {
           status: 'Pending' as const,
           totalClaims: 334,
@@ -758,9 +762,16 @@ export class MemStorage implements IStorage {
       ]
     };
 
+    // Convert locationId to location name for lookup
+    let targetLocationName = null;
+    if (locationId !== 'all') {
+      const targetLocation = allLocations.find(loc => loc.id === locationId);
+      targetLocationName = targetLocation?.name;
+    }
+
     // Return location-specific data or aggregate for 'all'
-    if (locationId !== 'all' && locationClaimsData[locationId]) {
-      return locationClaimsData[locationId];
+    if (targetLocationName && locationClaimsDataByName[targetLocationName]) {
+      return locationClaimsDataByName[targetLocationName];
     }
 
     // Aggregate all locations for 'all' view
@@ -771,7 +782,7 @@ export class MemStorage implements IStorage {
     ];
 
     // Aggregate data from all locations
-    Object.values(locationClaimsData).forEach(locationData => {
+    Object.values(locationClaimsDataByName).forEach(locationData => {
       locationData.forEach((bucket, index) => {
         aggregatedData[index].totalClaims += bucket.totalClaims;
         aggregatedData[index].totalAmount += bucket.totalAmount;
