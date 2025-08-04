@@ -351,14 +351,14 @@ export default function AIBusinessAssistant({ selectedLocationId }) {
         await new Promise(resolve => setTimeout(resolve, delay));
       }
       
-      // Mark streaming as complete and add response data
+      // Mark streaming as complete but don't add responseData since it's now part of content
       setMessages(prev => prev.map(msg => 
         msg.id === messageId 
           ? {
               ...msg,
               content: baseContent + streamedContent,
               isStreaming: false,
-              responseData: responseData
+              responseData: null // Don't add responseData to prevent duplicate rendering
             }
           : msg
       ));
@@ -467,32 +467,7 @@ export default function AIBusinessAssistant({ selectedLocationId }) {
                   }}
                 />
                 
-                {/* Show recommendations if available */}
-                {message.recommendations && message.recommendations.length > 0 && (
-                  <div className="mt-3 pt-3 border-t border-gray-200">
-                    <p className="text-sm font-medium text-gray-700 mb-2">Recommendations:</p>
-                    <ul className="space-y-1">
-                      {message.recommendations.map((rec, index) => (
-                        <li key={index} className="text-sm text-gray-600">• {rec}</li>
-                      ))}
-                    </ul>
-                  </div>
-                )}
-                
-                {/* Show key metrics if available */}
-                {message.metrics && Object.keys(message.metrics).length > 0 && (
-                  <div className="mt-3 pt-3 border-t border-gray-200">
-                    <p className="text-sm font-medium text-gray-700 mb-2">Key Metrics:</p>
-                    <div className="grid grid-cols-2 gap-2">
-                      {Object.entries(message.metrics).map(([key, value]) => (
-                        <div key={key} className="text-xs">
-                          <span className="text-gray-500">{key}:</span>
-                          <span className="text-gray-700 font-medium ml-1">{value}</span>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                )}
+                {/* Recommendations and Key Metrics are now streamed as part of content, no separate rendering needed */}
                 
                 <p className="text-xs opacity-70 mt-2">
                   {new Date(message.timestamp).toLocaleTimeString()}
