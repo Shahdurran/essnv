@@ -166,6 +166,25 @@ export default function InsuranceClaimsTracker({ selectedLocationId }: Insurance
     );
   }
 
+  /**
+   * Calculate dynamic success rate based on claims data
+   * Success rate = (Submitted claims) / (Submitted + Denied claims) * 100
+   * Excludes pending claims as they are still in process
+   */
+  const calculateSuccessRate = (): number => {
+    if (claimsData.length === 0) return 0;
+    
+    const submittedClaims = claimsData.find(b => b.status === 'Submitted')?.totalClaims || 0;
+    const deniedClaims = claimsData.find(b => b.status === 'Denied')?.totalClaims || 0;
+    
+    // Only count processed claims (submitted + denied) for success rate calculation
+    const processedClaims = submittedClaims + deniedClaims;
+    
+    if (processedClaims === 0) return 0;
+    
+    return Math.round((submittedClaims / processedClaims) * 100);
+  };
+
   return (
     <Card className="bg-white rounded-xl shadow-sm border border-gray-200">
       <CardContent className="p-6">
@@ -289,9 +308,7 @@ export default function InsuranceClaimsTracker({ selectedLocationId }: Insurance
             <div className="flex items-center space-x-4">
               <span className="text-gray-600">Success Rate:</span>
               <span className="font-semibold text-gray-900">
-                {claimsData.length > 0 ? 
-                  Math.round((claimsData.find(b => b.status === 'Submitted')?.totalClaims || 0) / 
-                            claimsData.reduce((sum, bucket) => sum + bucket.totalClaims, 0) * 100) : 0}%
+                {calculateSuccessRate()}%
               </span>
             </div>
           </div>
