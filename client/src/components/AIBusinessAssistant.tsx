@@ -476,7 +476,7 @@ export default function AIBusinessAssistant({ selectedLocationId }) {
               </div>
               
               {message.type === 'user' && (
-                <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-lg overflow-hidden flex-shrink-0 ml-2 sm:ml-3">
+                <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-lg overflow-hidden flex-shrink-0 ml-2 sm:ml-3">
                   <img 
                     src={drRaoPhoto} 
                     alt="Dr. Babar K. Rao"
