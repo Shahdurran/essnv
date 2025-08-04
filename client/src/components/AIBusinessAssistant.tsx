@@ -75,28 +75,57 @@ export default function AIBusinessAssistant({ selectedLocationId }) {
   }, []);
 
   /**
-   * Smart scrolling for chat messages - scroll to start of new AI messages, then follow streaming
+   * Smart scrolling for chat messages - follow streaming responses naturally
    */
   useEffect(() => {
     if (!messagesContainerRef.current || messages.length === 0) return;
     
     const lastMessage = messages[messages.length - 1];
     
-    // If it's a new AI message that just started streaming, scroll to the start of it
+    // If it's a new AI message that just started streaming, scroll to show the AI message start
     if (lastMessage.type === 'ai' && lastMessage.isStreaming && lastMessage.content === '') {
       const aiMessageElements = messagesContainerRef.current.querySelectorAll('[data-message-type="ai"]');
       const lastAiMessage = aiMessageElements[aiMessageElements.length - 1];
       if (lastAiMessage) {
-        lastAiMessage.scrollIntoView({ behavior: "smooth", block: "start" });
+        // Scroll to show the AI message with some context above it
+        const containerRect = messagesContainerRef.current.getBoundingClientRect();
+        const messageRect = lastAiMessage.getBoundingClientRect();
+        const relativeTop = messageRect.top - containerRect.top;
+        
+        // Keep some context by showing the message 20% down from the top of the container
+        const targetScrollTop = messagesContainerRef.current.scrollTop + relativeTop - (containerRect.height * 0.2);
+        messagesContainerRef.current.scrollTo({ top: targetScrollTop, behavior: "smooth" });
         return;
       }
     }
     
-    // For user messages and completed AI messages, scroll to bottom normally
+    // For streaming AI messages, gently scroll down to follow the content
+    if (lastMessage.type === 'ai' && lastMessage.isStreaming && lastMessage.content.length > 0) {
+      // Gradually scroll down to keep the streaming content visible
+      setTimeout(() => {
+        if (messagesContainerRef.current) {
+          const container = messagesContainerRef.current;
+          const isNearBottom = container.scrollHeight - container.scrollTop - container.clientHeight < 100;
+          
+          // Only auto-scroll if user is near the bottom (hasn't manually scrolled up)
+          if (isNearBottom) {
+            container.scrollTo({ 
+              top: container.scrollHeight, 
+              behavior: "smooth" 
+            });
+          }
+        }
+      }, 50);
+    }
+    
+    // For user messages and completed AI messages, scroll to bottom
     if (!lastMessage.isStreaming) {
       setTimeout(() => {
         if (messagesContainerRef.current) {
-          messagesContainerRef.current.scrollTop = messagesContainerRef.current.scrollHeight;
+          messagesContainerRef.current.scrollTo({ 
+            top: messagesContainerRef.current.scrollHeight, 
+            behavior: "smooth" 
+          });
         }
       }, 100);
     }
@@ -218,6 +247,20 @@ export default function AIBusinessAssistant({ selectedLocationId }) {
       // Add variable delay between words for natural typing effect
       const delay = 30 + Math.random() * 40; // 30-70ms per word
       await new Promise(resolve => setTimeout(resolve, delay));
+      
+      // Trigger a scroll update after each word for smooth following
+      if (i > 0 && i % 5 === 0) { // Every 5 words, trigger a gentle scroll
+        const container = messagesContainerRef.current;
+        if (container) {
+          const isNearBottom = container.scrollHeight - container.scrollTop - container.clientHeight < 150;
+          if (isNearBottom) {
+            container.scrollTo({ 
+              top: container.scrollHeight, 
+              behavior: "auto" // Use auto for frequent updates to avoid choppiness
+            });
+          }
+        }
+      }
     }
     
     // Mark streaming as complete
