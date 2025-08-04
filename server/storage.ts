@@ -101,12 +101,13 @@ export class MemStorage implements IStorage {
     },
     
     // Insurance claims breakdown (monthly basis)
-    // CRITICAL: Paid + Pending + Denied must NEVER exceed Total Submitted
+    // RULE: Paid + Pending + Denied = Total Submitted (100% of submitted claims)
     insuranceClaims: {
       totalSubmitted: 2450000,      // Total submitted claims (monthly)
-      paid: 1960000,               // 80% collection rate (becomes insurance revenue)
-      pending: 345000,             // 14.1% pending (part of AR)
-      denied: 145000               // 5.9% denial rate (realistic for dermatology)
+      paid: 1960000,               // 80% of submitted ($1.96M)
+      pending: 343000,             // 14% of submitted ($343K) 
+      denied: 147000               // 6% of submitted ($147K)
+      // Total: $1.96M + $343K + $147K = $2.45M ✓
     },
     
     // Location distribution weights (must sum to 100%)
@@ -706,15 +707,29 @@ export class MemStorage implements IStorage {
     // Use master data for mathematically consistent claims
     const baseClaims = this.masterData.insuranceClaims;
     
-    // CRITICAL FIX: Submitted = Only current unprocessed claims (small portion)
-    // Paid = Historical processed claims (larger, but separate from submitted)
-    // Logic: Submitted claims will eventually become Paid, Pending, or Denied
+    // CORRECT BUSINESS LOGIC: 
+    // Submitted = Total claims sent to insurance (largest number)
+    // Paid = Portion of submitted that insurance has paid (subset of submitted)
+    // Pending = Portion of submitted still being processed (subset of submitted)  
+    // Denied = Portion of submitted that was denied (subset of submitted)
+    // RULE: Paid + Pending + Denied = Submitted (all submitted claims have one of these outcomes)
     
-    // Apply location and date scaling
-    const submitted = Math.round((baseClaims.totalSubmitted * 0.12) * locationWeight * scalingFactor); // 12% current processing
-    const paid = Math.round(baseClaims.paid * locationWeight * scalingFactor); // Historical collections 
-    const pending = Math.round((baseClaims.totalSubmitted * 0.08) * locationWeight * scalingFactor); // 8% awaiting review
-    const denied = Math.round((baseClaims.totalSubmitted * 0.06) * locationWeight * scalingFactor); // 6% denied
+    // FIXED BUSINESS LOGIC: Start with paid amount (from insurance revenue) and work backwards
+    // Since Paid represents actual insurance revenue, we calculate Submitted based on collection rate
+    
+    const paidAmount = Math.round(baseClaims.paid * locationWeight * scalingFactor); // Actual insurance collections
+    const collectionRate = 0.80; // 80% collection rate
+    
+    // Calculate submitted based on what was needed to generate this paid amount
+    const submitted = Math.round(paidAmount / collectionRate); // LARGEST (total submitted)
+    const paid = paidAmount; // What actually got paid (80% of submitted)
+    const pending = Math.round(submitted * 0.14); // 14% of submitted 
+    const denied = Math.round(submitted * 0.06); // 6% of submitted
+    
+    // Ensure math works: adjust paid if needed for rounding
+    const total = paid + pending + denied;
+    const adjustment = submitted - total;
+    const adjustedPaid = paid + adjustment;
     
     // Insurance provider distribution (realistic for dermatology)
     const providerDistribution = [
@@ -738,27 +753,27 @@ export class MemStorage implements IStorage {
     return [
       {
         status: 'Submitted' as const,
-        totalClaims: Math.round(submitted / 1500), // Average $1,500 per claim
+        totalClaims: Math.round(submitted / 1400), // Total submitted claims
         totalAmount: submitted,
-        providers: createProviderBreakdown(submitted, Math.round(submitted / 1500))
+        providers: createProviderBreakdown(submitted, Math.round(submitted / 1400))
       },
       {
         status: 'Paid' as const,
-        totalClaims: Math.round(paid / 1400), // Slightly lower average for paid claims
-        totalAmount: paid,
-        providers: createProviderBreakdown(paid, Math.round(paid / 1400))
+        totalClaims: Math.round(adjustedPaid / 1400), // 80% of submitted claims
+        totalAmount: adjustedPaid,
+        providers: createProviderBreakdown(adjustedPaid, Math.round(adjustedPaid / 1400))
       },
       {
         status: 'Pending' as const,
-        totalClaims: Math.round(pending / 1200), // Lower average for pending claims
+        totalClaims: Math.round(pending / 1400), // 14% of submitted claims
         totalAmount: pending,
-        providers: createProviderBreakdown(pending, Math.round(pending / 1200))
+        providers: createProviderBreakdown(pending, Math.round(pending / 1400))
       },
       {
         status: 'Denied' as const,
-        totalClaims: Math.round(denied / 800), // Lower average for denied claims
+        totalClaims: Math.round(denied / 1400), // 6% of submitted claims
         totalAmount: denied,
-        providers: createProviderBreakdown(denied, Math.round(denied / 800))
+        providers: createProviderBreakdown(denied, Math.round(denied / 1400))
       }
     ];
   }
