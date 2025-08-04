@@ -250,29 +250,31 @@ export default function InsuranceClaimsTracker({ selectedLocationId }: Insurance
                   </div>
                 </div>
 
-                {/* Provider Breakdown */}
+                {/* Provider Breakdown with Scrollable List */}
                 <div className="space-y-3">
                   <h5 className="text-sm font-medium text-gray-700">By Insurance Provider:</h5>
-                  {bucket.providers.map((provider) => (
-                    <div 
-                      key={provider.name}
-                      className="flex justify-between items-center py-2 px-3 bg-white rounded border border-gray-100"
-                    >
-                      <div>
-                        <p className="text-sm font-medium text-gray-900">
-                          {provider.name}
-                        </p>
-                        <p className="text-xs text-gray-600">
-                          {provider.claimCount} claims
-                        </p>
+                  <div className="max-h-48 overflow-y-auto space-y-2 pr-2">
+                    {bucket.providers.map((provider) => (
+                      <div 
+                        key={provider.name}
+                        className="flex justify-between items-center py-2 px-3 bg-white rounded border border-gray-100"
+                      >
+                        <div>
+                          <p className="text-sm font-medium text-gray-900">
+                            {provider.name}
+                          </p>
+                          <p className="text-xs text-gray-600">
+                            {provider.claimCount} claims
+                          </p>
+                        </div>
+                        <div className="text-right">
+                          <p className="text-sm font-semibold text-gray-900">
+                            {formatCurrency(provider.amount)}
+                          </p>
+                        </div>
                       </div>
-                      <div className="text-right">
-                        <p className="text-sm font-semibold text-gray-900">
-                          {formatCurrency(provider.amount)}
-                        </p>
-                      </div>
-                    </div>
-                  ))}
+                    ))}
+                  </div>
                 </div>
 
                 {/* Bucket Footer with Action Hint */}

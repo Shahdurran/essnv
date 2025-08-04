@@ -573,7 +573,7 @@ export class MemStorage implements IStorage {
     // Total claims across all locations: ~12,500 (aligned with patient volume)
     const locationClaimsData = {
       // Manhattan, NY - Highest volume, premium cosmetic procedures
-      'da2fcff3-ec01-4d49-b05e-e4e2d15a25f7': [
+      '343cfe44-86d4-45e3-9d91-08f29a9df100': [
         {
           status: 'Pending' as const,
           totalClaims: 892,
@@ -610,7 +610,7 @@ export class MemStorage implements IStorage {
       ],
 
       // Atlantic Highlands, NJ - Balanced medical/cosmetic mix
-      '478f7a93-49c9-43e8-946b-320b5a07fa10': [
+      '24e6b987-2ef8-4a41-b05e-877a74951ff0': [
         {
           status: 'Pending' as const,
           totalClaims: 567,
@@ -647,7 +647,7 @@ export class MemStorage implements IStorage {
       ],
 
       // Woodbridge, NJ - Growing location, medical focus
-      '5cb22a59-c901-41b3-b2d0-4117196feb87': [
+      '030888af-d09f-4581-945c-23e9610b2256': [
         {
           status: 'Pending' as const,
           totalClaims: 445,
@@ -684,7 +684,7 @@ export class MemStorage implements IStorage {
       ],
 
       // Fresno, CA - Established location, diverse patient base
-      '0298fc7d-04de-4f6a-b556-234ed05aa789': [
+      '20242e3b-b117-4196-9058-3c59e0af08c9': [
         {
           status: 'Pending' as const,
           totalClaims: 678,
@@ -721,7 +721,7 @@ export class MemStorage implements IStorage {
       ],
 
       // Hanford, CA - Newest location, building patient volume
-      'b8c3e4d5-1234-5678-9012-345678901234': [
+      '9d79e5f7-f670-4e24-9514-ea4c76567434': [
         {
           status: 'Pending' as const,
           totalClaims: 334,
