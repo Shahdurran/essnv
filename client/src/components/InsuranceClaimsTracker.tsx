@@ -269,8 +269,8 @@ export default function InsuranceClaimsTracker({ selectedLocationId }: Insurance
 
         {/* Date Filter - Limited presets for mock data compatibility */}
         <div className="mb-6">
-          <div className="flex flex-wrap gap-2">
-            <span className="text-sm font-medium text-gray-700 mr-2">Filter by:</span>
+          <div className="flex items-center flex-wrap gap-2">
+            <span className="text-sm font-medium text-gray-700">Filter by:</span>
             {['Last Month', 'Last 3 Months', 'Last 6 Months', 'Last Year'].map((period) => (
               <button
                 key={period}

@@ -131,8 +131,8 @@ export default function PatientBillingAnalytics({ selectedLocationId }: PatientB
         </div>
 
         {/* Time Range Filter */}
-        <div className="flex gap-2 mt-4 sm:mt-0">
-          <span className="text-sm font-medium text-gray-700 mr-2">Time Range:</span>
+        <div className="flex items-center gap-2 mt-4 sm:mt-0">
+          <span className="text-sm font-medium text-gray-700">Time Range:</span>
           {['1', '3', '6', '12'].map((months) => (
             <button
               key={months}
