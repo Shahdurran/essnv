@@ -139,12 +139,24 @@ export default function TopRevenueProcedures({
 
   /**
    * Format growth percentage for display
-   * @param {string} growth - Growth percentage string
-   * @returns {JSX.Element} Formatted growth badge
+   * @param {string|number} growth - Growth percentage value (could be number or string)
+   * @returns {JSX.Element} Formatted growth badge with % symbol
    */
-  const formatGrowth = (growth: string) => {
-    const isPositive = growth.startsWith('+');
-    const isNegative = growth.startsWith('-');
+  const formatGrowth = (growth: string | number) => {
+    // Convert to number if it's a string, handle both formats
+    let numericGrowth: number;
+    if (typeof growth === 'string') {
+      // Remove any existing % symbol and convert to number
+      numericGrowth = parseFloat(growth.replace('%', ''));
+    } else {
+      numericGrowth = growth;
+    }
+    
+    // Format as percentage with + or - sign
+    const isPositive = numericGrowth > 0;
+    const isNegative = numericGrowth < 0;
+    const sign = isPositive ? '+' : ''; // Negative numbers already have - sign
+    const formattedValue = `${sign}${numericGrowth.toFixed(1)}%`;
     
     return (
       <Badge 
@@ -155,7 +167,7 @@ export default function TopRevenueProcedures({
           'text-gray-600 bg-gray-50'
         }`}
       >
-        {growth}
+        {formattedValue}
       </Badge>
     );
   };
@@ -310,7 +322,7 @@ export default function TopRevenueProcedures({
                         {formatRevenue(procedure.revenue || 0)}
                       </p>
                       <div className="flex items-center space-x-2 mt-1">
-                        {formatGrowth(procedure.growth || "+0.0%")}
+                        {formatGrowth(procedure.growth || 0)}
                         <TrendingUp className="h-3 w-3 text-green-500" />
                       </div>
                     </div>
