@@ -475,8 +475,12 @@ export default function AIBusinessAssistant({ selectedLocationId }) {
               </div>
               
               {message.type === 'user' && (
-                <div className="w-6 h-6 sm:w-8 sm:h-8 bg-gray-300 rounded-lg flex items-center justify-center flex-shrink-0 ml-2 sm:ml-3">
-                  <span className="text-xs font-medium text-gray-700">DR</span>
+                <div className="w-6 h-6 sm:w-8 sm:h-8 rounded-lg overflow-hidden flex-shrink-0 ml-2 sm:ml-3">
+                  <img 
+                    src="/attached_assets/image_1754326344792.png" 
+                    alt="Dr. Babar K. Rao"
+                    className="w-full h-full object-cover"
+                  />
                 </div>
               )}
             </div>
