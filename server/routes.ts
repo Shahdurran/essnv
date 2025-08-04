@@ -152,26 +152,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const { locationId } = req.params;
       const finalLocationId = locationId === 'all' ? undefined : locationId;
       
-      // Calculate key metrics from available data
-      const revenueData = await storage.getMonthlyRevenueData(finalLocationId);
-      const insuranceData = await storage.getInsurancePayerBreakdown(finalLocationId);
-      
-      const currentMonth = revenueData[revenueData.length - 1];
-      const previousMonth = revenueData[revenueData.length - 2];
-      
-      // Calculate weighted average AR days
-      const avgArDays = insuranceData.reduce((acc, payer) => 
-        acc + (payer.arDays * payer.percentage / 100), 0
-      );
-      
-      const metrics = {
-        monthlyPatients: currentMonth.patientCount,
-        monthlyRevenue: currentMonth.revenue,
-        arDays: Math.round(avgArDays * 10) / 10,
-        cleanClaimRate: 94.2, // This would come from claims data
-        patientGrowth: ((currentMonth.patientCount - previousMonth.patientCount) / previousMonth.patientCount * 100).toFixed(1),
-        revenueGrowth: ((currentMonth.revenue - previousMonth.revenue) / previousMonth.revenue * 100).toFixed(1)
-      };
+      // Use centralized data consistency engine for key metrics
+      const metrics = await storage.getKeyMetrics(finalLocationId);
       
       res.json(metrics);
     } catch (error) {

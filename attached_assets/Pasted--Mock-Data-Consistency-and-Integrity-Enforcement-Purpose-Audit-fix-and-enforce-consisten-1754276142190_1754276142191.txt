@@ -1,0 +1,99 @@
+# Mock Data Consistency and Integrity Enforcement
+
+## Purpose  
+Audit, fix, and enforce consistency across all mock data sources used throughout the dashboard. Ensure that all widgets reflect accurate, reconciled values that align with defined business logic and real-world expectations.
+
+---
+
+## Immediate Corrections
+
+### 1. Revenue Alignment  
+For each month, ensure the following equation holds true:
+
+**Key Metric Trends (Total Revenue)**  
+= **Insurance Claims Tracker → Submitted**  
++ **Patient Billing Analytics → Total Revenue (from Patient Payments)**
+
+Adjust values if this equation does not hold.
+
+---
+
+### 2. Insurance Claims Tracker Totals  
+Ensure that for every given time period and location:
+
+**Submitted = Paid + Pending + Denied**
+
+Fix any inconsistencies by recalculating the status totals.
+
+---
+
+## Additional Rules for Comprehensive Consistency
+
+### 3. Revenue Composition Ratio  
+Apply this rule across all time periods and widgets:
+
+- **Patient Revenue** ≈ 20% of Total Revenue  
+- **Insurance Revenue** ≈ 80% of Total Revenue
+
+Applies to:
+- Key Metric Trends  
+- Revenue Charts  
+- Practice Insights  
+- Insurance Claims Tracker  
+- Patient Billing Analytics
+
+---
+
+### 4. Location & Date Alignment  
+Each mock data entry should include:
+- A valid **date** within the expected filter range
+- A valid **location** (used for location filters and breakdowns)
+
+This ensures consistency when filtering across widgets.
+
+---
+
+### 5. Aging Bucket Accuracy  
+Use actual dates to classify data into AR buckets:
+
+- For insurance: use `submission_date`  
+- For patient billing: use `statement_sent_date`
+
+Aging buckets must be:
+- 0–30 days  
+- 31–60 days  
+- 61–90 days  
+- 90+ days
+
+Ensure each item is placed correctly based on aging.
+
+---
+
+### 6. Avoid Double Counting Revenue  
+- Do **not** count the same transaction in both insurance and patient datasets.  
+- Patient and insurance revenue should be exclusive.  
+- Each widget should pull from the correct dataset only.
+
+---
+
+### 7. Maintain Realistic Data Ranges  
+Adjust mock data to follow these expectations:
+
+- Insurance Claim Collection Rate: **70–98%**  
+- Patient Payment Collection Rate: **60–90%**  
+- Denial Rate: **10–20%** of submitted claims
+
+Any values outside these ranges should be revised for realism.
+
+---
+
+## Final Instructions
+
+- Validate all mock data sources against these rules  
+- Correct any monthly totals, aging categories, or revenue calculations that don’t match  
+- Normalize all datasets across:
+  - Insurance Claims Tracker  
+  - Revenue Charts  
+  - Practice Insights  
+  - Patient Billing Analytics  
+  - AR Buckets  
