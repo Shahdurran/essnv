@@ -23,23 +23,9 @@ interface PatientBillingAnalyticsProps {
 }
 
 interface PatientBillingData {
-  totalOutstanding: number;
-  totalOutstandingTrend: number; // Percentage change from previous period
-  collectionRate: number;
-  collectionRateTrend: number;
-  agingBreakdown: {
-    days0to30: number;
-    days31to60: number;
-    days61to90: number;
-    days90plus: number;
-  };
-  topOverdueAccounts: {
-    patientId: string;
-    patientName: string;
-    balance: number;
-    daysOverdue: number;
-    actionStatus: 'Uncontacted' | 'Reminder Sent' | 'Payment Plan' | 'Collection Agency';
-  }[];
+  totalRevenue: number; // Total amount paid by patients in selected time period
+  totalPaid: number; // Portion of billed-to-patients that has been collected
+  totalOutstanding: number; // Portion of billed-to-patients that remains unpaid
 }
 
 /**
@@ -51,12 +37,12 @@ interface PatientBillingData {
  */
 export default function PatientBillingAnalytics({ selectedLocationId }: PatientBillingAnalyticsProps) {
 
-  // State for time range filtering - default to 30 days
-  const [timeRange, setTimeRange] = useState("30");
+  // State for time range filtering - default to 1 month
+  const [timeRange, setTimeRange] = useState("1");
 
   /**
-   * Fetch patient billing data from API
-   * Includes outstanding balances, collection rates, and overdue accounts
+   * Fetch simplified patient billing data from API
+   * Includes total revenue, total paid, and total outstanding
    */
   const { data: billingData, isLoading, error } = useQuery<PatientBillingData>({
     queryKey: ['/api/analytics/patient-billing', selectedLocationId, timeRange],
@@ -70,20 +56,13 @@ export default function PatientBillingAnalytics({ selectedLocationId }: PatientB
   });
 
   /**
-   * Calculate aging breakdown percentages for visualization
+   * Calculate collection rate percentage
    */
-  const getAgingPercentages = () => {
-    if (!billingData?.agingBreakdown) return { days0to30: 0, days31to60: 0, days61to90: 0, days90plus: 0 };
-    
-    const total = Object.values(billingData.agingBreakdown).reduce((sum, value) => sum + value, 0);
-    if (total === 0) return { days0to30: 0, days31to60: 0, days61to90: 0, days90plus: 0 };
-    
-    return {
-      days0to30: (billingData.agingBreakdown.days0to30 / total) * 100,
-      days31to60: (billingData.agingBreakdown.days31to60 / total) * 100,
-      days61to90: (billingData.agingBreakdown.days61to90 / total) * 100,
-      days90plus: (billingData.agingBreakdown.days90plus / total) * 100
-    };
+  const getCollectionRate = () => {
+    if (!billingData) return 0;
+    const totalBilled = billingData.totalPaid + billingData.totalOutstanding;
+    if (totalBilled === 0) return 0;
+    return (billingData.totalPaid / totalBilled) * 100;
   };
 
   /**
@@ -99,34 +78,16 @@ export default function PatientBillingAnalytics({ selectedLocationId }: PatientB
   };
 
   /**
-   * Format trend indicator with appropriate icon and color
+   * Get time range display label
    */
-  const formatTrend = (trend: number, isPositiveGood: boolean = true) => {
-    const isPositive = trend > 0;
-    const isGood = isPositiveGood ? isPositive : !isPositive;
-    const color = isGood ? "text-green-600" : "text-red-600";
-    const Icon = isPositive ? TrendingUp : TrendingDown;
-    
-    return (
-      <span className={`flex items-center ${color} text-sm ml-2`}>
-        <Icon className="w-4 h-4 mr-1" />
-        {Math.abs(trend).toFixed(1)}%
-      </span>
-    );
-  };
-
-  /**
-   * Get status badge styling based on action status
-   */
-  const getStatusBadge = (status: string) => {
-    const statusStyles = {
-      'Uncontacted': 'bg-red-100 text-red-800',
-      'Reminder Sent': 'bg-yellow-100 text-yellow-800',
-      'Payment Plan': 'bg-blue-100 text-blue-800',
-      'Collection Agency': 'bg-purple-100 text-purple-800'
+  const getTimeRangeLabel = (range: string) => {
+    const labels = {
+      '1': '1 Month',
+      '3': '3 Months', 
+      '6': '6 Months',
+      '12': '1 Year'
     };
-    
-    return statusStyles[status as keyof typeof statusStyles] || 'bg-gray-100 text-gray-800';
+    return labels[range as keyof typeof labels] || '1 Month';
   };
 
   if (isLoading) {
@@ -134,11 +95,10 @@ export default function PatientBillingAnalytics({ selectedLocationId }: PatientB
       <div className="bg-white rounded-lg border border-gray-200 p-6">
         <div className="animate-pulse">
           <div className="h-6 bg-gray-300 rounded w-1/3 mb-4"></div>
-          <div className="grid grid-cols-1 lg:grid-cols-4 gap-4">
-            <div className="h-32 bg-gray-300 rounded"></div>
-            <div className="h-32 bg-gray-300 rounded"></div>
-            <div className="h-32 bg-gray-300 rounded"></div>
-            <div className="h-32 bg-gray-300 rounded"></div>
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            <div className="h-24 bg-gray-300 rounded"></div>
+            <div className="h-24 bg-gray-300 rounded"></div>
+            <div className="h-24 bg-gray-300 rounded"></div>
           </div>
         </div>
       </div>
@@ -155,8 +115,6 @@ export default function PatientBillingAnalytics({ selectedLocationId }: PatientB
       </div>
     );
   }
-
-  const agingPercentages = getAgingPercentages();
 
   return (
     <div className="bg-white rounded-lg border border-gray-200 p-6">
@@ -175,133 +133,69 @@ export default function PatientBillingAnalytics({ selectedLocationId }: PatientB
         {/* Time Range Filter */}
         <div className="flex gap-2 mt-4 sm:mt-0">
           <span className="text-sm font-medium text-gray-700 mr-2">Time Range:</span>
-          {['30', '60', '90'].map((days) => (
+          {['1', '3', '6', '12'].map((months) => (
             <button
-              key={days}
-              onClick={() => setTimeRange(days)}
+              key={months}
+              onClick={() => setTimeRange(months)}
               className={`px-3 py-1 text-sm rounded-md border transition-colors ${
-                timeRange === days
+                timeRange === months
                   ? 'bg-primary text-white border-primary'
                   : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50'
               }`}
             >
-              {days} Days
+              {getTimeRangeLabel(months)}
             </button>
           ))}
         </div>
       </div>
 
-      {/* Main Analytics Grid */}
-      <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
+      {/* Simplified Metrics Grid */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         
-        {/* Total Outstanding Balance */}
-        <div className="bg-gray-50 rounded-lg p-4">
+        {/* Total Revenue from Patient Payments */}
+        <div className="bg-green-50 rounded-lg p-6 border border-green-100">
+          <div className="flex items-center justify-between mb-3">
+            <h3 className="text-sm font-medium text-gray-700">Total Revenue</h3>
+            <DollarSign className="w-5 h-5 text-green-600" />
+          </div>
+          <div className="space-y-1">
+            <p className="text-2xl font-bold text-gray-900">
+              {formatCurrency(billingData?.totalRevenue || 0)}
+            </p>
+            <p className="text-xs text-gray-600">Patient payments received</p>
+          </div>
+        </div>
+
+        {/* Total Paid */}
+        <div className="bg-blue-50 rounded-lg p-6 border border-blue-100">
+          <div className="flex items-center justify-between mb-3">
+            <h3 className="text-sm font-medium text-gray-700">Total Paid</h3>
+            <TrendingUp className="w-5 h-5 text-blue-600" />
+          </div>
+          <div className="space-y-1">
+            <p className="text-2xl font-bold text-gray-900">
+              {formatCurrency(billingData?.totalPaid || 0)}
+            </p>
+            <p className="text-xs text-gray-600">
+              Collection rate: {getCollectionRate().toFixed(1)}%
+            </p>
+          </div>
+        </div>
+
+        {/* Total Outstanding */}
+        <div className="bg-orange-50 rounded-lg p-6 border border-orange-100">
           <div className="flex items-center justify-between mb-3">
             <h3 className="text-sm font-medium text-gray-700">Total Outstanding</h3>
-            <Clock className="w-4 h-4 text-gray-500" />
+            <Clock className="w-5 h-5 text-orange-600" />
           </div>
-          <div className="flex items-center">
-            <span className="text-2xl font-bold text-gray-900">
+          <div className="space-y-1">
+            <p className="text-2xl font-bold text-gray-900">
               {formatCurrency(billingData?.totalOutstanding || 0)}
-            </span>
-            {billingData?.totalOutstandingTrend && formatTrend(billingData.totalOutstandingTrend, false)}
+            </p>
+            <p className="text-xs text-gray-600">Unpaid patient balances</p>
           </div>
         </div>
 
-        {/* Collection Rate */}
-        <div className="bg-gray-50 rounded-lg p-4">
-          <div className="flex items-center justify-between mb-3">
-            <h3 className="text-sm font-medium text-gray-700">Collection Rate</h3>
-            <TrendingUp className="w-4 h-4 text-gray-500" />
-          </div>
-          <div className="flex items-center">
-            <span className="text-2xl font-bold text-gray-900">
-              {billingData?.collectionRate?.toFixed(1) || 0}%
-            </span>
-            {billingData?.collectionRateTrend && formatTrend(billingData.collectionRateTrend, true)}
-          </div>
-        </div>
-
-        {/* Balance Aging Breakdown */}
-        <div className="bg-gray-50 rounded-lg p-4">
-          <h3 className="text-sm font-medium text-gray-700 mb-3">Balance Aging</h3>
-          <div className="space-y-2">
-            <div className="flex justify-between items-center">
-              <span className="text-xs text-gray-600">0-30 days</span>
-              <span className="text-xs font-medium">{agingPercentages.days0to30.toFixed(0)}%</span>
-            </div>
-            <div className="w-full bg-gray-200 rounded-full h-2">
-              <div 
-                className="bg-green-500 h-2 rounded-full transition-all duration-300" 
-                style={{ width: `${agingPercentages.days0to30}%` }}
-              ></div>
-            </div>
-            
-            <div className="flex justify-between items-center">
-              <span className="text-xs text-gray-600">31-60 days</span>
-              <span className="text-xs font-medium">{agingPercentages.days31to60.toFixed(0)}%</span>
-            </div>
-            <div className="w-full bg-gray-200 rounded-full h-2">
-              <div 
-                className="bg-yellow-500 h-2 rounded-full transition-all duration-300" 
-                style={{ width: `${agingPercentages.days31to60}%` }}
-              ></div>
-            </div>
-            
-            <div className="flex justify-between items-center">
-              <span className="text-xs text-gray-600">61-90 days</span>
-              <span className="text-xs font-medium">{agingPercentages.days61to90.toFixed(0)}%</span>
-            </div>
-            <div className="w-full bg-gray-200 rounded-full h-2">
-              <div 
-                className="bg-orange-500 h-2 rounded-full transition-all duration-300" 
-                style={{ width: `${agingPercentages.days61to90}%` }}
-              ></div>
-            </div>
-            
-            <div className="flex justify-between items-center">
-              <span className="text-xs text-gray-600">90+ days</span>
-              <span className="text-xs font-medium">{agingPercentages.days90plus.toFixed(0)}%</span>
-            </div>
-            <div className="w-full bg-gray-200 rounded-full h-2">
-              <div 
-                className="bg-red-500 h-2 rounded-full transition-all duration-300" 
-                style={{ width: `${agingPercentages.days90plus}%` }}
-              ></div>
-            </div>
-          </div>
-        </div>
-
-        {/* Top 3 Overdue Accounts */}
-        <div className="bg-gray-50 rounded-lg p-4">
-          <h3 className="text-sm font-medium text-gray-700 mb-3">Top Overdue Accounts</h3>
-          <div className="space-y-3">
-            {billingData?.topOverdueAccounts?.slice(0, 3).map((account, index) => (
-              <div key={account.patientId} className="border-l-4 border-red-400 pl-3">
-                <div className="flex justify-between items-start">
-                  <div className="min-w-0 flex-1">
-                    <p className="text-sm font-medium text-gray-900 truncate">
-                      {account.patientName}
-                    </p>
-                    <p className="text-xs text-gray-600">
-                      {account.daysOverdue} days overdue
-                    </p>
-                  </div>
-                  <div className="text-right ml-2">
-                    <p className="text-sm font-bold text-gray-900">
-                      {formatCurrency(account.balance)}
-                    </p>
-                    <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${getStatusBadge(account.actionStatus)}`}>
-                      {account.actionStatus}
-                    </span>
-                  </div>
-                </div>
-              </div>
-            )) || (
-              <p className="text-sm text-gray-500 text-center py-4">No overdue accounts</p>
-            )}
-          </div>
-        </div>
       </div>
     </div>
   );
