@@ -162,12 +162,12 @@ export default function Dashboard() {
         </div>
 
         {/* 
-          Revenue Projections Component
-          Monthly forecasting and projections based on historical data
+          Revenue Projections Component - Temporarily removed from UI
+          Component still exists but not displayed per user request
         */}
-        <RevenueProjections 
+        {/* <RevenueProjections 
           selectedLocationId={selectedLocationId}
-        />
+        /> */}
 
       </div>
     </div>
