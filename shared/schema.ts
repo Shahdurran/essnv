@@ -188,3 +188,29 @@ export interface ChatMessage {
   recommendations?: string[];
   metrics?: Record<string, string | number>;
 }
+
+// Insurance Claims data interface
+export interface InsuranceClaim {
+  id: string;
+  locationId: string;
+  insuranceProvider: string;
+  status: 'Pending' | 'Submitted' | 'Denied';
+  claimAmount: number;
+  patientId: string;
+  cptCode: string;
+  dateSubmitted: string;
+  denialReason?: string;
+  dateCreated: string;
+}
+
+// Claims breakdown for display
+export interface ClaimsBreakdown {
+  status: 'Pending' | 'Submitted' | 'Denied';
+  totalClaims: number;
+  totalAmount: number;
+  providers: {
+    name: string;
+    claimCount: number;
+    amount: number;
+  }[];
+}

@@ -2,6 +2,7 @@ import { useState } from "react";
 import LocationSelector from "@/components/LocationSelector";
 import AIBusinessAssistant from "@/components/AIBusinessAssistant";
 import KeyMetricsTrendsChart from "@/components/KeyMetricsTrendsChart";
+import InsuranceClaimsTracker from "@/components/InsuranceClaimsTracker";
 import TopRevenueProcedures from "@/components/TopRevenueProcedures";
 import PracticeInsights from "@/components/PracticeInsights";
 import RevenueProjections from "@/components/RevenueProjections";
@@ -37,7 +38,7 @@ export default function Dashboard() {
    * Updates the dashboard to show analytics for the selected location
    * @param {string} locationId - The ID of the selected location or "all"
    */
-  const handleLocationChange = (locationId) => {
+  const handleLocationChange = (locationId: string) => {
     setSelectedLocationId(locationId);
     // Additional analytics tracking could be added here
     console.log(`Dashboard filtered to location: ${locationId}`);
@@ -48,7 +49,7 @@ export default function Dashboard() {
    * Updates procedure analytics to show medical, cosmetic, or all procedures
    * @param {string} category - The procedure category: "medical", "cosmetic", or "all"
    */
-  const handleProcedureCategoryChange = (category) => {
+  const handleProcedureCategoryChange = (category: string) => {
     setSelectedProcedureCategory(category);
     console.log(`Procedure filter changed to: ${category}`);
   };
@@ -122,6 +123,15 @@ export default function Dashboard() {
           Supports multiple time periods and metric types
         */}
         <KeyMetricsTrendsChart 
+          selectedLocationId={selectedLocationId}
+        />
+
+        {/* 
+          Insurance Claims Tracker Component
+          Claims organized by status (Pending, Submitted, Denied) with provider breakdown
+          Positioned below revenue chart as requested in requirements
+        */}
+        <InsuranceClaimsTracker 
           selectedLocationId={selectedLocationId}
         />
 

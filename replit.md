@@ -17,6 +17,11 @@ MDS AI Analytics is a comprehensive AI-powered business analytics dashboard desi
 - ✅ Real dermatology procedures with accurate CPT codes and pricing
 - ✅ Location-specific data scaling and aggregation algorithms
 - ✅ Enhanced AI assistant with anti-hallucination safeguards
+- ✅ **NEW: Insurance Claims Tracker Component** (August 4, 2025)
+  - Claims organized by status: Pending, Submitted, Denied
+  - Insurance provider breakdown within each status bucket
+  - Location-based filtering integration
+  - Enhanced AI assistant with claims denial context
 
 ## User Preferences
 

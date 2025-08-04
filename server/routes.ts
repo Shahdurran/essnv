@@ -180,6 +180,21 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  /**
+   * GET /api/analytics/insurance-claims/:locationId - Get insurance claims breakdown by status
+   * Path params: locationId (or 'all')
+   */
+  app.get("/api/analytics/insurance-claims/:locationId", async (req, res) => {
+    try {
+      const { locationId } = req.params;
+      const claimsData = await storage.getInsuranceClaimsData(locationId);
+      res.json(claimsData);
+    } catch (error) {
+      console.error('Error fetching insurance claims data:', error);
+      res.status(500).json({ error: 'Failed to fetch insurance claims data' });
+    }
+  });
+
   // ============================================================================
   // AI BUSINESS ASSISTANT ROUTES
   // ============================================================================
@@ -202,6 +217,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const insuranceData = await storage.getInsurancePayerBreakdown();
       const projections = await storage.getPatientVolumeProjections();
       const locations = await storage.getAllPracticeLocations();
+      const claimsData = await storage.getInsuranceClaimsData('all');
+      const denialReasons = storage.getDenialReasonsData();
 
       // Prepare comprehensive context for the AI assistant with all available practice data
       const systemPrompt = `You are an AI business analytics assistant for Rao Dermatology, a multi-location dermatology practice owned by Dr. Babar K. Rao.
@@ -222,6 +239,12 @@ ${topProcedures.map(p => `- ${p.description} (${p.cptCode}): $${p.revenue.toLoca
 
 Insurance Payer Mix:
 ${insuranceData.map(i => `- ${i.name}: ${i.percentage}% of revenue, AR Days: ${i.arDays}, Monthly Revenue: $${i.revenue.toLocaleString()}`).join('\n')}
+
+Insurance Claims Status:
+${claimsData.map(status => `- ${status.status}: ${status.totalClaims} claims ($${status.totalAmount.toLocaleString()})`).join('\n')}
+
+Common Denial Reasons by Payer:
+${Object.entries(denialReasons).map(([payer, reasons]) => `- ${payer}: ${reasons.join(', ')}`).join('\n')}
 
 PATIENT VOLUME PROJECTIONS (Next 6 Months):
 ${projections.map(p => `- ${p.month}: ${p.projectedPatients} patients, $${p.projectedRevenue.toLocaleString()} revenue (${Math.round(p.confidenceLevel * 100)}% confidence)`).join('\n')}

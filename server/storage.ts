@@ -525,6 +525,145 @@ export class MemStorage implements IStorage {
     
     return projections;
   }
+
+  // Get insurance claims data by location with enhanced popular questions
+  async getPopularQuestions(): Promise<any[]> {
+    return [
+      {
+        id: "patient-forecast",
+        question: "What's our patient volume forecast for the next quarter?",
+        icon: "TrendingUp",
+        category: "Analytics",
+      },
+      {
+        id: "revenue-trends",
+        question: "How are our revenue trends compared to last year?",
+        icon: "DollarSign",
+        category: "Financial",
+      },
+      {
+        id: "top-procedures",
+        question: "Which procedures are generating the most revenue?",
+        icon: "Activity",
+        category: "Procedures",
+      },
+      {
+        id: "location-performance",
+        question: "How are our different locations performing?",
+        icon: "MapPin",
+        category: "Operations",
+      },
+      {
+        id: "claim-denials-blue-cross",
+        question: "Why are most claims denied for Blue Cross?",
+        icon: "AlertTriangle",
+        category: "Claims",
+      },
+      {
+        id: "reduce-claim-denials", 
+        question: "How can we reduce dermatology claim denials?",
+        icon: "Shield",
+        category: "Claims",
+      }
+    ];
+  }
+
+  async getInsuranceClaimsData(locationId: string): Promise<any[]> {
+    // Generate mock claims data with location-based scaling
+    const baseData = [
+      {
+        status: 'Pending' as const,
+        totalClaims: 245,
+        totalAmount: 187500,
+        providers: [
+          { name: "Blue Cross Blue Shield", claimCount: 89, amount: 67300 },
+          { name: "Aetna", claimCount: 67, amount: 51200 },
+          { name: "Cigna", claimCount: 45, amount: 34600 },
+          { name: "Medicare", claimCount: 44, amount: 34400 }
+        ]
+      },
+      {
+        status: 'Submitted' as const,
+        totalClaims: 432,
+        totalAmount: 324000,
+        providers: [
+          { name: "Blue Cross Blue Shield", claimCount: 156, amount: 117800 },
+          { name: "United Healthcare", claimCount: 98, amount: 73500 },
+          { name: "Aetna", claimCount: 87, amount: 65200 },
+          { name: "Cigna", claimCount: 91, amount: 67500 }
+        ]
+      },
+      {
+        status: 'Denied' as const,
+        totalClaims: 78,
+        totalAmount: 58900,
+        providers: [
+          { name: "Blue Cross Blue Shield", claimCount: 32, amount: 24100 },
+          { name: "Aetna", claimCount: 18, amount: 13600 },
+          { name: "Medicare", claimCount: 15, amount: 11300 },
+          { name: "Cigna", claimCount: 13, amount: 9900 }
+        ]
+      }
+    ];
+
+    // Scale data based on location
+    if (locationId === 'all') {
+      return baseData;
+    }
+    
+    // Scale down for individual locations
+    const locationScales = {
+      'manhattan-ny': 0.35,
+      'atlantic-highlands-nj': 0.2,
+      'woodbridge-nj': 0.2,
+      'fresno-ca': 0.15,
+      'hanford-ca': 0.1
+    };
+    
+    const scale = locationScales[locationId as keyof typeof locationScales] || 0.2;
+    
+    return baseData.map(bucket => ({
+      ...bucket,
+      totalClaims: Math.round(bucket.totalClaims * scale),
+      totalAmount: Math.round(bucket.totalAmount * scale),
+      providers: bucket.providers.map(provider => ({
+        ...provider,
+        claimCount: Math.round(provider.claimCount * scale),
+        amount: Math.round(provider.amount * scale)
+      }))
+    }));
+  }
+
+  // Denial reasons dataset for AI assistant context only
+  getDenialReasonsData(): Record<string, string[]> {
+    return {
+      "Blue Cross Blue Shield": [
+        "Incorrect CPT / ICD-10 Coding",
+        "Modifier Misuse (especially 25 / 59)",
+        "Insufficient Medical Necessity Documentation"
+      ],
+      "Aetna": [
+        "Missing or Incomplete Documentation", 
+        "Lack of Prior Authorization",
+        "Insurance Eligibility / Coverage Verification Issues"
+      ],
+      "Cigna": [
+        "Claim Submission After Deadline",
+        "Duplicate Claims",
+        "Bundling / Unbundling Errors"
+      ],
+      "Medicare": [
+        "Coordination of Benefits (COB) Issues",
+        "Incorrect CPT / ICD-10 Coding",
+        "Insufficient Medical Necessity Documentation"
+      ],
+      "United Healthcare": [
+        "Modifier Misuse (especially 25 / 59)",
+        "Missing or Incomplete Documentation",
+        "Lack of Prior Authorization"
+      ]
+    };
+  }
 }
 
 // Export singleton instance for use throughout the application
