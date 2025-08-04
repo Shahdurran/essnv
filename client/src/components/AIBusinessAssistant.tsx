@@ -99,24 +99,7 @@ export default function AIBusinessAssistant({ selectedLocationId }) {
       }
     }
     
-    // For streaming AI messages, gently scroll down to follow the content
-    if (lastMessage.type === 'ai' && lastMessage.isStreaming && lastMessage.content.length > 0) {
-      // Gradually scroll down to keep the streaming content visible
-      setTimeout(() => {
-        if (messagesContainerRef.current) {
-          const container = messagesContainerRef.current;
-          const isNearBottom = container.scrollHeight - container.scrollTop - container.clientHeight < 100;
-          
-          // Only auto-scroll if user is near the bottom (hasn't manually scrolled up)
-          if (isNearBottom) {
-            container.scrollTo({ 
-              top: container.scrollHeight, 
-              behavior: "smooth" 
-            });
-          }
-        }
-      }, 50);
-    }
+    // For streaming AI messages, the scrolling is handled in simulateTypingEffect for better real-time tracking
     
     // For user messages and completed AI messages, scroll to bottom
     if (!lastMessage.isStreaming) {
@@ -222,7 +205,7 @@ export default function AIBusinessAssistant({ selectedLocationId }) {
   };
 
   /**
-   * Simulate typing effect for AI responses with streaming
+   * Simulate typing effect for AI responses with streaming and real-time scrolling
    * @param {string} messageId - The message ID to update
    * @param {string} fullText - The complete response text
    * @param {object} responseData - Additional response data
@@ -248,17 +231,20 @@ export default function AIBusinessAssistant({ selectedLocationId }) {
       const delay = 30 + Math.random() * 40; // 30-70ms per word
       await new Promise(resolve => setTimeout(resolve, delay));
       
-      // Trigger a scroll update after each word for smooth following
-      if (i > 0 && i % 5 === 0) { // Every 5 words, trigger a gentle scroll
+      // Real-time scrolling to follow the growing content
+      if (messagesContainerRef.current) {
         const container = messagesContainerRef.current;
-        if (container) {
-          const isNearBottom = container.scrollHeight - container.scrollTop - container.clientHeight < 150;
-          if (isNearBottom) {
+        const isUserNearBottom = container.scrollHeight - container.scrollTop - container.clientHeight < 100;
+        
+        // Only auto-scroll if user hasn't manually scrolled up
+        if (isUserNearBottom) {
+          // Smoothly scroll to show the latest content
+          requestAnimationFrame(() => {
             container.scrollTo({ 
               top: container.scrollHeight, 
-              behavior: "auto" // Use auto for frequent updates to avoid choppiness
+              behavior: "auto" // Use auto for smooth real-time following
             });
-          }
+          });
         }
       }
     }
