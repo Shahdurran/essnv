@@ -78,17 +78,17 @@ export function generatePatientVolumeProjections(months = 6) {
 }
 
 /**
- * Real Rao Dermatology practice locations data
+ * Demo dermatology practice locations data
  */
 export const practiceLocations = [
   {
     id: "manhattan-ny",
     name: "Manhattan, NY",
-    address: "900 Broadway, Suite 203",
+    address: "123 Demo Avenue, Suite 100",
     city: "New York",
     state: "NY",
-    zipCode: "10003",
-    phone: "212-949-0393",
+    zipCode: "10001",
+    phone: "555-001-0001",
     isActive: true,
     patientVolume: 425,
     monthlyRevenue: 178500
@@ -96,11 +96,11 @@ export const practiceLocations = [
   {
     id: "atlantic-highlands-nj",
     name: "Atlantic Highlands, NJ",
-    address: "95 First Avenue",
+    address: "456 Sample Street",
     city: "Atlantic Highlands",
     state: "NJ",
-    zipCode: "07716",
-    phone: "732-872-2007",
+    zipCode: "07700",
+    phone: "555-002-0002",
     isActive: true,
     patientVolume: 298,
     monthlyRevenue: 125600
@@ -108,11 +108,11 @@ export const practiceLocations = [
   {
     id: "woodbridge-nj",
     name: "Woodbridge, NJ",
-    address: "850-B Woodbridge Center Drive",
+    address: "789 Example Blvd, Suite 200",
     city: "Woodbridge",
     state: "NJ",
-    zipCode: "07095",
-    phone: "732-872-5802",
+    zipCode: "07090",
+    phone: "555-003-0003",
     isActive: true,
     patientVolume: 312,
     monthlyRevenue: 134800
@@ -120,11 +120,11 @@ export const practiceLocations = [
   {
     id: "fresno-ca",
     name: "Fresno, CA",
-    address: "7055 North Fresno St, Suite 310",
+    address: "321 Test Road, Suite 300",
     city: "Fresno",
     state: "CA",
-    zipCode: "93720",
-    phone: "559-446-0285",
+    zipCode: "93700",
+    phone: "555-004-0004",
     isActive: true,
     patientVolume: 156,
     monthlyRevenue: 89200
@@ -132,11 +132,11 @@ export const practiceLocations = [
   {
     id: "hanford-ca",
     name: "Hanford, CA",
-    address: "609 N. Douty St.",
+    address: "654 Demo Plaza",
     city: "Hanford",
     state: "CA",
-    zipCode: "93230",
-    phone: "559-582-2422",
+    zipCode: "93200",
+    phone: "555-005-0005",
     isActive: true,
     patientVolume: 134,
     monthlyRevenue: 76400

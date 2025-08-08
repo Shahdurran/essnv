@@ -138,60 +138,60 @@ export class MemStorage implements IStorage {
     this.aiQueries = new Map();
     this.performanceMetrics = new Map();
 
-    // Initialize with real Rao Dermatology data
+    // Initialize with demo dermatology data
     this.initializeRealData();
   }
 
   /**
-   * Initialize storage with authentic Rao Dermatology practice data
-   * This includes real locations, procedures, and sample analytics data
+   * Initialize storage with demo dermatology practice data
+   * This includes generic locations, procedures, and sample analytics data
    */
   private initializeRealData(): void {
-    // Initialize real practice locations
+    // Initialize demo practice locations
     const locations: InsertPracticeLocation[] = [
       {
         name: "Manhattan, NY",
-        address: "900 Broadway, Suite 203",
+        address: "123 Demo Avenue, Suite 100",
         city: "New York",
         state: "NY",
-        zipCode: "10003",
-        phone: "212-949-0393",
+        zipCode: "10001",
+        phone: "555-001-0001",
         isActive: true
       },
       {
         name: "Atlantic Highlands, NJ",
-        address: "95 First Avenue",
+        address: "456 Sample Street",
         city: "Atlantic Highlands",
         state: "NJ",
-        zipCode: "07716",
-        phone: "732-872-2007",
+        zipCode: "07700",
+        phone: "555-002-0002",
         isActive: true
       },
       {
         name: "Woodbridge, NJ",
-        address: "850-B Woodbridge Center Drive",
+        address: "789 Example Blvd, Suite 200",
         city: "Woodbridge",
         state: "NJ",
-        zipCode: "07095",
-        phone: "732-872-5802",
+        zipCode: "07090",
+        phone: "555-003-0003",
         isActive: true
       },
       {
         name: "Fresno, CA",
-        address: "7055 North Fresno St, Suite 310",
+        address: "321 Test Road, Suite 300",
         city: "Fresno",
         state: "CA",
-        zipCode: "93720",
-        phone: "559-446-0285",
+        zipCode: "93700",
+        phone: "555-004-0004",
         isActive: true
       },
       {
         name: "Hanford, CA",
-        address: "609 N. Douty St.",
+        address: "654 Demo Plaza",
         city: "Hanford",
         state: "CA",
-        zipCode: "93230",
-        phone: "559-582-2422",
+        zipCode: "93200",
+        phone: "555-005-0005",
         isActive: true
       }
     ];
@@ -234,11 +234,11 @@ export class MemStorage implements IStorage {
 
     // Create default practice owner user
     this.createUser({
-      username: "dr.rao",
+      username: "dr.example",
       password: "secure_password", // In production, this would be hashed
-      name: "Dr. Babar K. Rao",
+      name: "Dr. Example User",
       role: "practice_owner",
-      practiceId: "rao_dermatology"
+      practiceId: "demo_dermatology"
     });
   }
 

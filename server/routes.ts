@@ -314,10 +314,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const denialReasons = storage.getDenialReasonsData();
 
       // Prepare comprehensive context for the AI assistant with all available practice data
-      const systemPrompt = `You are an AI business analytics assistant for Rao Dermatology, a multi-location dermatology practice owned by Dr. Babar K. Rao.
+      const systemPrompt = `You are an AI business analytics assistant for Demo Dermatology Practice, a multi-location dermatology practice owned by Dr. Example User.
 
 PRACTICE OVERVIEW:
-- Practice Owner: Dr. Babar K. Rao, Board-Certified Dermatologist
+- Practice Owner: Dr. Example User, Board-Certified Dermatologist
 - 5 Active Locations: Manhattan NY, Atlantic Highlands NJ, Woodbridge NJ, Fresno CA, Hanford CA
 - Specialties: Medical Dermatology (Mohs surgery, skin cancer treatment) & Cosmetic Dermatology (Botox, fillers, laser treatments)
 - Total Staff: 47 employees across all locations

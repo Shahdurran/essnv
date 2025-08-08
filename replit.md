@@ -1,4 +1,4 @@
-# MDS AI Analytics - Rao Dermatology Business Intelligence Platform
+# MDS AI Analytics - Demo Dermatology Business Intelligence Platform
 
 ## Version 2.1 - AI Assistant Enhancements and Data Scaling Fixes
 **Release Date:** August 4, 2025  
@@ -14,7 +14,9 @@
 
 ## Overview
 
-MDS AI Analytics is a comprehensive AI-powered business analytics dashboard designed specifically for Rao Dermatology's multi-location practice management. The platform provides real-time insights, forecasting, and natural language analytics queries through an AI business assistant powered by OpenAI GPT-4o. The application serves 5 practice locations and offers comprehensive analytics for both medical and cosmetic dermatology procedures, including revenue projections, patient volume analysis, insurance breakdown, and key performance indicators.
+MDS AI Analytics is a comprehensive AI-powered business analytics dashboard designed for multi-location dermatology practice management. The platform provides real-time insights, forecasting, and natural language analytics queries through an AI business assistant powered by OpenAI GPT-4o. The application serves 5 demo practice locations and offers comprehensive analytics for both medical and cosmetic dermatology procedures, including revenue projections, patient volume analysis, insurance breakdown, and key performance indicators.
+
+**Note:** This is now a generalized demo version with anonymized data, generic addresses (555 phone numbers), and "Dr. Example User" instead of specific practitioner information, making it suitable for broader demonstration purposes.
 
 ## Version 2.1 Features Completed
 

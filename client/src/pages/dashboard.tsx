@@ -9,12 +9,12 @@ import RevenueProjections from "@/components/RevenueProjections";
 import PatientBillingAnalytics from "@/components/PatientBillingAnalytics";
 import ARBucketsWidget from "@/components/ARBucketsWidget";
 import mdsLogo from "@assets/MDS Logo_1754254040718.png";
-import drRaoPhoto from "@assets/image_1754253968575.png";
+import genericUserPhoto from "@assets/generic user pic_1754672840832.png";
 
 /**
  * Main Dashboard Component for MDS AI Analytics
  * 
- * This is the primary interface for the Rao Dermatology business intelligence platform.
+ * This is the primary interface for the Demo Dermatology business intelligence platform.
  * It provides a comprehensive view of practice analytics including:
  * - Location-based analytics selection
  * - AI-powered business assistant for natural language queries
@@ -74,19 +74,19 @@ export default function Dashboard() {
               />
               <div className="min-w-0 flex-1">
                 <h1 className="text-sm sm:text-xl font-bold text-gray-900 truncate">MDS AI Analytics</h1>
-                <p className="text-xs sm:text-sm text-gray-600 hidden sm:block">Rao Dermatology Business Intelligence</p>
+                <p className="text-xs sm:text-sm text-gray-600 hidden sm:block">Demo Dermatology Practice Intelligence</p>
               </div>
             </div>
             
             {/* User Profile Section - Mobile Optimized */}
             <div className="flex items-center space-x-2 sm:space-x-4 flex-shrink-0">
               <div className="text-right hidden sm:block">
-                <p className="text-sm font-medium text-gray-900">Dr. Babar K. Rao</p>
+                <p className="text-sm font-medium text-gray-900">Dr. Example User</p>
                 <p className="text-xs text-gray-600">Practice Owner</p>
               </div>
               <img 
-                src={drRaoPhoto} 
-                alt="Dr. Babar K. Rao" 
+                src={genericUserPhoto} 
+                alt="Dr. Example User" 
                 className="w-8 h-8 sm:w-10 sm:h-10 rounded-full object-cover border-2 border-blue-100"
               />
             </div>
@@ -103,7 +103,7 @@ export default function Dashboard() {
         {/* 
           Location Selector Component
           Allows users to filter analytics by practice location
-          Supports all 5 Rao Dermatology locations plus "All Locations" option
+          Supports all 5 demo practice locations plus "All Locations" option
         */}
         <LocationSelector 
           selectedLocationId={selectedLocationId}

@@ -17,7 +17,7 @@ import {
   MessageSquare,
   Loader2
 } from "lucide-react";
-import drRaoPhoto from "@assets/image_1754326344792.png";
+import genericUserPhoto from "@assets/generic user pic_1754672840832.png";
 
 /**
  * AIBusinessAssistant Component
@@ -50,7 +50,7 @@ export default function AIBusinessAssistant({ selectedLocationId }) {
   const messagesContainerRef = useRef(null);
   
   // Static user ID for demo purposes (in production, this would come from auth)
-  const userId = "dr-rao-demo";
+  const userId = "example-user-demo";
 
   /**
    * Fetch popular questions for the quick access grid
@@ -67,7 +67,7 @@ export default function AIBusinessAssistant({ selectedLocationId }) {
     const welcomeMessage = {
       id: "welcome",
       type: "ai",
-      content: "Hi Dr. Rao! I'm your AI business analytics assistant. Ask me anything about your practice performance, forecasts, or key metrics across your 5 locations.",
+      content: "Hi Dr. Example User! I'm your AI business analytics assistant. Ask me anything about your practice performance, forecasts, or key metrics across your 5 locations.",
       timestamp: new Date().toISOString(),
       isWelcome: true
     };
@@ -478,8 +478,8 @@ export default function AIBusinessAssistant({ selectedLocationId }) {
               {message.type === 'user' && (
                 <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-lg overflow-hidden flex-shrink-0 ml-2 sm:ml-3">
                   <img 
-                    src={drRaoPhoto} 
-                    alt="Dr. Babar K. Rao"
+                    src={genericUserPhoto} 
+                    alt="Dr. Example User"
                     className="w-full h-full object-cover"
                   />
                 </div>
