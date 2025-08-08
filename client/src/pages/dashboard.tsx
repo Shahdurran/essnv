@@ -59,10 +59,27 @@ export default function Dashboard() {
   return (
     <div className="min-h-screen bg-gray-50 overflow-x-hidden">
       {/* 
+        Demo Disclaimer Banner
+        Informs users this is a demonstration with static mock data
+      */}
+      <div className="bg-amber-50 border-b border-amber-200 px-3 sm:px-6 lg:px-8 py-2">
+        <div className="max-w-7xl mx-auto">
+          <div className="flex items-center justify-center text-center">
+            <div className="flex items-center space-x-2">
+              <div className="w-2 h-2 bg-amber-400 rounded-full animate-pulse"></div>
+              <p className="text-xs sm:text-sm text-amber-800 font-medium">
+                <span className="font-semibold">Demo Mode:</span> This is a demonstration using static mock data. Some functionality may be limited.
+              </p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* 
         Header Section - Mobile Responsive
         Displays practice branding and user information matching the design
       */}
-      <header className="bg-white border-b border-gray-200 sticky top-0 z-50">
+      <header className="bg-white border-b border-gray-200 sticky top-0 z-40">
         <div className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center h-14 sm:h-16">
             {/* Brand and Logo Section - Mobile Optimized */}
