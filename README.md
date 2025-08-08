@@ -4,7 +4,7 @@ A comprehensive AI-powered business analytics dashboard designed specifically fo
 
 ## 🏥 Overview
 
-MDS AI Analytics is a modern web application that combines business intelligence with AI-powered assistance to provide actionable insights for dermatology practice management. The platform serves Dr. Babar K. Rao and the Rao Dermatology team with comprehensive analytics across their locations in New York, New Jersey, and California.
+MDS AI Analytics is a modern web application that combines business intelligence with AI-powered assistance to provide actionable insights for dermatology practice management. This demo version serves as an example for multi-location dermatology practices with comprehensive analytics across locations in New York, New Jersey, and California.
 
 ### Key Features
 

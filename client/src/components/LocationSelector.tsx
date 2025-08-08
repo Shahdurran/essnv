@@ -174,7 +174,7 @@ export default function LocationSelector({ selectedLocationId, onLocationChange 
                   Viewing aggregated analytics across all practice locations
                 </p>
                 <p className="text-xs text-blue-700">
-                  Data includes all {locations.length} Rao Dermatology locations
+                  Data includes all {locations.length} demo practice locations
                 </p>
               </div>
               <div className="text-right">
