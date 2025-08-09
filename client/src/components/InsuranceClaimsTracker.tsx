@@ -1,42 +1,100 @@
+/*
+ * INSURANCE CLAIMS TRACKER COMPONENT
+ * ==================================
+ * 
+ * This component provides comprehensive tracking and analysis of insurance claims
+ * throughout their lifecycle, from submission to final payment or denial. It's
+ * essential for medical practice revenue cycle management.
+ * 
+ * MEDICAL BILLING CONTEXT:
+ * Insurance claims follow a predictable workflow:
+ * 1. Submitted: Claims sent to insurance for processing
+ * 2. Pending: Claims under review (may need additional information)
+ * 3. Paid: Claims approved and payment received
+ * 4. Denied: Claims rejected (may require appeal or patient billing)
+ * 
+ * BUSINESS VALUE FOR PRACTICES:
+ * Tracking claims by status helps practices:
+ * - Identify bottlenecks in the revenue cycle
+ * - Monitor payer performance and reliability
+ * - Manage cash flow expectations
+ * - Prioritize follow-up efforts on pending claims
+ * - Track denial rates by insurance provider
+ * - Optimize billing processes for faster payment
+ * 
+ * REVENUE CYCLE MANAGEMENT:
+ * This component supports key RCM activities:
+ * - Claims aging analysis
+ * - Payer performance monitoring
+ * - Denial management workflows
+ * - Cash flow forecasting
+ * - AR (Accounts Receivable) optimization
+ * 
+ * COMPONENT FEATURES:
+ * - Four-bucket organization matches industry standards
+ * - Provider-level breakdown within each status
+ * - Date filtering for trend analysis
+ * - Real-time claim counts and dollar amounts
+ * - Professional medical billing interface
+ */
+
+// React hooks for state management
 import { useState } from "react";
+// TanStack Query for server state management
 import { useQuery } from "@tanstack/react-query";
+// Shadcn UI components for consistent design
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+// Lucide React icons for claims management interface
 import { 
-  Clock, 
-  Send, 
-  XCircle, 
-  FileText,
-  TrendingUp,
-  AlertTriangle,
-  CheckCircle2,
-  DollarSign
+  Clock,         // Pending/timing indicators
+  Send,          // Submitted claims
+  XCircle,       // Denied claims
+  FileText,      // General claims/documents
+  TrendingUp,    // Performance trends
+  AlertTriangle, // Attention/warning indicators
+  CheckCircle2,  // Approved/paid claims
+  DollarSign     // Financial amounts
 } from "lucide-react";
+// Date filtering component for time-based analysis
 import DateFilter from "./DateFilter";
+// TypeScript interface for claims data
 import type { ClaimsBreakdown } from "../../../shared/schema";
 
+/*
+ * TYPESCRIPT INTERFACE DEFINITION
+ * ===============================
+ * 
+ * Define the component props interface for type safety and documentation.
+ * This component needs location context for filtering claims data.
+ */
 interface InsuranceClaimsTrackerProps {
-  selectedLocationId: string;
+  selectedLocationId: string;  // Location filter for claims analysis
 }
 
-/**
- * InsuranceClaimsTracker Component
+/*
+ * MAIN INSURANCE CLAIMS TRACKER COMPONENT
+ * =======================================
  * 
- * Displays insurance claim statuses organized into 4 buckets (Submitted, Paid, Pending, Denied).
- * Each bucket shows breakdown by insurance provider with claim counts and amounts.
- * Includes location-based filtering and unified date filtering.
+ * This component fetches and displays insurance claims data organized by status
+ * with detailed breakdown by insurance provider and time-based filtering.
  * 
- * Features:
- * - Four status buckets: Submitted, Paid, Pending, Denied
- * - Insurance provider breakdown within each bucket (scrollable)
- * - Real-time claim counts and dollar amounts
- * - Location filtering integration 
- * - Unified date filtering with presets and custom range
- * - Professional medical claim management UI
- * - Responsive design matching dashboard specifications
+ * COMPONENT RESPONSIBILITIES:
+ * 1. Fetch claims data from API with location and date filtering
+ * 2. Organize claims into four status buckets
+ * 3. Show provider breakdown within each status
+ * 4. Display claim counts and dollar amounts
+ * 5. Provide date range filtering functionality
+ * 6. Handle loading states and error conditions
  * 
- * @param {Object} props - Component properties
- * @param {string} props.selectedLocationId - Currently selected location for filtering
+ * CLAIMS WORKFLOW VISUALIZATION:
+ * The four-bucket display helps users understand claim progression:
+ * - Submitted: Total claims sent to insurers
+ * - Pending: Claims awaiting approval/denial decision
+ * - Paid: Claims successfully processed and paid
+ * - Denied: Claims rejected (may require appeal)
+ * 
+ * @param {InsuranceClaimsTrackerProps} props - Component properties
  */
 export default function InsuranceClaimsTracker({ selectedLocationId }: InsuranceClaimsTrackerProps) {
 

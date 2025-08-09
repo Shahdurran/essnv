@@ -1,37 +1,95 @@
+/*
+ * REVENUE PROJECTIONS COMPONENT
+ * =============================
+ * 
+ * This component displays forward-looking revenue and patient volume forecasts that
+ * help medical practice managers plan for the future and make informed business
+ * decisions based on predictive analytics.
+ * 
+ * BUSINESS FORECASTING VALUE:
+ * Medical practices benefit from revenue projections to:
+ * - Plan staffing levels for anticipated patient volume
+ * - Budget for equipment purchases and facility improvements
+ * - Negotiate with insurance payers from a position of knowledge
+ * - Identify seasonal trends for operational planning
+ * - Set realistic revenue targets and growth goals
+ * - Make data-driven decisions about practice expansion
+ * 
+ * FORECASTING METHODOLOGY:
+ * Our projections are based on:
+ * - Historical revenue and patient volume data
+ * - Seasonal adjustment factors
+ * - Growth trend analysis
+ * - Market conditions and economic factors
+ * - Confidence intervals to communicate uncertainty
+ * 
+ * MEDICAL PRACTICE CONSIDERATIONS:
+ * Healthcare forecasting has unique challenges:
+ * - Insurance reimbursement rate changes
+ * - Seasonal patient volume variations
+ * - New procedure adoption rates
+ * - Regulatory changes affecting billing
+ * - Competition from other practices
+ * 
+ * USER EXPERIENCE DESIGN:
+ * - Clear confidence level indicators
+ * - Easy-to-scan card layout
+ * - Color-coded performance indicators
+ * - Future-focused visual styling
+ * - Comparison with historical performance
+ */
+
+// TanStack Query for server state management
 import { useQuery } from "@tanstack/react-query";
+// Shadcn UI components for consistent design
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+// Lucide React icons for projection and forecasting themes
 import { 
-  TrendingUp, 
-  Calendar, 
-  DollarSign, 
-  Users,
-  ArrowUpRight,
-  Target
+  TrendingUp,    // Growth and positive trends
+  Calendar,      // Time-based projections
+  DollarSign,    // Revenue forecasts
+  Users,         // Patient volume projections
+  ArrowUpRight,  // Directional growth indicators
+  Target         // Goal and target achievement
 } from "lucide-react";
+// TypeScript interface for projection data
 import type { ProjectionData } from "../../../shared/schema";
 
+/*
+ * TYPESCRIPT INTERFACE DEFINITION
+ * ===============================
+ * 
+ * Define the component props interface for type safety and clear documentation.
+ * This component needs location context for generating accurate projections.
+ */
 interface RevenueProjectionsProps {
-  selectedLocationId: string;
+  selectedLocationId: string;  // Location filter for projection calculations
 }
 
-/**
- * RevenueProjections Component
+/*
+ * MAIN REVENUE PROJECTIONS COMPONENT
+ * ==================================
  * 
- * Displays monthly revenue and patient volume forecasts based on historical data.
- * Provides 6-month forward projections with confidence levels and growth metrics.
- * Integrates machine learning forecasting algorithms for accurate predictions.
+ * This component fetches and displays forward-looking revenue and patient volume
+ * projections with confidence levels and growth analysis.
  * 
- * Features:
- * - 6-month revenue and patient projections
- * - Confidence level indicators for each projection
- * - Growth rate calculations vs previous year
- * - Professional projection cards with gradient backgrounds
- * - Location-based projection filtering
- * - Real-time forecast updates
+ * COMPONENT RESPONSIBILITIES:
+ * 1. Fetch projection data from forecasting API
+ * 2. Display 6-month forward revenue projections
+ * 3. Show patient volume forecasts
+ * 4. Indicate confidence levels for each projection
+ * 5. Calculate and display growth rates
+ * 6. Handle loading states and error conditions
  * 
- * @param {Object} props - Component properties
- * @param {string} props.selectedLocationId - Currently selected location for filtering
+ * PROJECTION FEATURES:
+ * - Monthly revenue forecasts for 6 months ahead
+ * - Patient volume projections with seasonal adjustments
+ * - Confidence intervals indicating forecast reliability
+ * - Year-over-year growth rate comparisons
+ * - Visual indicators for projection trends
+ * 
+ * @param {RevenueProjectionsProps} props - Component properties
  */
 export default function RevenueProjections({ selectedLocationId }: RevenueProjectionsProps) {
 

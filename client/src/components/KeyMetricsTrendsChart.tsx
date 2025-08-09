@@ -1,14 +1,73 @@
+/*
+ * KEY METRICS TRENDS CHART COMPONENT
+ * ==================================
+ * 
+ * This component creates sophisticated time-series visualizations for medical practice
+ * business intelligence. It combines historical data with AI-powered projections to
+ * help practice managers understand trends and make informed decisions.
+ * 
+ * BUSINESS INTELLIGENCE VALUE:
+ * Medical practices need to track key performance indicators over time to:
+ * - Identify seasonal patterns (flu season increases dermatology visits)
+ * - Plan staffing based on patient volume trends
+ * - Project revenue for financial planning
+ * - Monitor practice growth and performance
+ * - Spot declining metrics early for intervention
+ * 
+ * CHART.JS INTEGRATION:
+ * We use Chart.js for visualization because it provides:
+ * - Professional-quality charts suitable for medical dashboards
+ * - Interactive features (hover, zoom, pan)
+ * - Responsive design that works on all devices
+ * - Extensive customization options for medical branding
+ * - Performance optimization for large datasets
+ * 
+ * ADVANCED REACT PATTERNS:
+ * - useRef for Chart.js instance management
+ * - useEffect for chart lifecycle management
+ * - Multiple useState hooks for complex UI state
+ * - Custom hooks for data processing
+ * - Conditional rendering for loading states
+ * 
+ * DATA VISUALIZATION CONCEPTS:
+ * - Time series analysis with trend lines
+ * - Actual vs projected data comparison
+ * - Multi-metric visualization (revenue, patients, procedures)
+ * - Color coding for data interpretation
+ * - Interactive legends and tooltips
+ */
+
+// React hooks for state management and lifecycle
 import { useState, useEffect, useRef } from "react";
+// TanStack Query for server state management
 import { useQuery } from "@tanstack/react-query";
+// Shadcn UI components for consistent design
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
+// Lucide React icons for visual enhancement
 import { TrendingUp, Calendar, BarChart3 } from "lucide-react";
+// Mock data generator for realistic analytics
 import { generateRevenueTimeSeriesData } from "@/lib/mockData";
+// TypeScript interfaces for type safety
 import type { RevenueDataPoint } from "../../../shared/schema";
 
-// Chart.js imports
+/*
+ * CHART.JS LIBRARY SETUP
+ * ======================
+ * 
+ * Chart.js is a modular charting library that requires explicit registration
+ * of components to keep bundle size small. We import only what we need.
+ * 
+ * COMPONENT EXPLANATIONS:
+ * - CategoryScale: For X-axis labels (months, years)
+ * - LinearScale: For Y-axis numeric values (revenue, patient counts)
+ * - PointElement: For data points on line charts
+ * - LineElement: For connecting lines between points
+ * - LineController: For managing line chart behavior
+ * - Title, Tooltip, Legend: For chart annotations and interactivity
+ */
 import {
   Chart as ChartJS,
   CategoryScale,
@@ -23,7 +82,18 @@ import {
   type Chart
 } from 'chart.js';
 
-// Register Chart.js components including LineController
+/*
+ * CHART.JS COMPONENT REGISTRATION
+ * ===============================
+ * 
+ * Register all Chart.js components that our charts will use.
+ * This must be done before creating any chart instances.
+ * 
+ * WHY REGISTRATION IS REQUIRED:
+ * Chart.js uses a plugin architecture where features are opt-in.
+ * This keeps the library lightweight and allows tree-shaking
+ * to remove unused features from production bundles.
+ */
 ChartJS.register(
   CategoryScale,
   LinearScale,
@@ -35,24 +105,39 @@ ChartJS.register(
   Legend
 );
 
+/*
+ * TYPESCRIPT INTERFACE DEFINITION
+ * ===============================
+ * 
+ * Define the props interface for type safety and documentation.
+ * This component needs location context for filtering analytics data.
+ */
 interface KeyMetricsTrendsChartProps {
-  selectedLocationId: string;
+  selectedLocationId: string;  // Location filter for analytics data
 }
 
-/**
- * KeyMetricsTrendsChart Component
+/*
+ * MAIN KEY METRICS TRENDS CHART COMPONENT
+ * =======================================
  * 
- * Advanced analytics chart component with projections and time series visualization.
- * Displays key business metrics with actual vs projected performance comparison.
- * Supports multiple time periods and metric types for comprehensive analysis.
+ * This component creates an interactive time-series chart that displays key
+ * practice metrics over time with trend analysis and projections.
  * 
- * Features:
- * - Interactive Chart.js visualization with actual and projected data
- * - Time period selection (1yr, 2yr, 5yr)
- * - Multiple metric types (revenue, patient volume, AR days, etc.)
- * - Location-based filtering integration
- * - Professional medical UI design matching specifications
- * - Real-time data updates and projections
+ * COMPONENT RESPONSIBILITIES:
+ * 1. Fetch historical metrics data from API
+ * 2. Create and manage Chart.js chart instance
+ * 3. Handle user interactions (time period, metric type selection)
+ * 4. Display loading states and error handling
+ * 5. Provide business insights through visualizations
+ * 
+ * CHART FEATURES:
+ * - Multi-time period support (1yr, 2yr, 5yr)
+ * - Multiple metric types (revenue, patients, procedures)
+ * - Trend line analysis with projections
+ * - Interactive tooltips with detailed information
+ * - Responsive design for all screen sizes
+ * 
+ * @param {KeyMetricsTrendsChartProps} props - Component properties
  */
 export default function KeyMetricsTrendsChart({ selectedLocationId }: KeyMetricsTrendsChartProps) {
   

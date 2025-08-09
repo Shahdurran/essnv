@@ -1,16 +1,63 @@
-/**
- * OpenAI Integration Module for MDS AI Analytics
- * Handles all interactions with the OpenAI GPT-4o API for the business analytics assistant
+/*
+ * OPENAI INTEGRATION MODULE FOR MDS AI ANALYTICS
+ * ==============================================
  * 
- * This module provides a clean interface for sending analytics queries to the AI assistant
- * and processing responses in the context of dermatology practice management.
+ * This module provides the client-side interface for communicating with our AI
+ * business assistant, which is powered by OpenAI's GPT-4o model. It handles
+ * query submission, response processing, and error handling for natural language
+ * analytics queries.
+ * 
+ * AI ASSISTANT CAPABILITIES:
+ * The AI assistant can answer questions about:
+ * - Revenue trends and projections
+ * - Patient volume analysis
+ * - Procedure performance comparisons
+ * - Insurance claim patterns
+ * - Location-specific analytics
+ * - Business recommendations and insights
+ * 
+ * TECHNICAL ARCHITECTURE:
+ * Client (this module) → Backend API → OpenAI GPT-4o → Backend processing → Client response
+ * 
+ * ERROR HANDLING PHILOSOPHY:
+ * We provide graceful fallbacks and user-friendly error messages rather than
+ * exposing technical errors to medical practice users.
+ * 
+ * SECURITY CONSIDERATIONS:
+ * - All queries are routed through our backend (no direct OpenAI calls from frontend)
+ * - Practice data is anonymized before sending to OpenAI
+ * - User sessions are maintained securely
+ * - No sensitive patient information is included in AI queries
  */
 
-/**
- * Submit a query to the AI business assistant
- * @param {string} query - The natural language query about practice analytics
- * @param {string} userId - Optional user ID for tracking query history
- * @returns {Promise<Object>} AI response with analytics insights
+/*
+ * SUBMIT AI QUERY FUNCTION
+ * ========================
+ * 
+ * This is the main function for sending natural language questions to our AI
+ * business assistant. It handles the complete request/response cycle with proper
+ * error handling and response formatting.
+ * 
+ * FUNCTION PARAMETERS:
+ * @param {string} query - The user's natural language question about their practice
+ * @param {string|null} userId - User identifier for query tracking (optional)
+ * @param {string} locationId - Location filter context for the AI (defaults to 'all')
+ * @param {string} timeRange - Time period context for the AI (defaults to '1' month)
+ * 
+ * RETURN VALUE:
+ * Returns a standardized response object with:
+ * - success: Boolean indicating if the query was processed successfully
+ * - data: The AI response with analytics insights
+ * - error: Error message if something went wrong
+ * - timestamp: When the response was generated
+ * 
+ * EXAMPLE USAGE:
+ * const result = await submitAIQuery(
+ *   "What's our top revenue procedure this month?",
+ *   "user123",
+ *   "manhattan-ny",
+ *   "1"
+ * );
  */
 export async function submitAIQuery(query: string, userId: string | null = null, locationId: string = 'all', timeRange: string = '1') {
   try {

@@ -1,43 +1,99 @@
+/*
+ * PRACTICE INSIGHTS COMPONENT
+ * ===========================
+ * 
+ * This component displays comprehensive key performance indicators (KPIs) and insurance
+ * analytics that give practice managers essential insights into their business health
+ * and operational efficiency.
+ * 
+ * KEY PERFORMANCE INDICATORS (KPIS):
+ * Medical practices track specific metrics that indicate business health:
+ * - Patient Volume: How many patients are being seen (capacity utilization)
+ * - Monthly Revenue: Total income generated from all services
+ * - Average Revenue Per Patient: Efficiency of patient encounters
+ * - Days in AR (Accounts Receivable): How quickly insurance pays claims
+ * - Collection Rate: Percentage of billed amounts actually collected
+ * 
+ * INSURANCE ANALYTICS VALUE:
+ * Understanding insurance payer performance helps practices:
+ * - Identify which insurers pay promptly vs slowly
+ * - Negotiate better contracts with poor-performing payers
+ * - Adjust patient mix to optimize revenue
+ * - Plan cash flow based on payment patterns
+ * - Spot trends in denial rates by payer
+ * 
+ * MEDICAL PRACTICE CONTEXT:
+ * These metrics are specifically relevant to medical practices because:
+ * - Insurance reimbursement is often 60-80% of total revenue
+ * - AR days directly impact cash flow and operations
+ * - Patient volume affects both revenue and operational costs
+ * - Payer mix influences profitability and risk
+ * 
+ * COMPONENT ARCHITECTURE:
+ * - Dual data fetching (key metrics + insurance breakdown)
+ * - Grid layout for easy metric comparison
+ * - Color-coded indicators for performance trending
+ * - Professional medical dashboard styling
+ */
+
+// React hooks for state management
 import { useState } from "react";
+// TanStack Query for server state management
 import { useQuery } from "@tanstack/react-query";
+// Shadcn UI components for consistent design
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+// Lucide React icons for medical and business metrics
 import { 
-  Users, 
-  DollarSign, 
-  Clock, 
-  Percent, 
-  TrendingUp, 
-  TrendingDown,
-  Shield,
-  Heart,
-  UserCheck,
-  Flag
+  Users,        // Patient volume metrics
+  DollarSign,   // Revenue and financial metrics
+  Clock,        // Time-based metrics (AR days)
+  Percent,      // Percentage-based metrics (collection rates)
+  TrendingUp,   // Positive trend indicators
+  TrendingDown, // Negative trend indicators
+  Shield,       // Insurance/protection related
+  Heart,        // Patient care quality
+  UserCheck,    // Patient satisfaction
+  Flag          // Important alerts/indicators
 } from "lucide-react";
+// TypeScript interfaces for analytics data
 import type { KeyMetrics, InsurancePayerData } from "../../../shared/schema";
 
+/*
+ * TYPESCRIPT INTERFACE DEFINITION
+ * ===============================
+ * 
+ * Define the component props interface for type safety and documentation.
+ * This component needs location context for filtering analytics data.
+ */
 interface PracticeInsightsProps {
-  selectedLocationId: string;
+  selectedLocationId: string;  // Location filter for metrics and insurance data
 }
 
-/**
- * PracticeInsights Component
+/*
+ * MAIN PRACTICE INSIGHTS COMPONENT
+ * ================================
  * 
- * Displays key performance indicators and insurance payer analytics.
- * Provides comprehensive practice metrics including patient volume,
- * revenue trends, AR days, and insurance breakdown analysis.
+ * This component fetches and displays key performance indicators and insurance
+ * analytics to provide comprehensive practice management insights.
  * 
- * Features:
- * - Key metrics grid with visual indicators
- * - Insurance payer breakdown with AR days
- * - Growth rate calculations and trends
- * - Professional medical dashboard design
- * - Real-time data integration
- * - Location-based filtering support
+ * COMPONENT RESPONSIBILITIES:
+ * 1. Fetch key performance metrics from API
+ * 2. Fetch insurance payer breakdown data from API
+ * 3. Display metrics in an organized, scannable format
+ * 4. Show trend indicators for performance tracking
+ * 5. Provide insurance payer analysis with AR days
+ * 6. Handle loading states and error conditions
  * 
- * @param {Object} props - Component properties
- * @param {string} props.selectedLocationId - Currently selected location for filtering
+ * BUSINESS VALUE PROVIDED:
+ * - At-a-glance view of practice health
+ * - Quick identification of performance trends
+ * - Insurance payer performance comparison
+ * - Data-driven insights for operational decisions
+ * - Early warning indicators for potential issues
+ * 
+ * @param {PracticeInsightsProps} props - Component properties
  */
 export default function PracticeInsights({ selectedLocationId }: PracticeInsightsProps) {
 

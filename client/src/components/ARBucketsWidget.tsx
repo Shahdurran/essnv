@@ -1,27 +1,105 @@
-import { useQuery } from '@tanstack/react-query';
-import { Clock, TrendingDown, AlertTriangle } from 'lucide-react';
-
-/**
- * AR Buckets Widget - Displays aging buckets for outstanding insurance claims
- * Shows accounts receivable aging in 0-30, 31-60, 61-90, and 90+ day buckets
- * Uses color coding to indicate urgency levels for collections
+/*
+ * ACCOUNTS RECEIVABLE (AR) BUCKETS WIDGET COMPONENT
+ * =================================================
+ * 
+ * This component displays aging analysis of outstanding insurance claims organized
+ * into time-based buckets. It's a critical tool for medical practice revenue cycle
+ * management and cash flow optimization.
+ * 
+ * ACCOUNTS RECEIVABLE CONCEPT:
+ * AR represents money owed to the practice by insurance companies for services
+ * already provided to patients. The "aging" refers to how long claims have been
+ * outstanding since they were submitted.
+ * 
+ * AGING BUCKET SYSTEM:
+ * Claims are organized into four standard aging buckets:
+ * - 0-30 days: Recently submitted claims (normal processing time)
+ * - 31-60 days: Slightly delayed claims (may need follow-up)
+ * - 61-90 days: Significantly delayed claims (require attention)
+ * - 90+ days: Seriously overdue claims (urgent collection action needed)
+ * 
+ * BUSINESS CRITICAL METRICS:
+ * AR aging analysis helps practices:
+ * - Identify which payers are slow to pay
+ * - Prioritize collection efforts on oldest claims
+ * - Monitor cash flow health and trends
+ * - Negotiate better payment terms with payers
+ * - Detect billing process problems early
+ * - Plan working capital needs
+ * 
+ * COLOR-CODED URGENCY SYSTEM:
+ * - Green (0-30 days): Normal, no action needed
+ * - Yellow (31-60 days): Monitor, may need follow-up
+ * - Orange (61-90 days): Attention required, active follow-up
+ * - Red (90+ days): Urgent action needed, collection priority
+ * 
+ * REVENUE CYCLE IMPACT:
+ * Effective AR management directly affects practice profitability:
+ * - Faster collections improve cash flow
+ * - Reduced aged AR decreases bad debt risk
+ * - Better payer relationships improve future payments
+ * - Optimized billing processes reduce delays
  */
 
+// TanStack Query for server state management
+import { useQuery } from '@tanstack/react-query';
+// Lucide React icons for aging and urgency indicators
+import { Clock, TrendingDown, AlertTriangle } from 'lucide-react';
+
+/*
+ * TYPESCRIPT INTERFACE DEFINITIONS
+ * ================================
+ * 
+ * Define interfaces for AR bucket data structure and component props
+ * to ensure type safety and clear data modeling.
+ */
+
+/*
+ * AR Bucket data structure
+ * Represents one aging bucket with amount, count, and visual styling
+ */
 interface ARBucket {
-  ageRange: string;
-  amount: number;
-  claimCount: number;
-  color: {
-    bg: string;
-    border: string;
-    text: string;
+  ageRange: string;       // Age range label (e.g., "0-30", "31-60")
+  amount: number;         // Total dollar amount in this bucket
+  claimCount: number;     // Number of claims in this bucket
+  color: {                // Color scheme for urgency indication
+    bg: string;           // Background color class
+    border: string;       // Border color class
+    text: string;         // Text color class
   };
 }
 
+/*
+ * Component props interface
+ */
 interface ARBucketsWidgetProps {
-  selectedLocationId: string;
+  selectedLocationId: string;  // Location filter for AR analysis
 }
 
+/*
+ * MAIN AR BUCKETS WIDGET COMPONENT
+ * ================================
+ * 
+ * This component fetches and displays accounts receivable aging analysis
+ * with color-coded urgency indicators and summary statistics.
+ * 
+ * COMPONENT RESPONSIBILITIES:
+ * 1. Fetch AR aging data from API
+ * 2. Display four aging buckets with amounts and claim counts
+ * 3. Apply color coding based on aging urgency
+ * 4. Show summary statistics (total AR, current vs aged)
+ * 5. Provide visual progress bars for relative bucket sizes
+ * 6. Handle loading states and error conditions
+ * 
+ * BUSINESS INSIGHTS PROVIDED:
+ * - Total outstanding AR amount
+ * - Distribution across aging buckets
+ * - Percentage of current (0-60 days) vs aged (60+ days) claims
+ * - Visual indicators of collection urgency
+ * - Claim count analysis by age range
+ * 
+ * @param {ARBucketsWidgetProps} props - Component properties
+ */
 export default function ARBucketsWidget({ selectedLocationId }: ARBucketsWidgetProps) {
   
   /**

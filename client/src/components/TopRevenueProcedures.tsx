@@ -1,46 +1,99 @@
+/*
+ * TOP REVENUE PROCEDURES COMPONENT
+ * ================================
+ * 
+ * This component displays analytics for the highest-performing medical and cosmetic
+ * procedures by revenue generation. It provides crucial insights into which treatments
+ * drive practice profitability and growth.
+ * 
+ * MEDICAL PRACTICE VALUE:
+ * Understanding procedure performance helps practices:
+ * - Identify their most profitable services
+ * - Plan staffing and equipment needs
+ * - Focus marketing efforts on high-value procedures
+ * - Optimize scheduling for revenue generation
+ * - Compare performance across locations
+ * - Track trends in procedure popularity
+ * 
+ * DERMATOLOGY-SPECIFIC FEATURES:
+ * - Real CPT codes used in dermatology practices
+ * - Medical vs cosmetic procedure categorization
+ * - Appropriate procedure groupings (Mohs surgery, biopsies, cosmetic treatments)
+ * - Revenue scaling appropriate for dermatology practice sizes
+ * 
+ * DATA VISUALIZATION CONCEPTS:
+ * - Ranked list display (top performers first)
+ * - Color-coded categories (medical vs cosmetic)
+ * - Growth indicators with directional arrows
+ * - Professional iconography for medical context
+ * 
+ * REACT COMPONENT PATTERNS:
+ * - Controlled component (parent manages category state)
+ * - TanStack Query for data fetching and caching
+ * - Conditional rendering for loading/error states
+ * - TypeScript interfaces for type safety
+ */
+
+// React hooks for state management
 import { useState } from "react";
+// TanStack Query for efficient server state management
 import { useQuery } from "@tanstack/react-query";
+// Shadcn UI components for consistent design
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+// Lucide React icons representing medical procedures and analytics
 import { 
-  DollarSign, 
-  TrendingUp, 
-  Activity, 
-  Search, 
-  Microscope, 
-  Syringe,
-  Zap,
-  UserCheck,
-  Stethoscope
+  DollarSign,   // Revenue indicators
+  TrendingUp,   // Growth metrics
+  Activity,     // General medical procedures
+  Search,       // Diagnostic procedures
+  Microscope,   // Laboratory/pathology work
+  Syringe,      // Injection-based treatments
+  Zap,          // Laser/energy-based treatments
+  UserCheck,    // Patient care procedures
+  Stethoscope   // Medical examination procedures
 } from "lucide-react";
+// TypeScript interface for procedure analytics data
 import type { ProcedureAnalytics } from "../../../shared/schema";
 
+/*
+ * TYPESCRIPT INTERFACE DEFINITION
+ * ===============================
+ * 
+ * Define the component props interface for type safety and clear API documentation.
+ * This component needs location and category context from parent components.
+ */
 interface TopRevenueProceduresProps {
-  selectedLocationId: string;
-  selectedCategory: string;
-  onCategoryChange: (category: string) => void;
+  selectedLocationId: string;                           // Location filter for procedure data
+  selectedCategory: string;                             // Procedure category filter
+  onCategoryChange: (category: string) => void;         // Callback for category changes
 }
 
-/**
- * TopRevenueProcedures Component
+/*
+ * MAIN TOP REVENUE PROCEDURES COMPONENT
+ * =====================================
  * 
- * Displays analytics for highest performing procedures by revenue.
- * Includes medical/cosmetic filtering and real-time growth metrics.
- * Integrates with location filtering and uses actual dermatology CPT codes.
+ * This component fetches and displays procedure performance analytics with filtering
+ * capabilities. It provides insights into which treatments generate the most revenue
+ * for the medical practice.
  * 
- * Features:
- * - Medical/Cosmetic/All procedure category filtering
- * - Real CPT codes and dermatology procedures
- * - Revenue and growth rate analytics
- * - Professional medical iconography
- * - Location-based filtering integration
- * - Responsive design matching specifications
+ * COMPONENT RESPONSIBILITIES:
+ * 1. Fetch procedure analytics data from API
+ * 2. Provide category filtering (medical/cosmetic/all)
+ * 3. Display ranked list of top-performing procedures
+ * 4. Show revenue, growth, and volume metrics
+ * 5. Handle loading states and error conditions
+ * 6. Integrate with location-based filtering
  * 
- * @param {Object} props - Component properties
- * @param {string} props.selectedLocationId - Currently selected location for filtering
- * @param {string} props.selectedCategory - Currently selected procedure category
- * @param {Function} props.onCategoryChange - Callback when category filter changes
+ * BUSINESS INSIGHTS PROVIDED:
+ * - Which procedures generate the most revenue
+ * - Growth trends for each procedure type
+ * - Comparison between medical and cosmetic procedures
+ * - Performance variations across locations
+ * - CPT code and description for billing reference
+ * 
+ * @param {TopRevenueProceduresProps} props - Component properties
  */
 export default function TopRevenueProcedures({ 
   selectedLocationId, 
