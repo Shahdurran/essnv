@@ -1,61 +1,190 @@
+/*
+ * API ROUTES MODULE FOR MDS AI ANALYTICS
+ * ======================================
+ * 
+ * This module defines all the REST API endpoints that power our medical analytics dashboard.
+ * It handles routing, request validation, data processing, and response formatting.
+ * 
+ * MODERN EXPRESS.JS PATTERNS:
+ * - Async/await for all route handlers (no callback hell)
+ * - Comprehensive error handling with proper HTTP status codes
+ * - Request parameter validation and type safety
+ * - RESTful API design principles
+ * - Integration with OpenAI for AI assistant functionality
+ * 
+ * API ORGANIZATION:
+ * Routes are organized by functional area:
+ * - /api/locations: Practice location management
+ * - /api/analytics/*: Business intelligence data endpoints
+ * - /api/ai/*: AI assistant and natural language processing
+ * 
+ * TYPESCRIPT BENEFITS:
+ * All routes use TypeScript for:
+ * - Request/response type safety
+ * - Parameter validation
+ * - IDE autocompletion and error catching
+ * - Better maintainability and refactoring support
+ */
+
+// Express framework types for building REST API routes
 import type { Express } from "express";
+// HTTP server creation for advanced server features
 import { createServer, type Server } from "http";
+// Our custom storage layer for data persistence
 import { storage } from "./storage";
+// OpenAI SDK for AI assistant functionality
 import OpenAI from "openai";
+// Zod schema for AI query validation
 import { insertAiQuerySchema } from "@shared/schema";
 
-// Initialize OpenAI client for AI business assistant functionality
+/*
+ * OPENAI CLIENT INITIALIZATION
+ * ============================
+ * 
+ * This sets up our connection to OpenAI's GPT-4o model for the AI business assistant.
+ * The AI assistant helps users ask natural language questions about their practice data.
+ * 
+ * ENVIRONMENT VARIABLE HANDLING:
+ * We check multiple environment variable names to ensure compatibility:
+ * - OPENAI_API_KEY: Standard OpenAI environment variable name
+ * - OPENAI_API_KEY_ENV_VAR: Alternative naming convention
+ * - "default_key": Fallback for development (should be replaced with real key)
+ * 
+ * GPT-4o MODEL CHOICE:
+ * GPT-4o was released in May 2024 and offers the best balance of:
+ * - Speed (faster than GPT-4)
+ * - Cost (cheaper than GPT-4)
+ * - Capability (multimodal, large context window)
+ * - Accuracy (excellent for business intelligence queries)
+ */
 // the newest OpenAI model is "gpt-4o" which was released May 13, 2024. do not change this unless explicitly requested by the user
 const openai = new OpenAI({ 
   apiKey: process.env.OPENAI_API_KEY || process.env.OPENAI_API_KEY_ENV_VAR || "default_key"
 });
 
-/**
- * Extract location context from AI query text
+/*
+ * INTELLIGENT LOCATION EXTRACTION FROM AI QUERIES
+ * ===============================================
+ * 
+ * This function analyzes user questions to automatically determine which practice
+ * location they're asking about, even if they don't explicitly select it in the UI.
+ * 
+ * BUSINESS VALUE:
+ * Users often ask location-specific questions like:
+ * - "How are denial rates in Manhattan?"
+ * - "What's the top procedure in our Fresno location?"
+ * - "Show me Atlantic Highlands revenue trends"
+ * 
+ * The AI should automatically route these queries to the correct location data
+ * rather than requiring users to manually select locations every time.
+ * 
+ * IMPLEMENTATION APPROACH:
+ * - Convert query to lowercase for case-insensitive matching
+ * - Check for location-specific keywords (city names, state abbreviations)
+ * - Return location ID for data filtering
+ * - Fall back to default location if no specific mention found
+ * 
+ * @param {string} query - The user's natural language question
+ * @param {string} defaultLocation - Fallback location if none detected
+ * @returns {string} Location ID for data filtering
  */
 function extractLocationFromQuery(query: string, defaultLocation: string): string {
+  // Convert to lowercase for reliable string matching
   const queryLower = query.toLowerCase();
   
-  // Check for specific location mentions
+  /*
+   * LOCATION DETECTION LOGIC:
+   * We check for various ways users might reference each location:
+   * - Full city names
+   * - State names and abbreviations
+   * - Common variations and shortcuts
+   */
+  
+  // Manhattan, NY location detection
   if (queryLower.includes('manhattan') || queryLower.includes('new york') || queryLower.includes('ny')) {
     return 'manhattan-ny';
   }
+  
+  // Atlantic Highlands, NJ location detection
   if (queryLower.includes('atlantic') || queryLower.includes('highlands')) {
     return 'atlantic-highlands-nj';
   }
+  
+  // Woodbridge, NJ location detection
   if (queryLower.includes('woodbridge')) {
     return 'woodbridge-nj';
   }
+  
+  // Fresno, CA location detection
   if (queryLower.includes('fresno')) {
     return 'fresno-ca';
   }
+  
+  // Hanford, CA location detection
   if (queryLower.includes('hanford')) {
     return 'hanford-ca';
   }
   
+  // No specific location mentioned - use default (usually "all" for aggregated data)
   return defaultLocation;
 }
 
-/**
- * Extract time range context from AI query text
+/*
+ * INTELLIGENT TIME RANGE EXTRACTION FROM AI QUERIES
+ * =================================================
+ * 
+ * This function analyzes user questions to automatically determine what time period
+ * they're interested in, enabling more contextual AI responses.
+ * 
+ * NATURAL LANGUAGE TIME REFERENCES:
+ * Users naturally express time periods in various ways:
+ * - "last month" / "past month" → 1 month
+ * - "this quarter" / "last 3 months" → 3 months  
+ * - "first half of year" / "last 6 months" → 6 months
+ * - "annual" / "last year" / "12 months" → 12 months
+ * 
+ * BUSINESS INTELLIGENCE VALUE:
+ * Different time ranges reveal different insights:
+ * - 1 month: Immediate performance, recent trends
+ * - 3 months: Quarterly patterns, seasonal effects
+ * - 6 months: Medium-term trends, semi-annual planning
+ * - 12 months: Annual patterns, year-over-year growth
+ * 
+ * @param {string} query - The user's natural language question
+ * @param {string} defaultTimeRange - Fallback time range if none detected
+ * @returns {string} Time range identifier for data filtering
  */
 function extractTimeRangeFromQuery(query: string, defaultTimeRange: string): string {
+  // Convert to lowercase for reliable pattern matching
   const queryLower = query.toLowerCase();
   
-  // Check for time period mentions
+  /*
+   * TIME PERIOD DETECTION PATTERNS:
+   * We look for common ways users express different time periods.
+   * Each pattern maps to a standardized time range identifier.
+   */
+  
+  // 1 month patterns
   if (queryLower.includes('last month') || queryLower.includes('past month') || queryLower.includes('1 month')) {
     return '1';
   }
+  
+  // 3 months patterns (quarterly)
   if (queryLower.includes('last 3 months') || queryLower.includes('past 3 months') || queryLower.includes('quarter')) {
     return '3';
   }
+  
+  // 6 months patterns (semi-annual)
   if (queryLower.includes('last 6 months') || queryLower.includes('past 6 months') || queryLower.includes('half year')) {
     return '6';
   }
+  
+  // 12 months patterns (annual)
   if (queryLower.includes('last year') || queryLower.includes('past year') || queryLower.includes('12 months') || queryLower.includes('annual')) {
     return '12';
   }
   
+  // No specific time period mentioned - use default
   return defaultTimeRange;
 }
 

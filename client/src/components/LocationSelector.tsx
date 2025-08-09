@@ -1,43 +1,114 @@
+/*
+ * LOCATION SELECTOR COMPONENT
+ * ===========================
+ * 
+ * This component provides an intuitive interface for filtering practice analytics
+ * by location. Users can select individual practice locations or view aggregated
+ * data across all locations.
+ * 
+ * DESIGN PHILOSOPHY:
+ * Rather than using a traditional dropdown, we use a button-style selector that:
+ * - Shows all options at once (better discoverability)
+ * - Provides immediate visual feedback on selection
+ * - Matches the modern dashboard aesthetic
+ * - Works well on both desktop and mobile
+ * 
+ * BUSINESS CONTEXT:
+ * Multi-location medical practices need location-specific analytics because:
+ * - Different locations serve different patient demographics
+ * - Procedure mix varies by location (urban vs suburban preferences)
+ * - Staffing and operational costs differ between locations
+ * - Practice owners need to identify top and bottom performing sites
+ * 
+ * REACT PATTERNS USED:
+ * - TanStack Query for server state management
+ * - Controlled component pattern (parent manages selected state)
+ * - Callback props for parent communication
+ * - Conditional rendering for loading/error states
+ * - Modern React hooks (useQuery)
+ */
+
+// TanStack Query for efficient server state management
 import { useQuery } from "@tanstack/react-query";
+// Shadcn UI components for consistent design system
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+// Lucide React icons for visual enhancement
 import { MapPin, TrendingUp } from "lucide-react";
 
-/**
- * LocationSelector Component
+/*
+ * TYPESCRIPT INTERFACE DEFINITION
+ * ===============================
  * 
- * Interactive button layout for selecting Rao Dermatology practice locations.
- * Matches the design specification with button-style selection (not dropdown).
- * Supports multi-location analytics with "All Locations" aggregation option.
- * 
- * Features:
- * - Visual button layout for all 5 practice locations
- * - "All Locations" option with count indicator
- * - Active state management with visual feedback
- * - Real practice location data integration
- * - Responsive design for mobile and desktop
- * 
- * @param {Object} props - Component properties
- * @param {string} props.selectedLocationId - Currently selected location ID
- * @param {Function} props.onLocationChange - Callback when location selection changes
+ * Define the props interface for type safety and documentation.
+ * This helps prevent bugs and provides excellent IDE support.
  */
-export default function LocationSelector({ selectedLocationId, onLocationChange }) {
+interface LocationSelectorProps {
+  selectedLocationId: string;           // Currently selected location ID
+  onLocationChange: (locationId: string) => void;  // Callback when selection changes
+}
+
+/*
+ * MAIN LOCATION SELECTOR COMPONENT
+ * ================================
+ * 
+ * This component provides location filtering functionality for the entire dashboard.
+ * It fetches location data from the API and renders interactive selection buttons.
+ * 
+ * COMPONENT LIFECYCLE:
+ * 1. Mount: Fetch location data from API
+ * 2. Render: Show loading state while fetching
+ * 3. Interactive: User clicks location buttons
+ * 4. Update: Parent component receives location change callbacks
+ * 
+ * STATE MANAGEMENT:
+ * - Server state: Managed by TanStack Query (location data from API)
+ * - UI state: Managed by parent component (selectedLocationId)
+ * - No local component state needed (fully controlled)
+ * 
+ * @param {LocationSelectorProps} props - Component properties
+ */
+export default function LocationSelector({ selectedLocationId, onLocationChange }: LocationSelectorProps) {
   
-  /**
-   * Fetch practice locations from the API
-   * Uses TanStack Query for efficient caching and state management
+  /*
+   * API DATA FETCHING WITH TANSTACK QUERY
+   * =====================================
+   * 
+   * Fetch practice location data from our backend API using TanStack Query.
+   * This provides automatic caching, loading states, and error handling.
+   * 
+   * QUERY CONFIGURATION:
+   * - queryKey: Unique identifier for this query (enables caching)
+   * - staleTime: How long data stays "fresh" before background refetch
+   * - Default data: Empty array prevents undefined errors during loading
+   * 
+   * CACHING STRATEGY:
+   * Location data rarely changes, so we cache for 5 minutes to improve performance
+   * and reduce unnecessary API calls.
    */
   const { data: locations = [], isLoading, error } = useQuery({
     queryKey: ['/api/locations'],
     staleTime: 5 * 60 * 1000, // Cache for 5 minutes since locations rarely change
   });
 
-  /**
-   * Handle location button click
-   * Updates the selected location and triggers parent callback
-   * @param {string} locationId - The location ID to select
+  /*
+   * LOCATION SELECTION HANDLER
+   * =========================
+   * 
+   * This function handles user clicks on location buttons and communicates
+   * the selection back to the parent component via the onLocationChange callback.
+   * 
+   * CONTROLLED COMPONENT PATTERN:
+   * This component doesn't manage its own selected state. Instead, it:
+   * 1. Receives selectedLocationId as a prop from parent
+   * 2. Calls onLocationChange when user makes a selection
+   * 3. Parent updates selectedLocationId and re-renders this component
+   * 
+   * This pattern ensures single source of truth for location selection state.
+   * 
+   * @param {string} locationId - The ID of the location to select
    */
-  const handleLocationClick = (locationId) => {
+  const handleLocationClick = (locationId: string) => {
     onLocationChange(locationId);
   };
 
