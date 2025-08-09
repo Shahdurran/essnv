@@ -1,4 +1,38 @@
+/*
+ * MAIN DASHBOARD PAGE COMPONENT
+ * =============================
+ * 
+ * This is the heart of our medical analytics application - the main dashboard
+ * where practice owners and staff interact with their business intelligence data.
+ * 
+ * DASHBOARD DESIGN PHILOSOPHY:
+ * Medical practice dashboards need to balance comprehensive data with usability:
+ * - Critical metrics prominently displayed (revenue, patient volume, AR days)
+ * - Complex analytics available but not overwhelming
+ * - Multiple views of the same data (charts, tables, summaries)
+ * - Filtering capabilities to drill down into specific insights
+ * - AI assistance for natural language queries
+ * 
+ * COMPONENT ARCHITECTURE:
+ * This dashboard follows a "widget-based" architecture where each major
+ * analytics feature is encapsulated in its own component. Benefits:
+ * - Individual widgets can be developed and tested independently
+ * - Easy to add/remove/rearrange widgets based on user needs
+ * - Performance optimizations can be applied per widget
+ * - Different user roles could see different widget combinations
+ * 
+ * STATE MANAGEMENT STRATEGY:
+ * We use local component state for UI interactions (filtering, selections)
+ * and TanStack Query for server data (analytics, metrics, projections).
+ * This separation keeps the component focused on UI logic while
+ * delegating data fetching to specialized hooks.
+ */
+
+// React hooks for state management
 import { useState } from "react";
+
+// Import all dashboard widget components
+// These are the major analytical components that make up our dashboard
 import LocationSelector from "@/components/LocationSelector";
 import AIBusinessAssistant from "@/components/AIBusinessAssistant";
 import KeyMetricsTrendsChart from "@/components/KeyMetricsTrendsChart";
@@ -8,52 +42,156 @@ import PracticeInsights from "@/components/PracticeInsights";
 import RevenueProjections from "@/components/RevenueProjections";
 import PatientBillingAnalytics from "@/components/PatientBillingAnalytics";
 import ARBucketsWidget from "@/components/ARBucketsWidget";
+
+// Import brand assets for professional appearance
 import mdsLogo from "@assets/MDS Logo_1754254040718.png";
 import genericUserPhoto from "@assets/generic user pic_1754672840832.png";
 
-/**
- * Main Dashboard Component for MDS AI Analytics
+/*
+ * MAIN DASHBOARD COMPONENT
+ * ========================
  * 
- * This is the primary interface for the Demo Dermatology business intelligence platform.
- * It provides a comprehensive view of practice analytics including:
- * - Location-based analytics selection
- * - AI-powered business assistant for natural language queries
- * - Advanced trends charting with projections
- * - Revenue procedure analysis
- * - Key performance indicators
- * - Financial projections and forecasting
+ * This component orchestrates the entire dashboard experience for medical practice
+ * business intelligence. It manages the overall layout, filtering state, and
+ * coordinates data flow between different analytical widgets.
  * 
- * The dashboard is designed to match the provided mockups exactly and supports
- * both medical and cosmetic dermatology analytics across 5 practice locations.
+ * KEY FEATURES PROVIDED:
+ * 
+ * 1. LOCATION-BASED ANALYTICS
+ *    - Filter data by specific practice location or view aggregated data
+ *    - Each location has unique patient demographics and procedure mix
+ *    - Enables comparison between different practice sites
+ * 
+ * 2. AI-POWERED BUSINESS ASSISTANT  
+ *    - Natural language queries about practice performance
+ *    - Contextual insights based on current filter selections
+ *    - Helps non-technical users explore complex data
+ * 
+ * 3. COMPREHENSIVE ANALYTICS WIDGETS
+ *    - Revenue trends with forecasting capabilities
+ *    - Insurance claims tracking and denial analysis
+ *    - Top performing procedures by revenue
+ *    - Key performance indicators and metrics
+ *    - Accounts receivable aging analysis
+ * 
+ * 4. RESPONSIVE DESIGN
+ *    - Mobile-first approach with desktop enhancements
+ *    - Widgets reflow and resize based on screen size
+ *    - Touch-friendly interfaces for tablet use
+ * 
+ * 5. PROFESSIONAL MEDICAL PRACTICE BRANDING
+ *    - Custom logo and practitioner information
+ *    - Medical industry color scheme and terminology
+ *    - HIPAA-conscious design without PHI exposure
  */
 export default function Dashboard() {
-  // State management for location filtering
-  // Supports individual location selection or "all" for aggregated analytics
+  /*
+   * STATE MANAGEMENT FOR FILTERING
+   * ==============================
+   * 
+   * The dashboard maintains several pieces of filter state that affect
+   * how data is displayed across multiple widgets.
+   */
+  
+  /*
+   * LOCATION FILTER STATE
+   * =====================
+   * 
+   * Controls which practice location(s) to display analytics for.
+   * 
+   * POSSIBLE VALUES:
+   * - "all": Aggregated data across all 5 practice locations
+   * - "manhattan-ny": Manhattan, NY location only
+   * - "atlantic-highlands-nj": Atlantic Highlands, NJ location only  
+   * - "woodbridge-nj": Woodbridge, NJ location only
+   * - "fresno-ca": Fresno, CA location only
+   * - "hanford-ca": Hanford, CA location only
+   * 
+   * BUSINESS IMPACT:
+   * Location filtering is crucial for multi-site practices because:
+   * - Different locations serve different patient demographics
+   * - Procedure mix varies by location (urban vs suburban, etc.)
+   * - Staffing and operational metrics differ between sites
+   * - Practice owners need to identify high/low performing locations
+   */
   const [selectedLocationId, setSelectedLocationId] = useState("all");
   
-  // State management for procedure category filtering  
-  // Supports medical, cosmetic, or all procedure types
+  /*
+   * PROCEDURE CATEGORY FILTER STATE
+   * ===============================
+   * 
+   * Controls which types of procedures to include in procedure-specific analytics.
+   * 
+   * DERMATOLOGY PROCEDURE CATEGORIES:
+   * - "all": Both medical and cosmetic procedures
+   * - "medical": Medical dermatology (skin cancer, rashes, medical treatments)
+   * - "cosmetic": Cosmetic dermatology (Botox, fillers, laser treatments)
+   * 
+   * BUSINESS RATIONALE:
+   * Medical vs cosmetic procedures have very different business characteristics:
+   * - Medical: Insurance coverage, consistent volume, regulatory requirements
+   * - Cosmetic: Cash pay, seasonal variation, higher profit margins
+   * - Mixed practices need to analyze these segments separately
+   */
   const [selectedProcedureCategory, setSelectedProcedureCategory] = useState("all");
 
-  /**
-   * Handle location selection changes
-   * Updates the dashboard to show analytics for the selected location
-   * @param {string} locationId - The ID of the selected location or "all"
+  /*
+   * EVENT HANDLER FUNCTIONS
+   * =======================
+   * 
+   * These functions handle user interactions and update the dashboard state.
+   * They also provide opportunities for analytics tracking and logging.
+   */
+
+  /*
+   * LOCATION CHANGE HANDLER
+   * =======================
+   * 
+   * Called when user selects a different location from the location selector.
+   * Updates the dashboard state and triggers re-fetching of location-specific data.
+   * 
+   * @param {string} locationId - The ID of the newly selected location
+   * 
+   * SIDE EFFECTS:
+   * - Updates selectedLocationId state
+   * - Triggers re-render of all location-dependent components
+   * - Could trigger analytics tracking for usage insights
+   * - Could update URL params for bookmarkable dashboard states
    */
   const handleLocationChange = (locationId: string) => {
     setSelectedLocationId(locationId);
-    // Additional analytics tracking could be added here
+    
+    // Log the filter change for debugging and usage analytics
     console.log(`Dashboard filtered to location: ${locationId}`);
+    
+    // TODO: Future enhancements could include:
+    // - Update URL parameters for bookmarkable dashboard states
+    // - Track filter usage for analytics and UX improvements
+    // - Show loading states while data refreshes
+    // - Persist user's last location selection in localStorage
   };
 
-  /**
-   * Handle procedure category filter changes  
-   * Updates procedure analytics to show medical, cosmetic, or all procedures
-   * @param {string} category - The procedure category: "medical", "cosmetic", or "all"
+  /*
+   * PROCEDURE CATEGORY CHANGE HANDLER
+   * =================================
+   * 
+   * Called when user changes the procedure category filter.
+   * Updates the filter state which affects procedure-specific analytics widgets.
+   * 
+   * @param {string} category - The newly selected procedure category
+   * 
+   * BUSINESS LOGIC:
+   * This filter primarily affects the TopRevenueProcedures widget, but could
+   * be extended to filter other procedure-related analytics as the app grows.
    */
   const handleProcedureCategoryChange = (category: string) => {
     setSelectedProcedureCategory(category);
     console.log(`Procedure filter changed to: ${category}`);
+    
+    // TODO: Future enhancements:
+    // - Update related widgets that show procedure-specific data
+    // - Add smooth transitions when filter changes
+    // - Implement filter state persistence
   };
 
   return (
