@@ -1,8 +1,12 @@
 # MDS AI Analytics - Demo Dermatology Business Intelligence Platform
 
+## Version 2.2 - Architecture Refactoring and AI Enhancement
+**Release Date:** August 10, 2025  
+**Status:** Completed and Ready for Deployment
+
 ## Version 2.1 - AI Assistant Enhancements and Data Scaling Fixes
 **Release Date:** August 4, 2025  
-**Status:** Completed and Ready for Deployment
+**Status:** Archived - Replaced by Version 2.2
 
 ## Version 2.0 - Enhanced UI and Data Integrity Release
 **Release Date:** August 4, 2025  
@@ -18,7 +22,25 @@ MDS AI Analytics is a comprehensive AI-powered business analytics dashboard desi
 
 **Note:** This is now a generalized demo version with anonymized data, generic addresses (555 phone numbers), and "Dr. Example User" instead of specific practitioner information, making it suitable for broader demonstration purposes.
 
-## Version 2.1 Features Completed
+## Version 2.2 Features Completed
+
+- ✅ **MAJOR: AI Assistant Architecture Refactoring** (August 10, 2025)
+  - Replaced primitive string matching with actual OpenAI-powered context extraction
+  - Created modular utility system: server/utils/queryParser.ts and server/utils/aiAssistant.ts
+  - Moved business logic out of routes.ts into proper utility modules
+  - Dynamic location loading from database instead of hardcoded strings
+  - Real AI-powered natural language understanding for location and time context
+  - Improved error handling and response standardization
+  - Better separation of concerns and testability
+
+- ✅ **Enhanced Code Documentation Project** (August 10, 2025)
+  - Comprehensive commenting across entire codebase for educational purposes
+  - Detailed explanations of React 18, Express.js, TanStack Query, and Chart.js patterns
+  - Medical practice business intelligence context and concepts
+  - TypeScript interface documentation and modern JavaScript patterns
+  - Architecture decision explanations and code reasoning
+
+## Version 2.1 Features (Inherited)
 
 - ✅ **MAJOR: Enhanced AI Assistant with Intelligent Data Routing** (August 4, 2025)
   - AI now extracts location and time context from questions (e.g., "Manhattan denial reasons")

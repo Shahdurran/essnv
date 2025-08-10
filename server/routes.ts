@@ -62,131 +62,9 @@ const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY || process.env.OPENAI_API_KEY_ENV_VAR || "default_key"
 });
 
-/*
- * INTELLIGENT LOCATION EXTRACTION FROM AI QUERIES
- * ===============================================
- * 
- * This function analyzes user questions to automatically determine which practice
- * location they're asking about, even if they don't explicitly select it in the UI.
- * 
- * BUSINESS VALUE:
- * Users often ask location-specific questions like:
- * - "How are denial rates in Manhattan?"
- * - "What's the top procedure in our Fresno location?"
- * - "Show me Atlantic Highlands revenue trends"
- * 
- * The AI should automatically route these queries to the correct location data
- * rather than requiring users to manually select locations every time.
- * 
- * IMPLEMENTATION APPROACH:
- * - Convert query to lowercase for case-insensitive matching
- * - Check for location-specific keywords (city names, state abbreviations)
- * - Return location ID for data filtering
- * - Fall back to default location if no specific mention found
- * 
- * @param {string} query - The user's natural language question
- * @param {string} defaultLocation - Fallback location if none detected
- * @returns {string} Location ID for data filtering
- */
-function extractLocationFromQuery(query: string, defaultLocation: string): string {
-  // Convert to lowercase for reliable string matching
-  const queryLower = query.toLowerCase();
-  
-  /*
-   * LOCATION DETECTION LOGIC:
-   * We check for various ways users might reference each location:
-   * - Full city names
-   * - State names and abbreviations
-   * - Common variations and shortcuts
-   */
-  
-  // Manhattan, NY location detection
-  if (queryLower.includes('manhattan') || queryLower.includes('new york') || queryLower.includes('ny')) {
-    return 'manhattan-ny';
-  }
-  
-  // Atlantic Highlands, NJ location detection
-  if (queryLower.includes('atlantic') || queryLower.includes('highlands')) {
-    return 'atlantic-highlands-nj';
-  }
-  
-  // Woodbridge, NJ location detection
-  if (queryLower.includes('woodbridge')) {
-    return 'woodbridge-nj';
-  }
-  
-  // Fresno, CA location detection
-  if (queryLower.includes('fresno')) {
-    return 'fresno-ca';
-  }
-  
-  // Hanford, CA location detection
-  if (queryLower.includes('hanford')) {
-    return 'hanford-ca';
-  }
-  
-  // No specific location mentioned - use default (usually "all" for aggregated data)
-  return defaultLocation;
-}
-
-/*
- * INTELLIGENT TIME RANGE EXTRACTION FROM AI QUERIES
- * =================================================
- * 
- * This function analyzes user questions to automatically determine what time period
- * they're interested in, enabling more contextual AI responses.
- * 
- * NATURAL LANGUAGE TIME REFERENCES:
- * Users naturally express time periods in various ways:
- * - "last month" / "past month" → 1 month
- * - "this quarter" / "last 3 months" → 3 months  
- * - "first half of year" / "last 6 months" → 6 months
- * - "annual" / "last year" / "12 months" → 12 months
- * 
- * BUSINESS INTELLIGENCE VALUE:
- * Different time ranges reveal different insights:
- * - 1 month: Immediate performance, recent trends
- * - 3 months: Quarterly patterns, seasonal effects
- * - 6 months: Medium-term trends, semi-annual planning
- * - 12 months: Annual patterns, year-over-year growth
- * 
- * @param {string} query - The user's natural language question
- * @param {string} defaultTimeRange - Fallback time range if none detected
- * @returns {string} Time range identifier for data filtering
- */
-function extractTimeRangeFromQuery(query: string, defaultTimeRange: string): string {
-  // Convert to lowercase for reliable pattern matching
-  const queryLower = query.toLowerCase();
-  
-  /*
-   * TIME PERIOD DETECTION PATTERNS:
-   * We look for common ways users express different time periods.
-   * Each pattern maps to a standardized time range identifier.
-   */
-  
-  // 1 month patterns
-  if (queryLower.includes('last month') || queryLower.includes('past month') || queryLower.includes('1 month')) {
-    return '1';
-  }
-  
-  // 3 months patterns (quarterly)
-  if (queryLower.includes('last 3 months') || queryLower.includes('past 3 months') || queryLower.includes('quarter')) {
-    return '3';
-  }
-  
-  // 6 months patterns (semi-annual)
-  if (queryLower.includes('last 6 months') || queryLower.includes('past 6 months') || queryLower.includes('half year')) {
-    return '6';
-  }
-  
-  // 12 months patterns (annual)
-  if (queryLower.includes('last year') || queryLower.includes('past year') || queryLower.includes('12 months') || queryLower.includes('annual')) {
-    return '12';
-  }
-  
-  // No specific time period mentioned - use default
-  return defaultTimeRange;
-}
+// Import AI assistant utilities (moved to separate modules for better architecture)
+import { processAIQuery } from './utils/aiAssistant';
+import { extractQueryContext } from './utils/queryParser';
 
 /**
  * Register all API routes for the MDS AI Analytics platform
@@ -428,95 +306,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ message: "Query is required and must be a string" });
       }
 
-      // Parse location and time context from query if not provided explicitly
-      const finalLocationId = extractLocationFromQuery(query, locationId);
-      const finalTimeRange = extractTimeRangeFromQuery(query, timeRange);
-
-      // Get contextual practice data based on query location and time parameters
-      const currentMetrics = await storage.getMonthlyRevenueData(finalLocationId);
-      const topProcedures = await storage.getTopRevenueProcedures(finalLocationId, undefined, parseInt(finalTimeRange));
-      const insuranceData = await storage.getInsurancePayerBreakdown(finalLocationId, parseInt(finalTimeRange));
-      const keyMetrics = await storage.getKeyMetrics(finalLocationId, parseInt(finalTimeRange));
-      const projections = await storage.getPatientVolumeProjections(finalLocationId);
-      const locations = await storage.getAllPracticeLocations();
-      const claimsData = await storage.getInsuranceClaimsData(finalLocationId === 'all' ? 'all' : finalLocationId);
-      const denialReasons = storage.getDenialReasonsData();
-
-      // Prepare comprehensive context for the AI assistant with all available practice data
-      const systemPrompt = `You are an AI business analytics assistant for Demo Dermatology Practice, a multi-location dermatology practice owned by Dr. Example User.
-
-PRACTICE OVERVIEW:
-- Practice Owner: Dr. Example User, Board-Certified Dermatologist
-- 5 Active Locations: Manhattan NY, Atlantic Highlands NJ, Woodbridge NJ, Fresno CA, Hanford CA
-- Specialties: Medical Dermatology (Mohs surgery, skin cancer treatment) & Cosmetic Dermatology (Botox, fillers, laser treatments)
-- Total Staff: 47 employees across all locations
-- Years in Operation: 18 years
-
-CURRENT FINANCIAL DATA (${finalLocationId === 'all' ? 'All Locations' : 'Selected Location'} - ${finalTimeRange} Month${finalTimeRange !== '1' ? 's' : ''}):
-Revenue Trends (Last 12 Months):
-${currentMetrics.map(m => `- ${m.month}: $${m.revenue.toLocaleString()} (${m.patientCount} patients)`).join('\n')}
-
-Key Performance Metrics:
-- Monthly Patients: ${keyMetrics.monthlyPatients.toLocaleString()}
-- Monthly Revenue: $${keyMetrics.monthlyRevenue.toLocaleString()}
-- AR Days: ${keyMetrics.arDays}
-- Clean Claim Rate: ${keyMetrics.cleanClaimRate}%
-- Patient Growth: ${keyMetrics.patientGrowth}%
-- Revenue Growth: ${keyMetrics.revenueGrowth}%
-
-Top Revenue Procedures (${finalTimeRange} Month${finalTimeRange !== '1' ? 's' : ''}):
-${topProcedures.map(p => `- ${p.description} (${p.cptCode}): $${p.revenue.toLocaleString()}, Growth: ${p.growth}%`).join('\n')}
-
-Insurance Payer Mix (${finalTimeRange} Month${finalTimeRange !== '1' ? 's' : ''}):
-${insuranceData.map(i => `- ${i.name}: ${i.percentage?.toFixed(1)}% of revenue, AR Days: ${i.arDays?.toFixed(1)}, Revenue: $${i.revenue?.toLocaleString()}`).join('\n')}
-
-Insurance Claims Status:
-${claimsData.map(status => `- ${status.status}: ${status.totalClaims} claims ($${status.totalAmount.toLocaleString()})`).join('\n')}
-
-Common Denial Reasons by Payer:
-${Object.entries(denialReasons).map(([payer, reasons]) => `- ${payer}: ${reasons.join(', ')}`).join('\n')}
-
-PATIENT VOLUME PROJECTIONS (Next 6 Months):
-${projections.map(p => `- ${p.month}: ${p.projectedPatients} patients, $${p.projectedRevenue.toLocaleString()} revenue (${Math.round(p.confidenceLevel * 100)}% confidence)`).join('\n')}
-
-LOCATION PERFORMANCE:
-- Manhattan, NY: Highest volume location, strong cosmetic procedures
-- Atlantic Highlands, NJ: Balanced medical/cosmetic mix
-- Woodbridge, NJ: Growing location, medical focus
-- Fresno, CA: Established location, diverse patient base
-- Hanford, CA: Newest location, building patient volume
-
-OPERATIONAL METRICS:
-- Average Patient Visit Value: $340
-- Clean Claim Rate: 94.2%
-- Average AR Days: 28.5 days
-- Patient Satisfaction Score: 4.8/5.0
-- Monthly New Patient Rate: 12.3%
-- Procedure Success Rate: 98.1%
-
-Your role is to provide actionable business insights using this comprehensive data. You can analyze trends, make recommendations, compare metrics, and provide forecasts based on the information above.
-
-Always format your response as JSON with this structure:
-{
-  "response": "Your detailed analysis with specific data points and insights",
-  "queryType": "forecast|revenue_analysis|patient_volume|procedure_analysis|insurance_analysis|general",
-  "recommendations": ["specific actionable recommendation 1", "specific actionable recommendation 2"],
-  "keyMetrics": {"relevant_metric_1": "value1", "relevant_metric_2": "value2"}
-}`;
-
-      // Call OpenAI GPT-4o for intelligent response
-      const completion = await openai.chat.completions.create({
-        model: "gpt-4o", // the newest OpenAI model is "gpt-4o" which was released May 13, 2024
-        messages: [
-          { role: "system", content: systemPrompt },
-          { role: "user", content: query }
-        ],
-        response_format: { type: "json_object" },
-        temperature: 0.7,
-        max_tokens: 1000
-      });
-
-      const aiResponse = JSON.parse(completion.choices[0].message.content || "{}");
+      // Get available locations for AI context
+      const availableLocations = await storage.getAllPracticeLocations();
+      
+      // Process query using new AI assistant utility
+      const aiResponse = await processAIQuery(
+        query,
+        availableLocations,
+        storage,
+        locationId,
+        timeRange
+      );
       
       // Store the query and response for analytics
       if (userId) {
@@ -524,18 +324,22 @@ Always format your response as JSON with this structure:
           userId,
           query,
           response: aiResponse.response,
-          queryType: aiResponse.queryType || "general"
+          queryType: aiResponse.queryType
         });
       }
 
       res.json(aiResponse);
     } catch (error) {
       console.error("Error processing AI query:", error);
+      const { locationId: fallbackLocationId = 'all', timeRange: fallbackTimeRange = '1' } = req.body;
+      
       res.status(500).json({ 
-        message: "Failed to process AI query",
         response: "I apologize, but I'm experiencing technical difficulties. Please try your question again.",
         queryType: "error",
-        recommendations: [],
+        confidence: 0,
+        locationContext: fallbackLocationId,
+        timeContext: fallbackTimeRange,
+        recommendations: ["Check your internet connection", "Try rephrasing your question", "Contact support if the issue persists"],
         keyMetrics: {}
       });
     }
