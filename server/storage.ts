@@ -138,15 +138,15 @@ export class MemStorage implements IStorage {
     this.aiQueries = new Map();
     this.performanceMetrics = new Map();
 
-    // Initialize with demo dermatology data
-    this.initializeRealData();
+    // Initialize with demo dermatology data (fire and forget - async initialization)
+    this.initializeRealData().catch(console.error);
   }
 
   /**
    * Initialize storage with demo dermatology practice data
    * This includes generic locations, procedures, and sample analytics data
    */
-  private initializeRealData(): void {
+  private async initializeRealData(): Promise<void> {
     // Initialize demo practice locations
     const locations: InsertPracticeLocation[] = [
       {
@@ -196,10 +196,10 @@ export class MemStorage implements IStorage {
       }
     ];
 
-    // Create practice locations
-    locations.forEach(async (location) => {
+    // Create practice locations (wait for all to complete)
+    for (const location of locations) {
       await this.createPracticeLocation(location);
-    });
+    }
 
     // Initialize real dermatology procedures with CPT codes
     const procedures: InsertProcedure[] = [
@@ -227,13 +227,13 @@ export class MemStorage implements IStorage {
       { cptCode: "LASER_HAIR", description: "Laser Hair Removal", category: "cosmetic", basePrice: "300.00", rvuValue: "0.00" },
     ];
 
-    // Create procedures
-    procedures.forEach(async (procedure) => {
+    // Create procedures (wait for all to complete)
+    for (const procedure of procedures) {
       await this.createProcedure(procedure);
-    });
+    }
 
-    // Create default practice owner user
-    this.createUser({
+    // Create default practice owner user (wait for completion)
+    await this.createUser({
       username: "dr.example",
       password: "secure_password", // In production, this would be hashed
       name: "Dr. Example User",
