@@ -37,12 +37,21 @@ interface AIResponse {
  * OPENAI CLIENT INITIALIZATION
  * ============================
  * 
- * Centralized OpenAI client setup for the AI assistant functionality.
- * This ensures consistent configuration across all AI-related operations.
+ * Lazy initialization of OpenAI client for the AI assistant functionality.
+ * This prevents the app from crashing if the API key is not available.
  */
-const openai = new OpenAI({ 
-  apiKey: process.env.OPENAI_API_KEY || process.env.OPENAI_API_KEY_ENV_VAR
-});
+let openaiClient: OpenAI | null = null;
+
+function getOpenAIClient(): OpenAI {
+  if (!openaiClient) {
+    const apiKey = process.env.OPENAI_API_KEY || process.env.OPENAI_API_KEY_ENV_VAR;
+    if (!apiKey) {
+      throw new Error('OpenAI API key is required for AI assistant functionality. Please set the OPENAI_API_KEY environment variable.');
+    }
+    openaiClient = new OpenAI({ apiKey });
+  }
+  return openaiClient;
+}
 
 /*
  * PROCESS AI ASSISTANT QUERY
@@ -94,6 +103,22 @@ export async function processAIQuery(
     };
     
   } catch (error) {
+    // Check if it's an API key error specifically
+    if (error instanceof Error && error.message.includes('OpenAI API key')) {
+      console.warn('AI assistant unavailable: OpenAI API key not configured. Using fallback response.');
+      return {
+        response: "I'm currently unavailable as the AI features require configuration. The app can still display your analytics data without AI assistance.",
+        queryType: "configuration_needed",
+        confidence: 0,
+        locationContext: defaultLocationId,
+        timeContext: defaultTimeRange,
+        recommendations: [
+          "View your analytics data directly from the dashboard",
+          "Contact your administrator to configure AI features"
+        ]
+      };
+    }
+    
     console.error('Error processing AI query:', error);
     
     return {
@@ -179,6 +204,7 @@ async function generateAIResponse(
     // Build context-aware system prompt
     const systemPrompt = buildSystemPrompt(analyticsData, locations, context);
     
+    const openai = getOpenAIClient();
     const response = await openai.chat.completions.create({
       model: "gpt-4o", // the newest OpenAI model is "gpt-4o" which was released May 13, 2024. do not change this unless explicitly requested by the user
       messages: [
@@ -201,6 +227,17 @@ async function generateAIResponse(
     };
     
   } catch (error) {
+    // Check if it's an API key error specifically
+    if (error instanceof Error && error.message.includes('OpenAI API key')) {
+      console.warn('AI response generation unavailable: OpenAI API key not configured.');
+      return {
+        response: "I'm unable to provide AI-powered insights as the system needs configuration. You can still view your raw analytics data.",
+        queryType: "configuration_needed",
+        confidence: 0,
+        recommendations: ["View analytics data directly", "Contact administrator for AI setup"]
+      };
+    }
+    
     console.error('Error generating AI response:', error);
     
     return {

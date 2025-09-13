@@ -34,12 +34,21 @@ interface QueryContext {
  * OPENAI CLIENT INITIALIZATION
  * ============================
  * 
- * Initialize OpenAI client for query parsing. This should use the same
- * API key as the main AI assistant but is isolated for specific parsing tasks.
+ * Lazy initialize OpenAI client for query parsing. This prevents the app from
+ * crashing if the API key is not available and allows graceful degradation.
  */
-const openai = new OpenAI({ 
-  apiKey: process.env.OPENAI_API_KEY || process.env.OPENAI_API_KEY_ENV_VAR
-});
+let openaiClient: OpenAI | null = null;
+
+function getOpenAIClient(): OpenAI {
+  if (!openaiClient) {
+    const apiKey = process.env.OPENAI_API_KEY || process.env.OPENAI_API_KEY_ENV_VAR;
+    if (!apiKey) {
+      throw new Error('OpenAI API key is required for AI query parsing. Please set the OPENAI_API_KEY environment variable.');
+    }
+    openaiClient = new OpenAI({ apiKey });
+  }
+  return openaiClient;
+}
 
 /*
  * INTELLIGENT QUERY CONTEXT EXTRACTION
@@ -92,6 +101,7 @@ Return JSON with:
 
 If no specific location is mentioned, use "all". If no time period is mentioned, use "1".`;
 
+    const openai = getOpenAIClient();
     const response = await openai.chat.completions.create({
       model: "gpt-4o", // the newest OpenAI model is "gpt-4o" which was released May 13, 2024. do not change this unless explicitly requested by the user
       messages: [
@@ -123,7 +133,12 @@ If no specific location is mentioned, use "all". If no time period is mentioned,
     };
 
   } catch (error) {
-    console.error('Error extracting query context:', error);
+    // Check if it's an API key error specifically
+    if (error instanceof Error && error.message.includes('OpenAI API key')) {
+      console.warn('AI query parsing unavailable: OpenAI API key not configured. Using fallback parsing.');
+    } else {
+      console.error('Error extracting query context:', error);
+    }
     
     // Fallback to defaults if AI extraction fails
     return {
