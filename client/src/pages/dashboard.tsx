@@ -43,6 +43,7 @@ import RevenueProjections from "@/components/RevenueProjections";
 import PatientBillingAnalytics from "@/components/PatientBillingAnalytics";
 import ARBucketsWidget from "@/components/ARBucketsWidget";
 import FinancialRevenueWidget from "@/components/FinancialRevenueWidget";
+import FinancialExpensesWidget from "@/components/FinancialExpensesWidget";
 
 // Import brand assets for professional appearance
 import mdsLogo from "@assets/MDS Logo_1754254040718.png";
@@ -352,10 +353,11 @@ export default function Dashboard() {
                     />
                   </div>
                   
-                  {/* Financial Expenses Widget - Placeholder */}
-                  <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-                    <h4 className="text-lg font-semibold text-gray-900 mb-4">Expenses Widget</h4>
-                    <p className="text-gray-600">Expenses widget will be implemented next.</p>
+                  {/* Financial Expenses Widget */}
+                  <div data-testid="widget-financial-expenses">
+                    <FinancialExpensesWidget 
+                      selectedLocationId={selectedLocationId}
+                    />
                   </div>
                 </div>
                 
