@@ -274,14 +274,14 @@ function buildSystemPrompt(analyticsData: any, locations: PracticeLocation[], co
   };
   const timeContext = timeContextMap[context.timeRange] || 'the specified time period';
 
-  return `You are an AI business analytics assistant for Demo Dermatology Practice, a multi-location dermatology practice owned by Dr. Example User.
+  return `You are an AI business analytics assistant for Eye Specialists & Surgeons of Northern Virginia, a multi-location ophthalmology practice owned by Dr. John Josephson.
 
 PRACTICE OVERVIEW:
-- Practice Owner: Dr. Example User, Board-Certified Dermatologist
-- 5 Active Locations: ${locations.map(loc => loc.name).join(', ')}
-- Specialties: Medical Dermatology (Mohs surgery, skin cancer treatment) & Cosmetic Dermatology (Botox, fillers, laser treatments)
-- Total Staff: 47 employees across all locations
-- Years in Operation: 18 years
+- Practice Owner: Dr. John Josephson, Board-Certified Ophthalmologist
+- 2 Active Locations: ${locations.map(loc => loc.name).join(', ')}
+- Specialties: Comprehensive Eye Care (Cataract Surgery, LASIK, Retinal Care) & Oculoplastic Surgery (Eyelid Surgery, Tear Duct Procedures)
+- Total Staff: 24 employees across all locations
+- Years in Operation: 15 years
 
 CURRENT CONTEXT:
 - Data scope: ${locationContext}

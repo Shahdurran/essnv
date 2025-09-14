@@ -12,8 +12,8 @@
  * - Enables demos without requiring real practice management system integration
  * 
  * DATA MODELING APPROACH:
- * All mock data is based on real dermatology practice patterns:
- * - Actual CPT codes used in dermatology
+ * All mock data is based on real ophthalmology practice patterns:
+ * - Actual CPT codes used in ophthalmology
  * - Realistic revenue ranges and patient volumes
  * - Seasonal patterns (cosmetic procedures peak in spring/summer)
  * - Insurance payer mix representative of US healthcare
@@ -345,165 +345,129 @@ export function generatePatientVolumeProjections(months = 6) {
 }
 
 /**
- * Demo dermatology practice locations data
+ * Eye specialist practice locations data
  */
 export const practiceLocations = [
   {
-    id: "manhattan-ny",
-    name: "Manhattan, NY",
-    address: "123 Demo Avenue, Suite 100",
-    city: "New York",
-    state: "NY",
-    zipCode: "10001",
-    phone: "555-001-0001",
+    id: "fairfax",
+    name: "Fairfax",
+    address: "10721 Main St, Suite 2200",
+    city: "Fairfax",
+    state: "VA",
+    zipCode: "22030",
+    phone: "571-445-0001",
     isActive: true,
-    patientVolume: 425,
-    monthlyRevenue: 178500
+    patientVolume: 650,
+    monthlyRevenue: 1592500
   },
   {
-    id: "atlantic-highlands-nj",
-    name: "Atlantic Highlands, NJ",
-    address: "456 Sample Street",
-    city: "Atlantic Highlands",
-    state: "NJ",
-    zipCode: "07700",
-    phone: "555-002-0002",
+    id: "gainesville",
+    name: "Gainesville",
+    address: "7601 Heritage Dr, Suite 330",
+    city: "Gainesville",
+    state: "VA",
+    zipCode: "20155",
+    phone: "571-445-0002",
     isActive: true,
-    patientVolume: 298,
-    monthlyRevenue: 125600
-  },
-  {
-    id: "woodbridge-nj",
-    name: "Woodbridge, NJ",
-    address: "789 Example Blvd, Suite 200",
-    city: "Woodbridge",
-    state: "NJ",
-    zipCode: "07090",
-    phone: "555-003-0003",
-    isActive: true,
-    patientVolume: 312,
-    monthlyRevenue: 134800
-  },
-  {
-    id: "fresno-ca",
-    name: "Fresno, CA",
-    address: "321 Test Road, Suite 300",
-    city: "Fresno",
-    state: "CA",
-    zipCode: "93700",
-    phone: "555-004-0004",
-    isActive: true,
-    patientVolume: 156,
-    monthlyRevenue: 89200
-  },
-  {
-    id: "hanford-ca",
-    name: "Hanford, CA",
-    address: "654 Demo Plaza",
-    city: "Hanford",
-    state: "CA",
-    zipCode: "93200",
-    phone: "555-005-0005",
-    isActive: true,
-    patientVolume: 134,
-    monthlyRevenue: 76400
+    patientVolume: 350,
+    monthlyRevenue: 857500
   }
 ];
 
 /**
- * Real dermatology procedures with actual CPT codes and revenue data
+ * Real ophthalmology procedures with actual CPT codes and revenue data
  */
 export const topRevenueProcedures = [
   {
-    id: "mohs-surgery-17311",
-    cptCode: "17311",
-    name: "Mohs Surgery (17311)",
-    description: "First stage, head/neck",
+    id: "cataract-surgery-66984",
+    cptCode: "66984",
+    name: "Cataract Surgery (66984)",
+    description: "With IOL insertion",
     category: "medical",
+    basePrice: 3500.00,
+    monthlyVolume: 85,
+    monthlyRevenue: 297500,
+    growth: "+18.5%",
+    icon: "eye",
+    rvuValue: 15.57
+  },
+  {
+    id: "intravitreal-injection-67028",
+    cptCode: "67028",
+    name: "Intravitreal Injection (67028)",
+    description: "Medication injection",
+    category: "medical",
+    basePrice: 1200.00,
+    monthlyVolume: 145,
+    monthlyRevenue: 174000,
+    growth: "+22.3%",
+    icon: "syringe",
+    rvuValue: 3.25
+  },
+  {
+    id: "lasik-surgery",
+    cptCode: "LASIK",
+    name: "LASIK Surgery",
+    description: "Refractive surgery",
+    category: "refractive",
+    basePrice: 4500.00,
+    monthlyVolume: 28,
+    monthlyRevenue: 126000,
+    growth: "+15.7%",
+    icon: "zap",
+    rvuValue: 0.00
+  },
+  {
+    id: "blepharoplasty-15823",
+    cptCode: "15823",
+    name: "Blepharoplasty (15823)",
+    description: "Upper eyelid surgery",
+    category: "cosmetic",
     basePrice: 2500.00,
-    monthlyVolume: 51,
-    monthlyRevenue: 127450,
-    growth: "+12.5%",
-    icon: "cut",
-    rvuValue: 10.85
+    monthlyVolume: 32,
+    monthlyRevenue: 80000,
+    growth: "+12.1%",
+    icon: "scissors",
+    rvuValue: 8.45
   },
   {
-    id: "excision-malignant-11603",
-    cptCode: "11603",
-    name: "Excision Malignant (11603)",
-    description: "Trunk, arms, legs",
-    category: "medical",
-    basePrice: 850.00,
-    monthlyVolume: 105,
-    monthlyRevenue: 89320,
-    growth: "+8.3%",
-    icon: "search",
-    rvuValue: 4.15
-  },
-  {
-    id: "punch-biopsy-11104",
-    cptCode: "11104",
-    name: "Punch Biopsy (11104)",
-    description: "Single lesion",
+    id: "oct-scan-92134",
+    cptCode: "92134",
+    name: "OCT Scan (92134)",
+    description: "Retinal imaging",
     category: "medical",
     basePrice: 320.00,
-    monthlyVolume: 212,
-    monthlyRevenue: 67890,
-    growth: "+15.7%",
-    icon: "microscope",
-    rvuValue: 1.85
+    monthlyVolume: 235,
+    monthlyRevenue: 75200,
+    growth: "+8.9%",
+    icon: "camera",
+    rvuValue: 0.84
   },
   {
-    id: "botox-injections",
-    cptCode: "BOTOX",
-    name: "Botox Injections",
-    description: "Cosmetic treatment",
-    category: "cosmetic",
-    basePrice: 550.00,
-    monthlyVolume: 82,
-    monthlyRevenue: 45230,
-    growth: "+22.1%",
-    icon: "syringe",
-    rvuValue: 0.00
+    id: "trabeculoplasty-65855",
+    cptCode: "65855",
+    name: "Trabeculoplasty (65855)",
+    description: "Laser glaucoma treatment",
+    category: "medical",
+    basePrice: 850.00,
+    monthlyVolume: 65,
+    monthlyRevenue: 55250,
+    growth: "+18.3%",
+    icon: "target",
+    rvuValue: 4.12
   },
   {
-    id: "destruction-lesions-17000",
-    cptCode: "17000",
-    name: "Destruction Lesions (17000)",
-    description: "Premalignant lesions",
+    id: "comprehensive-exam-92004",
+    cptCode: "92004",
+    name: "Comprehensive Exam (92004)",
+    description: "New patient exam",
     category: "medical",
     basePrice: 250.00,
-    monthlyVolume: 155,
-    monthlyRevenue: 38670,
-    growth: "+5.9%",
-    icon: "fire",
-    rvuValue: 1.25
-  },
-  {
-    id: "dermal-fillers",
-    cptCode: "FILLER",
-    name: "Dermal Fillers",
-    description: "Cosmetic enhancement",
-    category: "cosmetic",
-    basePrice: 750.00,
-    monthlyVolume: 34,
-    monthlyRevenue: 25500,
-    growth: "+18.3%",
-    icon: "magic",
-    rvuValue: 0.00
-  },
-  {
-    id: "established-visit-99214",
-    cptCode: "99214",
-    name: "Established Visit (99214)",
-    description: "Moderate complexity",
-    category: "medical",
-    basePrice: 275.00,
-    monthlyVolume: 156,
-    monthlyRevenue: 42900,
+    monthlyVolume: 185,
+    monthlyRevenue: 46250,
     growth: "+7.2%",
-    icon: "user-md",
-    rvuValue: 1.75
+    icon: "search",
+    rvuValue: 2.11
   },
   {
     id: "new-patient-99204",
@@ -625,15 +589,15 @@ export const popularQuestions = [
     usage: 167
   },
   {
-    id: "mohs-analytics",
-    question: "Mohs surgery analytics",
-    icon: "cut",
+    id: "lasik-analytics",
+    question: "LASIK surgery analytics",
+    icon: "zap",
     category: "procedures",
     usage: 134
   },
   {
-    id: "cosmetic-vs-medical",
-    question: "Cosmetic vs Medical revenue",
+    id: "refractive-vs-medical",
+    question: "Refractive vs Medical revenue",
     icon: "balance-scale",
     category: "revenue",
     usage: 122

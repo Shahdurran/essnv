@@ -45,7 +45,7 @@ import ARBucketsWidget from "@/components/ARBucketsWidget";
 
 // Import brand assets for professional appearance
 import mdsLogo from "@assets/MDS Logo_1754254040718.png";
-import genericUserPhoto from "@assets/generic user pic_1754672840832.png";
+import drJohnJosephsonPhoto from "@assets/Dr. John Josephson_1757862871625.jpeg";
 
 /*
  * MAIN DASHBOARD COMPONENT
@@ -100,12 +100,9 @@ export default function Dashboard() {
    * Controls which practice location(s) to display analytics for.
    * 
    * POSSIBLE VALUES:
-   * - "all": Aggregated data across all 5 practice locations
-   * - "manhattan-ny": Manhattan, NY location only
-   * - "atlantic-highlands-nj": Atlantic Highlands, NJ location only  
-   * - "woodbridge-nj": Woodbridge, NJ location only
-   * - "fresno-ca": Fresno, CA location only
-   * - "hanford-ca": Hanford, CA location only
+   * - "all": Aggregated data across all 2 practice locations
+   * - "fairfax": Fairfax, VA location only
+   * - "gainesville": Gainesville, VA location only
    * 
    * BUSINESS IMPACT:
    * Location filtering is crucial for multi-site practices because:
@@ -122,16 +119,18 @@ export default function Dashboard() {
    * 
    * Controls which types of procedures to include in procedure-specific analytics.
    * 
-   * DERMATOLOGY PROCEDURE CATEGORIES:
-   * - "all": Both medical and cosmetic procedures
-   * - "medical": Medical dermatology (skin cancer, rashes, medical treatments)
-   * - "cosmetic": Cosmetic dermatology (Botox, fillers, laser treatments)
+   * OPHTHALMOLOGY PROCEDURE CATEGORIES:
+   * - "all": All procedure types
+   * - "medical": Medical ophthalmology (cataract surgery, injections, eye exams)
+   * - "cosmetic": Cosmetic ophthalmology (blepharoplasty)
+   * - "refractive": Refractive surgery (LASIK, PRK)
    * 
    * BUSINESS RATIONALE:
-   * Medical vs cosmetic procedures have very different business characteristics:
+   * Medical vs cosmetic vs refractive procedures have different characteristics:
    * - Medical: Insurance coverage, consistent volume, regulatory requirements
-   * - Cosmetic: Cash pay, seasonal variation, higher profit margins
-   * - Mixed practices need to analyze these segments separately
+   * - Cosmetic: Often cash pay, elective procedures, higher margins
+   * - Refractive: Typically cash pay, high-value procedures, patient satisfaction focus
+   * - Eye specialty practices need to analyze these segments separately
    */
   const [selectedProcedureCategory, setSelectedProcedureCategory] = useState("all");
 
@@ -229,19 +228,19 @@ export default function Dashboard() {
               />
               <div className="min-w-0 flex-1">
                 <h1 className="text-sm sm:text-xl font-bold text-gray-900 truncate">MDS AI Analytics</h1>
-                <p className="text-xs sm:text-sm text-gray-600 hidden sm:block">Demo Dermatology Practice Intelligence</p>
+                <p className="text-xs sm:text-sm text-gray-600 hidden sm:block">Eye Specialists & Surgeons of Northern Virginia</p>
               </div>
             </div>
             
             {/* User Profile Section - Mobile Optimized */}
             <div className="flex items-center space-x-2 sm:space-x-4 flex-shrink-0">
               <div className="text-right hidden sm:block">
-                <p className="text-sm font-medium text-gray-900">Dr. Example User</p>
+                <p className="text-sm font-medium text-gray-900">Dr. John Josephson</p>
                 <p className="text-xs text-gray-600">Practice Owner</p>
               </div>
               <img 
-                src={genericUserPhoto} 
-                alt="Dr. Example User" 
+                src={drJohnJosephsonPhoto} 
+                alt="Dr. John Josephson" 
                 className="w-8 h-8 sm:w-10 sm:h-10 rounded-full object-cover border-2 border-blue-100"
               />
             </div>

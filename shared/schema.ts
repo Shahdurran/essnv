@@ -184,7 +184,7 @@ export const procedures = pgTable("procedures", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
   cptCode: text("cpt_code").notNull().unique(),
   description: text("description").notNull(),
-  category: text("category").notNull(), // medical, cosmetic
+  category: text("category").notNull(), // medical, cosmetic, refractive
   basePrice: decimal("base_price", { precision: 10, scale: 2 }),
   rvuValue: decimal("rvu_value", { precision: 8, scale: 4 }),
 });

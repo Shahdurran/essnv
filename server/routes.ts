@@ -104,7 +104,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const { locationId, category } = req.params;
       const { timeRange = '1' } = req.query;
       const finalLocationId = locationId === 'all' ? undefined : locationId;
-      const procedureCategory = category === 'all' ? undefined : category as 'medical' | 'cosmetic';
+      const procedureCategory = category === 'all' ? undefined : category as 'medical' | 'cosmetic' | 'refractive';
       
       const topProcedures = await storage.getTopRevenueProcedures(
         finalLocationId, 
@@ -370,14 +370,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
           category: "operations"
         },
         {
-          id: "mohs-analytics",
-          question: "Mohs surgery analytics",
-          icon: "cut",
+          id: "lasik-analytics",
+          question: "LASIK surgery analytics",
+          icon: "zap",
           category: "procedures"
         },
         {
-          id: "cosmetic-vs-medical",
-          question: "Cosmetic vs Medical revenue",
+          id: "refractive-vs-medical",
+          question: "Refractive vs Medical revenue",
           icon: "balance-scale",
           category: "revenue"
         },
@@ -429,7 +429,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const { category } = req.query;
       
       let procedures;
-      if (category && (category === 'medical' || category === 'cosmetic')) {
+      if (category && (category === 'medical' || category === 'cosmetic' || category === 'refractive')) {
         procedures = await storage.getProceduresByCategory(category);
       } else {
         procedures = await storage.getAllProcedures();

@@ -65,7 +65,7 @@ import {
   Loader2
 } from "lucide-react";
 // User avatar for chat interface
-import genericUserPhoto from "@assets/generic user pic_1754672840832.png";
+import drJohnJosephsonPhoto from "@assets/Dr. John Josephson_1757862871625.jpeg";
 
 /*
  * TYPESCRIPT INTERFACE DEFINITIONS
@@ -203,7 +203,7 @@ export default function AIBusinessAssistant({ selectedLocationId }: AIBusinessAs
     const welcomeMessage: ChatMessage = {
       id: "welcome",
       type: "ai",
-      content: "Hi Dr. Example User! I'm your AI business analytics assistant. Ask me anything about your practice performance, forecasts, or key metrics across your 5 locations.",
+      content: "Hi Dr. John Josephson! I'm your AI business analytics assistant. Ask me anything about your practice performance, forecasts, or key metrics across your 2 locations.",
       timestamp: new Date().toISOString(),
       isWelcome: true
     };
@@ -552,7 +552,7 @@ export default function AIBusinessAssistant({ selectedLocationId }: AIBusinessAs
             <div className="min-w-0 flex-1">
               <h3 className="text-lg sm:text-xl font-bold truncate">AI Business Assistant</h3>
               <p className="text-xs sm:text-sm text-blue-100 hidden sm:block">
-                Ask anything about your practice performance across all 5 locations
+                Ask anything about your practice performance across all 2 locations
               </p>
               <p className="text-xs text-blue-100 sm:hidden">
                 Ask about practice performance
@@ -614,8 +614,8 @@ export default function AIBusinessAssistant({ selectedLocationId }: AIBusinessAs
               {message.type === 'user' && (
                 <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-lg overflow-hidden flex-shrink-0 ml-2 sm:ml-3">
                   <img 
-                    src={genericUserPhoto} 
-                    alt="Dr. Example User"
+                    src={drJohnJosephsonPhoto} 
+                    alt="Dr. John Josephson"
                     className="w-full h-full object-cover"
                   />
                 </div>

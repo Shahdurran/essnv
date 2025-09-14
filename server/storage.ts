@@ -39,7 +39,7 @@ export interface IStorage {
 
   // Procedure management
   getAllProcedures(): Promise<Procedure[]>;
-  getProceduresByCategory(category: 'medical' | 'cosmetic'): Promise<Procedure[]>;
+  getProceduresByCategory(category: 'medical' | 'cosmetic' | 'refractive'): Promise<Procedure[]>;
   createProcedure(procedure: InsertProcedure): Promise<Procedure>;
 
   // Visit and revenue management
@@ -61,7 +61,7 @@ export interface IStorage {
   createPerformanceMetric(metric: InsertPerformanceMetric): Promise<PerformanceMetric>;
 
   // Analytics aggregation methods
-  getTopRevenueProcedures(locationId?: string, category?: 'medical' | 'cosmetic', timeRangeMonths?: number): Promise<any[]>;
+  getTopRevenueProcedures(locationId?: string, category?: 'medical' | 'cosmetic' | 'refractive', timeRangeMonths?: number): Promise<any[]>;
   getMonthlyRevenueData(locationId?: string): Promise<any[]>;
   getInsurancePayerBreakdown(locationId?: string, timeRangeMonths?: number): Promise<any[]>;
   getPatientVolumeProjections(locationId?: string): Promise<any[]>;
@@ -114,11 +114,8 @@ export class MemStorage implements IStorage {
     
     // Location distribution weights (must sum to 100%)
     locationWeights: {
-      'manhattan-ny': 0.43,         // 43% - Premium location
-      'atlantic-highlands-nj': 0.22, // 22% - Established practice
-      'woodbridge-nj': 0.16,        // 16% - Mid-size practice  
-      'fresno-ca': 0.12,           // 12% - Growing market
-      'hanford-ca': 0.07           // 7% - Smaller practice
+      'fairfax': 0.65,              // 65% - Main location
+      'gainesville': 0.35           // 35% - Secondary location
     }
   };
   private procedures: Map<string, Procedure>;
@@ -138,93 +135,71 @@ export class MemStorage implements IStorage {
     this.aiQueries = new Map();
     this.performanceMetrics = new Map();
 
-    // Initialize with demo dermatology data (fire and forget - async initialization)
+    // Initialize with demo ophthalmology data (fire and forget - async initialization)
     this.initializeRealData().catch(console.error);
   }
 
   /**
-   * Initialize storage with demo dermatology practice data
-   * This includes generic locations, procedures, and sample analytics data
+   * Initialize storage with demo ophthalmology practice data
+   * This includes eye specialist locations, procedures, and sample analytics data
    */
   private async initializeRealData(): Promise<void> {
     // Initialize demo practice locations
     const locations: InsertPracticeLocation[] = [
       {
-        name: "Manhattan, NY",
-        address: "123 Demo Avenue, Suite 100",
-        city: "New York",
-        state: "NY",
-        zipCode: "10001",
-        phone: "555-001-0001",
+        name: "Fairfax",
+        address: "10721 Main St, Suite 2200",
+        city: "Fairfax",
+        state: "VA",
+        zipCode: "22030",
+        phone: "571-445-0001",
         isActive: true
       },
       {
-        name: "Atlantic Highlands, NJ",
-        address: "456 Sample Street",
-        city: "Atlantic Highlands",
-        state: "NJ",
-        zipCode: "07700",
-        phone: "555-002-0002",
-        isActive: true
-      },
-      {
-        name: "Woodbridge, NJ",
-        address: "789 Example Blvd, Suite 200",
-        city: "Woodbridge",
-        state: "NJ",
-        zipCode: "07090",
-        phone: "555-003-0003",
-        isActive: true
-      },
-      {
-        name: "Fresno, CA",
-        address: "321 Test Road, Suite 300",
-        city: "Fresno",
-        state: "CA",
-        zipCode: "93700",
-        phone: "555-004-0004",
-        isActive: true
-      },
-      {
-        name: "Hanford, CA",
-        address: "654 Demo Plaza",
-        city: "Hanford",
-        state: "CA",
-        zipCode: "93200",
-        phone: "555-005-0005",
+        name: "Gainesville",
+        address: "7601 Heritage Dr, Suite 330",
+        city: "Gainesville",
+        state: "VA",
+        zipCode: "20155",
+        phone: "571-445-0002",
         isActive: true
       }
     ];
 
-    // Create practice locations (wait for all to complete)
-    for (const location of locations) {
-      await this.createPracticeLocation(location);
+    // Create practice locations with specific IDs (wait for all to complete)
+    const locationMappings = [
+      { location: locations[0], id: 'fairfax' },
+      { location: locations[1], id: 'gainesville' }
+    ];
+    
+    for (const { location, id } of locationMappings) {
+      await this.createPracticeLocationWithId(location, id);
     }
 
-    // Initialize real dermatology procedures with CPT codes
+    // Initialize ophthalmology procedures with CPT codes
     const procedures: InsertProcedure[] = [
       // High-revenue procedures
-      { cptCode: "17311", description: "Mohs Surgery - First Stage (Head/Neck)", category: "medical", basePrice: "2500.00", rvuValue: "10.85" },
-      { cptCode: "17312", description: "Mohs Surgery - Additional Stage (Head/Neck)", category: "medical", basePrice: "1200.00", rvuValue: "5.42" },
-      { cptCode: "11603", description: "Excision Malignant Lesion (Trunk/Arms/Legs)", category: "medical", basePrice: "850.00", rvuValue: "4.15" },
-      { cptCode: "11104", description: "Punch Biopsy - Single Lesion", category: "medical", basePrice: "320.00", rvuValue: "1.85" },
-      { cptCode: "11105", description: "Punch Biopsy - Additional Lesion", category: "medical", basePrice: "180.00", rvuValue: "0.95" },
+      { cptCode: "66984", description: "Cataract Surgery with IOL Insertion", category: "medical", basePrice: "3500.00", rvuValue: "15.57" },
+      { cptCode: "67028", description: "Intravitreal Injection", category: "medical", basePrice: "1200.00", rvuValue: "3.25" },
+      { cptCode: "65855", description: "Trabeculoplasty by Laser Surgery", category: "medical", basePrice: "850.00", rvuValue: "4.12" },
+      { cptCode: "92134", description: "Scanning Computerized Ophthalmic Diagnostic Imaging (OCT)", category: "medical", basePrice: "320.00", rvuValue: "0.84" },
+      { cptCode: "92083", description: "Visual Field Examination", category: "medical", basePrice: "180.00", rvuValue: "0.63" },
       
       // Common procedures
-      { cptCode: "17000", description: "Destruction Premalignant Lesions - First", category: "medical", basePrice: "250.00", rvuValue: "1.25" },
-      { cptCode: "17003", description: "Destruction Premalignant Lesions (2-14)", category: "medical", basePrice: "450.00", rvuValue: "2.15" },
-      { cptCode: "17110", description: "Destruction Benign Lesions (up to 14)", category: "medical", basePrice: "380.00", rvuValue: "1.85" },
+      { cptCode: "92004", description: "Comprehensive Eye Examination, New Patient", category: "medical", basePrice: "250.00", rvuValue: "2.11" },
+      { cptCode: "92014", description: "Comprehensive Eye Examination, Established Patient", category: "medical", basePrice: "200.00", rvuValue: "1.50" },
+      { cptCode: "92012", description: "Intermediate Eye Examination", category: "medical", basePrice: "150.00", rvuValue: "1.17" },
       
       // E/M codes
       { cptCode: "99202", description: "New Patient Visit (15-29 min)", category: "medical", basePrice: "220.00", rvuValue: "1.45" },
       { cptCode: "99213", description: "Established Patient Visit (Low Complexity)", category: "medical", basePrice: "165.00", rvuValue: "1.05" },
       { cptCode: "99214", description: "Established Patient Visit (Moderate Complexity)", category: "medical", basePrice: "275.00", rvuValue: "1.75" },
       
-      // Cosmetic procedures (self-pay)
-      { cptCode: "BOTOX", description: "Botox Injections", category: "cosmetic", basePrice: "550.00", rvuValue: "0.00" },
-      { cptCode: "FILLER", description: "Dermal Filler Treatment", category: "cosmetic", basePrice: "750.00", rvuValue: "0.00" },
-      { cptCode: "CHEM_PEEL", description: "Chemical Peel", category: "cosmetic", basePrice: "350.00", rvuValue: "0.00" },
-      { cptCode: "LASER_HAIR", description: "Laser Hair Removal", category: "cosmetic", basePrice: "300.00", rvuValue: "0.00" },
+      // Oculoplastic procedures (cosmetic/reconstructive)
+      { cptCode: "15823", description: "Blepharoplasty (Upper Eyelid)", category: "cosmetic", basePrice: "2500.00", rvuValue: "8.45" },
+      { cptCode: "15824", description: "Blepharoplasty (Lower Eyelid)", category: "cosmetic", basePrice: "2800.00", rvuValue: "9.12" },
+      { cptCode: "68761", description: "Closure of Lacrimal Punctum", category: "medical", basePrice: "750.00", rvuValue: "3.25" },
+      { cptCode: "LASIK", description: "LASIK Refractive Surgery", category: "refractive", basePrice: "4500.00", rvuValue: "0.00" },
     ];
 
     // Create procedures (wait for all to complete)
@@ -234,11 +209,11 @@ export class MemStorage implements IStorage {
 
     // Create default practice owner user (wait for completion)
     await this.createUser({
-      username: "dr.example",
+      username: "dr.josephson",
       password: "secure_password", // In production, this would be hashed
-      name: "Dr. Example User",
+      name: "Dr. John Josephson",
       role: "practice_owner",
-      practiceId: "demo_dermatology"
+      practiceId: "eye_specialists_nova"
     });
   }
 
@@ -276,6 +251,12 @@ export class MemStorage implements IStorage {
     return location;
   }
 
+  async createPracticeLocationWithId(insertLocation: InsertPracticeLocation, customId: string): Promise<PracticeLocation> {
+    const location: PracticeLocation = { ...insertLocation, id: customId };
+    this.practiceLocations.set(customId, location);
+    return location;
+  }
+
   // Patient management methods
   async getPatientsByLocation(locationId: string): Promise<Patient[]> {
     return Array.from(this.patients.values()).filter(
@@ -299,7 +280,7 @@ export class MemStorage implements IStorage {
     return Array.from(this.procedures.values());
   }
 
-  async getProceduresByCategory(category: 'medical' | 'cosmetic'): Promise<Procedure[]> {
+  async getProceduresByCategory(category: 'medical' | 'cosmetic' | 'refractive'): Promise<Procedure[]> {
     return Array.from(this.procedures.values()).filter(
       (procedure) => procedure.category === category
     );
@@ -394,7 +375,7 @@ export class MemStorage implements IStorage {
   }
 
   // Analytics aggregation methods
-  async getTopRevenueProcedures(locationId?: string, category?: 'medical' | 'cosmetic', timeRangeMonths?: number): Promise<any[]> {
+  async getTopRevenueProcedures(locationId?: string, category?: 'medical' | 'cosmetic' | 'refractive', timeRangeMonths?: number): Promise<any[]> {
     const procedures = Array.from(this.procedures.values());
     const locations = Array.from(this.practiceLocations.values());
     const timeRange = timeRangeMonths || 1;
@@ -601,7 +582,7 @@ export class MemStorage implements IStorage {
       },
       {
         id: "reduce-claim-denials", 
-        question: "How can we reduce dermatology claim denials?",
+        question: "How can we reduce ophthalmology claim denials?",
         icon: "Shield",
         category: "Claims",
       }
@@ -658,7 +639,7 @@ export class MemStorage implements IStorage {
     const monthlyPatientRevenue = this.masterData.baseMonthlyRevenue.patientRevenue * locationWeight;
     const totalPatientRevenue = monthlyPatientRevenue * scalingFactor;
     
-    // Patient collection rate: 82% (realistic for dermatology)
+    // Patient collection rate: 82% (realistic for ophthalmology)
     const collectionRate = 0.82;
     const totalPaid = Math.round(totalPatientRevenue * collectionRate);
     const totalOutstanding = Math.round(totalPatientRevenue * (1 - collectionRate));
@@ -746,7 +727,7 @@ export class MemStorage implements IStorage {
     const adjustment = submitted - total;
     const adjustedPaid = paid + adjustment;
     
-    // Insurance provider distribution (realistic for dermatology)
+    // Insurance provider distribution (realistic for ophthalmology)
     const providerDistribution = [
       { name: 'Blue Cross Blue Shield', percentage: 0.35 },
       { name: 'Aetna', percentage: 0.22 },
