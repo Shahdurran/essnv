@@ -1,0 +1,29 @@
+1.	Below the chatbot, add two main sections that users can toggle between:
+o	Financial Analysis (should appear first by default).
+o	Clinical Analysis (should appear second).
+These should be easy to switch between, preferably with clear buttons or tabs.
+2.	The Clinical Analysis section will mostly stay the same, with these adjustments:
+o	Key Metric Trends: Remove the 1yr, 2yr, 5yr filter. It should default to 1 year.
+	Add EBITDA to the Revenue chart.
+	Replace AR Days with Write-Offs.
+o	Top Revenue Procedures:
+	Remove the “Medical, Cosmetic, All” filter.
+	Show this fixed list:
+	Office Visits
+	Diagnostics & Minor Procedures
+	Cataract Surgeries
+	Intravitreal Injections
+	Refractive Cash
+	Corneal Procedures
+	Oculoplastics
+	Optical / Contact Lens Sales
+3.	The Financial Analysis section should include:
+o	Two side-by-side widgets at the top:
+	Revenue (green theme): Scrollable list of the revenue categories listed above, with filters for 1 month, 3 months, 6 months, 1 year, and a custom date range. Data should come from the “PL” file.
+	Expenses (red theme): Scrollable list of expenses (Drug Acquisition, Surgical Supplies & IOLs, Optical Cost of Goods, Total Direct Costs, Gross Profit, Bad Debt Expense, Staff Wages & Benefits, Billing & Coding Vendors, Rent & Utilities, Technology, Insurance, Equipment Service & Leases, Marketing & Outreach, Office & Miscellaneous). Same filters as Revenue, data also from the “PL” file.
+7.	Profit and Loss Statement: A full-width widget showing a visually polished P&L table, with the same time filters as above, matching the format of the “PL” file. There should be a list and graph option at the top as buttons, and the graph should show everything visually nicely
+o	
+Cash In vs. Cash Out: Two side-by-side widgets.
+	Cash In (green): Insurance Reimbursements and Patient Payments (from the “Cashflow” file).
+	Cash Out (red): List of expenses from the “Cashflow” file (Drug Purchases, Surgical Supplies, Optical Goods, Staff Wages, Billing Vendors, Rent, Technology, Insurance, Equipment, Marketing, Office, Purchase of Equipment, Other Investing, Loan Repayment, Owner Distributions).
+8.	Cash Flow Statement: A full-width widget showing a complete cash flow table, styled to match the “Cashflow” file, with the same time filters. There should be a list and graph option at the top as buttons, and the graph should show everything visually nicely
