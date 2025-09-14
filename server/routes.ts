@@ -36,6 +36,8 @@ import { storage } from "./storage";
 import OpenAI from "openai";
 // Zod schema for AI query validation
 import { insertAiQuerySchema } from "@shared/schema";
+// Cash flow CSV import functions
+import { importCashFlowDataFromCsv, getCashFlowData } from "./csvImport";
 
 /*
  * OPENAI CLIENT INITIALIZATION
@@ -693,6 +695,99 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Error fetching P&L monthly data:", error);
       res.status(500).json({ message: "Failed to fetch P&L data" });
+    }
+  });
+
+  // ============================================================================
+  // CASH FLOW DATA IMPORT ROUTES
+  // ============================================================================
+  
+  /**
+   * POST /api/cashflow/import-csv - Import cash flow data from CSV file
+   */
+  app.post("/api/cashflow/import-csv", async (req, res) => {
+    try {
+      // Use Fairfax location as default
+      const locationId = "fairfax";
+      
+      // Import cash flow data from CSV
+      const fs = await import('fs');
+      const path = await import('path');
+      const csvPath = path.join(process.cwd(), 'Cashflow-Eye-Specialists.csv');
+      
+      if (!fs.existsSync(csvPath)) {
+        return res.status(404).json({ message: "Cash flow CSV file not found" });
+      }
+      
+      const result = await importCashFlowDataFromCsv(csvPath, locationId);
+      
+      res.json(result);
+      
+    } catch (error) {
+      console.error("Error importing cash flow CSV data:", error);
+      res.status(500).json({ message: "Failed to import cash flow data" });
+    }
+  });
+
+  /**
+   * GET /api/financial/cashflow/:locationId/:period - Get cash flow data
+   */
+  app.get("/api/financial/cashflow/:locationId/:period", async (req, res) => {
+    try {
+      const { locationId, period } = req.params;
+      
+      // Get raw cash flow data
+      const rawData = getCashFlowData(locationId, period);
+      
+      // Process and structure the data for the frontend
+      const operatingItems = rawData.filter(item => item.category === 'operating');
+      const investingItems = rawData.filter(item => item.category === 'investing');
+      const financingItems = rawData.filter(item => item.category === 'financing');
+      
+      // Aggregate by line item
+      const aggregateByLineItem = (items: any[]) => {
+        const grouped = items.reduce((acc: Record<string, number>, item: any) => {
+          if (!acc[item.lineItem]) {
+            acc[item.lineItem] = 0;
+          }
+          acc[item.lineItem] += Number(item.amount);
+          return acc;
+        }, {} as Record<string, number>);
+        
+        return Object.entries(grouped).map(([name, amount]: [string, number]) => ({
+          name,
+          amount,
+          change: Math.random() * 10 - 5, // Mock change percentage
+          trend: amount > 0 ? 'up' : 'down'
+        }));
+      };
+      
+      const operating = aggregateByLineItem(operatingItems);
+      const investing = aggregateByLineItem(investingItems);
+      const financing = aggregateByLineItem(financingItems);
+      
+      // Calculate totals
+      const totalOperating = operating.reduce((sum: number, item: any) => sum + Number(item.amount), 0);
+      const totalInvesting = investing.reduce((sum: number, item: any) => sum + Number(item.amount), 0);
+      const totalFinancing = financing.reduce((sum: number, item: any) => sum + Number(item.amount), 0);
+      const netCashFlow = totalOperating + totalInvesting + totalFinancing;
+      
+      res.json({
+        operating,
+        investing,
+        financing,
+        totals: {
+          operating: totalOperating,
+          investing: totalInvesting,
+          financing: totalFinancing,
+          netCashFlow
+        },
+        period: period
+      });
+      
+    } catch (error) {
+      console.error("Error fetching cash flow data:", error);
+      res.status(500).json({ message: "Failed to fetch cash flow data" });
     }
   });
 

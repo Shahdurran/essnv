@@ -218,4 +218,140 @@ if (import.meta.url === `file://${process.argv[1]}`) {
     });
 }
 
-export { importCsvData };
+/*
+ * CASH FLOW CSV IMPORT FUNCTIONALITY  
+ * ==================================
+ */
+
+// Global storage for cash flow data (in-memory)
+let cashFlowDataStore: any[] = [];
+
+/**
+ * Import cash flow data from CSV file and store in memory
+ */
+async function importCashFlowDataFromCsv(csvPath: string, locationId: string) {
+  try {
+    const csvContent = fs.readFileSync(csvPath, 'utf-8');
+    const lines = csvContent.split('\n').filter(line => line.trim());
+    
+    console.log(`Processing ${lines.length} cash flow CSV lines...`);
+    
+    if (lines.length < 2) {
+      throw new Error('CSV file must have at least header and one data row');
+    }
+
+    // Parse header to get month columns (skip first column)
+    const headers = lines[0].split(',').slice(1);
+    const months = headers.map(month => month.trim().replace(/"/g, '').replace('﻿', ''));
+    
+    console.log(`Found ${months.length} months: ${months.join(', ')}`);
+
+    // Clear existing cash flow data for this location
+    cashFlowDataStore = cashFlowDataStore.filter(record => record.locationId !== locationId);
+    let recordsImported = 0;
+
+    // Process each line item
+    for (let i = 1; i < lines.length; i++) {
+      const line = lines[i];
+      if (!line.trim()) continue;
+
+      const columns = line.split(',');
+      const lineItem = columns[0].replace(/"/g, '').replace('﻿', '').trim();
+      
+      if (!lineItem || lineItem === '') continue;
+
+      // Process each month's data for this line item
+      for (let monthIndex = 0; monthIndex < months.length; monthIndex++) {
+        const month = months[monthIndex];
+        const amountStr = columns[monthIndex + 1];
+        
+        if (!amountStr || amountStr.trim() === '') continue;
+        
+        const amount = parseFloat(amountStr.replace(/[,]/g, ''));
+        
+        if (isNaN(amount)) continue;
+
+        // Create cash flow record
+        const cashFlowRecord = {
+          id: `cf-${locationId}-${month}-${lineItem}`.toLowerCase().replace(/[^a-z0-9-]/g, '-'),
+          locationId: locationId,
+          month: month,
+          lineItem: lineItem,
+          amount: amount,
+          category: getCashFlowCategory(lineItem),
+          createdAt: new Date().toISOString(),
+        };
+
+        // Store in memory
+        cashFlowDataStore.push(cashFlowRecord);
+        recordsImported++;
+      }
+    }
+
+    console.log(`Imported ${recordsImported} cash flow records for location ${locationId}`);
+    
+    return {
+      success: true,
+      recordsImported,
+      locationId,
+      message: 'Cash flow data imported successfully'
+    };
+
+  } catch (error) {
+    console.error('Failed to import cash flow CSV:', error);
+    throw error;
+  }
+}
+
+/**
+ * Get cash flow data from memory store
+ */
+function getCashFlowData(locationId?: string, period?: string) {
+  let filteredData = cashFlowDataStore;
+  
+  if (locationId && locationId !== 'all') {
+    filteredData = filteredData.filter(record => record.locationId === locationId);
+  }
+  
+  return filteredData;
+}
+
+/**
+ * Categorize cash flow line items into operating, investing, or financing activities
+ */
+function getCashFlowCategory(lineItem: string): 'operating' | 'investing' | 'financing' {
+  const item = lineItem.toLowerCase();
+  
+  // Operating activities
+  if (item.includes('insurance') || item.includes('reimbursement') ||
+      item.includes('patient') || item.includes('payment') ||
+      item.includes('drug') || item.includes('supplies') ||
+      item.includes('staff') || item.includes('wages') ||
+      item.includes('rent') || item.includes('utilities') ||
+      item.includes('billing') || item.includes('coding') ||
+      item.includes('technology') || item.includes('marketing') ||
+      item.includes('office') || item.includes('miscellaneous') ||
+      item.includes('optical') || item.includes('goods') ||
+      item.includes('equipment service') || item.includes('leases') ||
+      item.includes('net cash from operating')) {
+    return 'operating';
+  }
+  
+  // Investing activities  
+  if (item.includes('purchase') || item.includes('equipment') ||
+      item.includes('investing') || item.includes('net cash from investing')) {
+    return 'investing';
+  }
+  
+  // Financing activities
+  if (item.includes('loan') || item.includes('repayment') ||
+      item.includes('owner') || item.includes('distribution') ||
+      item.includes('financing') || item.includes('net cash from financing')) {
+    return 'financing';
+  }
+  
+  // Default to operating for most practice items
+  return 'operating';
+}
+
+export { importCsvData, importCashFlowDataFromCsv, getCashFlowData };

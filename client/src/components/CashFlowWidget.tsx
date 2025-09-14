@@ -4,6 +4,7 @@ import { Badge } from "@/components/ui/badge";
 import { BarChart3, List, TrendingUp, TrendingDown } from "lucide-react";
 import { useState } from "react";
 import { Line } from "react-chartjs-2";
+import { useQuery } from "@tanstack/react-query";
 import {
   Chart as ChartJS,
   CategoryScale,
@@ -31,29 +32,21 @@ interface CashFlowWidgetProps {
   selectedPeriod: string;
 }
 
-// Cash Flow Statement data structure for ophthalmology practice
-const cashFlowData = {
-  operating: {
-    patientCollections: 285000,
-    insuranceReimbursements: 175000,
-    supplierPayments: -89500,
-    staffPayroll: -125000,
-    rentUtilities: -42000,
-    otherOperating: -15200
-  },
-  investing: {
-    equipmentPurchases: -45000,
-    technologyInvestments: -18900,
-    facilityImprovements: -12000,
-    assetSales: 8500
-  },
-  financing: {
-    loanPayments: -15800,
-    ownerDraws: -25000,
-    lineOfCredit: 12000,
-    equipmentFinancing: -8200
-  }
-};
+// Interface for cash flow API response
+interface CashFlowApiResponse {
+  operating: { name: string; amount: number; change: number; trend: string }[];
+  investing: { name: string; amount: number; change: number; trend: string }[];
+  financing: { name: string; amount: number; change: number; trend: string }[];
+  totals: {
+    operating: number;
+    investing: number;
+    financing: number;
+    netCashFlow: number;
+  };
+  period: string;
+}
+
+// This component now fetches real cash flow data from your CSV via API
 
 const timePeriods = [
   { id: "1M", label: "1 Month", active: false },
@@ -123,11 +116,17 @@ const chartOptions = {
 export default function CashFlowWidget({ selectedLocationId, selectedPeriod }: CashFlowWidgetProps) {
   const [viewMode, setViewMode] = useState<"list" | "graph">("list");
 
-  // Calculate totals
-  const operatingCashFlow = Object.values(cashFlowData.operating).reduce((sum, val) => sum + val, 0);
-  const investingCashFlow = Object.values(cashFlowData.investing).reduce((sum, val) => sum + val, 0);
-  const financingCashFlow = Object.values(cashFlowData.financing).reduce((sum, val) => sum + val, 0);
-  const netCashFlow = operatingCashFlow + investingCashFlow + financingCashFlow;
+  // Fetch real cash flow data from CSV-based API
+  const { data: cashFlowApiData, isLoading, error } = useQuery<CashFlowApiResponse>({
+    queryKey: ['/api/financial/cashflow', selectedLocationId, selectedPeriod],
+    enabled: Boolean(selectedLocationId && selectedPeriod),
+  });
+
+  // Calculate totals from API data
+  const operatingCashFlow = cashFlowApiData?.totals?.operating || 0;
+  const investingCashFlow = cashFlowApiData?.totals?.investing || 0;
+  const financingCashFlow = cashFlowApiData?.totals?.financing || 0;
+  const netCashFlow = cashFlowApiData?.totals?.netCashFlow || 0;
 
   const formatCurrency = (amount: number) => {
     return new Intl.NumberFormat("en-US", {
@@ -190,8 +189,17 @@ export default function CashFlowWidget({ selectedLocationId, selectedPeriod }: C
             <div>
               <h4 className="font-semibold text-green-700 mb-3 text-sm uppercase tracking-wide">Cash Flow from Operating Activities</h4>
               <div className="space-y-2">
-                {Object.entries(cashFlowData.operating).map(([key, value]) => 
-                  formatCashFlowItem(key, value)
+                {isLoading ? (
+                  <div className="space-y-2">
+                    <div className="h-4 bg-gray-200 rounded animate-pulse"></div>
+                    <div className="h-4 bg-gray-200 rounded animate-pulse"></div>
+                  </div>
+                ) : error ? (
+                  <div className="text-red-600 text-sm">Error loading operating data</div>
+                ) : (
+                  cashFlowApiData?.operating?.map((item) => 
+                    formatCashFlowItem(item.name, item.amount)
+                  )
                 )}
                 <div className="border-t pt-2 mt-2" data-testid="cf-operating-total">
                   <div className="flex justify-between items-center">
@@ -208,8 +216,18 @@ export default function CashFlowWidget({ selectedLocationId, selectedPeriod }: C
             <div>
               <h4 className="font-semibold text-red-700 mb-3 text-sm uppercase tracking-wide">Cash Flow from Investing Activities</h4>
               <div className="space-y-2">
-                {Object.entries(cashFlowData.investing).map(([key, value]) => 
-                  formatCashFlowItem(key, value)
+                {isLoading ? (
+                  <div className="space-y-2">
+                    <div className="h-4 bg-gray-200 rounded animate-pulse"></div>
+                  </div>
+                ) : error ? (
+                  <div className="text-red-600 text-sm">Error loading investing data</div>
+                ) : cashFlowApiData?.investing?.length === 0 ? (
+                  <div className="text-gray-500 text-sm">No investing activities</div>
+                ) : (
+                  cashFlowApiData?.investing?.map((item) => 
+                    formatCashFlowItem(item.name, item.amount)
+                  )
                 )}
                 <div className="border-t pt-2 mt-2" data-testid="cf-investing-total">
                   <div className="flex justify-between items-center">
@@ -226,8 +244,18 @@ export default function CashFlowWidget({ selectedLocationId, selectedPeriod }: C
             <div>
               <h4 className="font-semibold text-purple-700 mb-3 text-sm uppercase tracking-wide">Cash Flow from Financing Activities</h4>
               <div className="space-y-2">
-                {Object.entries(cashFlowData.financing).map(([key, value]) => 
-                  formatCashFlowItem(key, value)
+                {isLoading ? (
+                  <div className="space-y-2">
+                    <div className="h-4 bg-gray-200 rounded animate-pulse"></div>
+                  </div>
+                ) : error ? (
+                  <div className="text-red-600 text-sm">Error loading financing data</div>
+                ) : cashFlowApiData?.financing?.length === 0 ? (
+                  <div className="text-gray-500 text-sm">No financing activities</div>
+                ) : (
+                  cashFlowApiData?.financing?.map((item) => 
+                    formatCashFlowItem(item.name, item.amount)
+                  )
                 )}
                 <div className="border-t pt-2 mt-2" data-testid="cf-financing-total">
                   <div className="flex justify-between items-center">
