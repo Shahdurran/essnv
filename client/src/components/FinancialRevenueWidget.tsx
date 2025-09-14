@@ -242,6 +242,13 @@ export default function FinancialRevenueWidget({ selectedLocationId, selectedPer
             </div>
           ))}
         </div>
+
+        {/* Period Label */}
+        <div className="mt-4 pt-4 border-t border-gray-100">
+          <p className="text-xs text-gray-500 text-center" data-testid="revenue-period-label">
+            Showing revenue for {TIME_PERIODS.find(p => p.value === selectedPeriod)?.label.toLowerCase()}
+          </p>
+        </div>
       </CardContent>
     </Card>
   );
