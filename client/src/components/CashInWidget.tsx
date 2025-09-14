@@ -104,7 +104,7 @@ export default function CashInWidget({ selectedLocationId, selectedPeriod }: Cas
   return (
     <Card className="bg-white shadow-sm border border-gray-200" data-testid="cash-in-widget">
       <CardHeader className="pb-4">
-        <CardTitle className="text-lg font-semibold text-gray-900 flex items-center justify-between">
+        <CardTitle className="text-xl font-bold text-gray-900 flex items-center justify-between">
           Cash In
           {/* Total Cash In with Overall Trend */}
           <div className="flex items-center gap-2">

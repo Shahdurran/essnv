@@ -158,12 +158,12 @@ export default function FinancialRevenueWidget({ selectedLocationId, selectedPer
    * ======================
    */
   const formatCurrency = (amount: number): string => {
-    if (amount >= 1000000) {
-      return `$${(amount / 1000000).toFixed(1)}M`;
-    } else if (amount >= 1000) {
-      return `$${(amount / 1000).toFixed(0)}K`;
-    }
-    return `$${amount.toLocaleString()}`;
+    return new Intl.NumberFormat("en-US", {
+      style: "currency",
+      currency: "USD",
+      minimumFractionDigits: 0,
+      maximumFractionDigits: 0,
+    }).format(amount);
   };
 
   /*
@@ -194,7 +194,7 @@ export default function FinancialRevenueWidget({ selectedLocationId, selectedPer
   return (
     <Card className="bg-white shadow-sm border border-gray-200" data-testid="financial-revenue-widget">
       <CardHeader className="pb-4">
-        <CardTitle className="text-lg font-semibold text-gray-900 flex items-center justify-between">
+        <CardTitle className="text-xl font-bold text-gray-900 flex items-center justify-between">
           Revenue
           {/* Total Revenue with Overall Trend */}
           <div className="flex items-center gap-2">

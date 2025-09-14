@@ -138,7 +138,7 @@ export default function ProfitLossWidget({ selectedLocationId, selectedPeriod }:
   return (
     <Card className="bg-white shadow-sm border border-gray-200" data-testid="profit-loss-widget">
       <CardHeader className="pb-4">
-        <CardTitle className="text-lg font-semibold text-gray-900 flex items-center justify-between">
+        <CardTitle className="text-xl font-bold text-gray-900 flex items-center justify-between">
           P&L Statement
           
           {/* View Mode Toggle */}

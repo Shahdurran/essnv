@@ -112,7 +112,7 @@ export default function CashOutWidget({ selectedLocationId, selectedPeriod }: Ca
   return (
     <Card className="bg-white shadow-sm border border-gray-200" data-testid="cash-out-widget">
       <CardHeader className="pb-4">
-        <CardTitle className="text-lg font-semibold text-gray-900 flex items-center justify-between">
+        <CardTitle className="text-xl font-bold text-gray-900 flex items-center justify-between">
           Cash Out
           {/* Total Cash Out with Overall Trend */}
           <div className="flex items-center gap-2">
