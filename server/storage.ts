@@ -74,6 +74,10 @@ export interface IStorage {
   getKeyMetrics(locationId?: string, timeRangeMonths?: number): Promise<any>;
   getDenialReasonsData(): any;
 
+  // P&L Data methods
+  getPlMonthlyData(locationId?: string, monthYear?: string): Promise<any[]>;
+  importPlDataFromCsv(csvData: string, locationId: string): Promise<void>;
+
   // Financial Analysis methods
   getFinancialRevenueData(locationId?: string, period?: string): Promise<{
     categories: FinancialRevenueCategory[];
@@ -1077,6 +1081,133 @@ export class MemStorage implements IStorage {
       period: finalPeriod,
       locationId
     };
+  }
+
+  /*
+   * P&L DATA STORAGE
+   * ================
+   * In-memory storage for P&L monthly data imported from CSV
+   */
+  private plMonthlyData: Array<{
+    locationId: string;
+    lineItem: string;
+    categoryType: string;
+    monthYear: string;
+    amount: number;
+  }> = [];
+
+  async getPlMonthlyData(locationId?: string, monthYear?: string): Promise<any[]> {
+    let filteredData = this.plMonthlyData;
+    
+    if (locationId) {
+      filteredData = filteredData.filter(item => item.locationId === locationId);
+    }
+    
+    if (monthYear) {
+      filteredData = filteredData.filter(item => item.monthYear === monthYear);
+    }
+    
+    return filteredData;
+  }
+
+  async importPlDataFromCsv(csvData: string, locationId: string): Promise<void> {
+    // Category mapping for P&L line items
+    const CATEGORY_MAPPING = {
+      // Revenue items
+      'Office Visits': 'revenue',
+      'Diagnostics & Minor Procedures': 'revenue', 
+      'Cataract Surgeries': 'revenue',
+      'Intravitreal Injections': 'revenue',
+      'Refractive Cash': 'revenue',
+      'Corneal Procedures': 'revenue',
+      'Oculoplastics': 'revenue',
+      'Optical / Contact Lens Sales': 'revenue',
+      
+      // Direct costs
+      'Drug Acquisition (injections)': 'direct_costs',
+      'Surgical Supplies & IOLs': 'direct_costs',
+      'Optical Cost of Goods': 'direct_costs',
+      
+      // Operating expenses  
+      'Bad Debt Expense ': 'operating_expenses', // Note trailing space
+      'Staff Wages & Benefits': 'operating_expenses',
+      'Billing & Coding Vendors': 'operating_expenses',
+      'Rent & Utilities': 'operating_expenses',
+      'Technology': 'operating_expenses',
+      'Insurance': 'operating_expenses',
+      'Equipment Service & Leases': 'operating_expenses',
+      'Marketing & Outreach': 'operating_expenses',
+      'Office & Miscellaneous': 'operating_expenses',
+      
+      // Calculated totals
+      'Total Revenue': 'calculated_totals',
+      'Total Direct Costs': 'calculated_totals',
+      'Gross Profit': 'calculated_totals',
+      'Total Operating Expenses': 'calculated_totals',
+      'EBITDA': 'calculated_totals'
+    } as const;
+
+    // Month headers from CSV
+    const MONTH_HEADERS = [
+      'Sep-2024', 'Oct-2024', 'Nov-2024', 'Dec-2024',
+      'Jan-2025', 'Feb-2025', 'Mar-2025', 'Apr-2025', 
+      'May-2025', 'Jun-2025', 'Jul-2025', 'Aug-2025'
+    ];
+
+    // Convert month format  
+    const convertMonthFormat = (monthYear: string): string => {
+      const [month, year] = monthYear.split('-');
+      const monthMap: Record<string, string> = {
+        'Sep': '09', 'Oct': '10', 'Nov': '11', 'Dec': '12',
+        'Jan': '01', 'Feb': '02', 'Mar': '03', 'Apr': '04',
+        'May': '05', 'Jun': '06', 'Jul': '07', 'Aug': '08'
+      };
+      return `${year}-${monthMap[month]}`;
+    };
+
+    // Parse CSV
+    const lines = csvData.split('\n').filter(line => line.trim());
+    
+    // Clear existing P&L data for this location
+    this.plMonthlyData = this.plMonthlyData.filter(item => item.locationId !== locationId);
+    
+    // Process each data line (skip header)
+    for (let i = 1; i < lines.length; i++) {
+      const line = lines[i];
+      if (!line.trim()) continue;
+      
+      // Simple CSV parsing (assumes no commas in values)
+      const values = line.split(',').map(v => v.trim());
+      const lineItem = values[0];
+      
+      // Skip if unknown line item
+      if (!(lineItem in CATEGORY_MAPPING)) {
+        continue;
+      }
+      
+      const categoryType = CATEGORY_MAPPING[lineItem as keyof typeof CATEGORY_MAPPING];
+      
+      // Process each month's data
+      for (let monthIndex = 0; monthIndex < MONTH_HEADERS.length; monthIndex++) {
+        const monthYear = MONTH_HEADERS[monthIndex];
+        const amountStr = values[monthIndex + 1]; // +1 for line item column
+        
+        if (!amountStr || amountStr.trim() === '') continue;
+        
+        const amount = parseFloat(amountStr.replace(/,/g, ''));
+        if (isNaN(amount)) continue;
+        
+        this.plMonthlyData.push({
+          locationId,
+          lineItem,
+          categoryType,
+          monthYear: convertMonthFormat(monthYear),
+          amount
+        });
+      }
+    }
+    
+    console.log(`Imported ${this.plMonthlyData.length} P&L records for location ${locationId}`);
   }
 }
 
