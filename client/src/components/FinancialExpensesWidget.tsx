@@ -110,7 +110,7 @@ export default function FinancialExpensesWidget({ selectedLocationId, selectedPe
   };
 
   return (
-    <Card className="bg-white shadow-sm border border-gray-200" data-testid="financial-expenses-widget">
+    <Card className="bg-white shadow-sm border border-gray-200 flex flex-col h-[28rem]" data-testid="financial-expenses-widget">
       <CardHeader className="pb-4">
         <CardTitle className="text-xl font-bold text-gray-900">
           Expenses
@@ -129,10 +129,10 @@ export default function FinancialExpensesWidget({ selectedLocationId, selectedPe
         </div>
       </CardHeader>
 
-      <CardContent>
+      <CardContent className="flex-1 flex flex-col min-h-0">
         {/* Scrollable Expense Categories List */}
         <div 
-          className="space-y-3 max-h-80 overflow-y-auto scrollbar-thin scrollbar-thumb-red-200 scrollbar-track-gray-100"
+          className="space-y-3 flex-1 min-h-0 overflow-y-auto scrollbar-thin scrollbar-thumb-red-200 scrollbar-track-gray-100"
           data-testid="expenses-categories-list"
         >
           {expenseCategories.map((category) => (

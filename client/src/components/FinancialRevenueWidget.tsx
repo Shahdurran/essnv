@@ -192,7 +192,7 @@ export default function FinancialRevenueWidget({ selectedLocationId, selectedPer
   };
 
   return (
-    <Card className="bg-white shadow-sm border border-gray-200" data-testid="financial-revenue-widget">
+    <Card className="bg-white shadow-sm border border-gray-200 flex flex-col h-[28rem]" data-testid="financial-revenue-widget">
       <CardHeader className="pb-4">
         <CardTitle className="text-xl font-bold text-gray-900">
           Revenue
@@ -211,11 +211,11 @@ export default function FinancialRevenueWidget({ selectedLocationId, selectedPer
         </div>
       </CardHeader>
 
-      <CardContent>
+      <CardContent className="flex-1 flex flex-col min-h-0">
 
         {/* Scrollable Revenue Categories List */}
         <div 
-          className="space-y-3 max-h-80 overflow-y-auto scrollbar-thin scrollbar-thumb-green-200 scrollbar-track-gray-100"
+          className="space-y-3 flex-1 min-h-0 overflow-y-auto scrollbar-thin scrollbar-thumb-green-200 scrollbar-track-gray-100"
           data-testid="revenue-categories-list"
         >
           {revenueCategories.map((category) => (
