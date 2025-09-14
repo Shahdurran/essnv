@@ -42,6 +42,7 @@ import PracticeInsights from "@/components/PracticeInsights";
 import RevenueProjections from "@/components/RevenueProjections";
 import PatientBillingAnalytics from "@/components/PatientBillingAnalytics";
 import ARBucketsWidget from "@/components/ARBucketsWidget";
+import FinancialRevenueWidget from "@/components/FinancialRevenueWidget";
 
 // Import brand assets for professional appearance
 import mdsLogo from "@assets/MDS Logo_1754254040718.png";
@@ -341,8 +342,46 @@ export default function Dashboard() {
             {activeTab === "financial" && (
               <div className="space-y-6" data-testid="financial-analysis-content">
                 <h3 className="text-lg font-semibold text-gray-900 mb-4">Financial Analysis</h3>
-                <p className="text-gray-600">Financial Analysis widgets will be implemented here.</p>
-                {/* Financial Analysis widgets will be added here */}
+                
+                {/* Revenue and Expenses Widgets Row */}
+                <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
+                  {/* Financial Revenue Widget */}
+                  <div data-testid="widget-financial-revenue">
+                    <FinancialRevenueWidget 
+                      selectedLocationId={selectedLocationId}
+                    />
+                  </div>
+                  
+                  {/* Financial Expenses Widget - Placeholder */}
+                  <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+                    <h4 className="text-lg font-semibold text-gray-900 mb-4">Expenses Widget</h4>
+                    <p className="text-gray-600">Expenses widget will be implemented next.</p>
+                  </div>
+                </div>
+                
+                {/* Additional Financial Widgets - Placeholders */}
+                <div className="space-y-6">
+                  <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+                    <h4 className="text-lg font-semibold text-gray-900 mb-4">P&L Statement</h4>
+                    <p className="text-gray-600">P&L Statement widget will be implemented.</p>
+                  </div>
+                  
+                  <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
+                    <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+                      <h4 className="text-lg font-semibold text-gray-900 mb-4">Cash In</h4>
+                      <p className="text-gray-600">Cash In widget will be implemented.</p>
+                    </div>
+                    <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+                      <h4 className="text-lg font-semibold text-gray-900 mb-4">Cash Out</h4>
+                      <p className="text-gray-600">Cash Out widget will be implemented.</p>
+                    </div>
+                  </div>
+                  
+                  <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+                    <h4 className="text-lg font-semibold text-gray-900 mb-4">Cash Flow Statement</h4>
+                    <p className="text-gray-600">Cash Flow Statement widget will be implemented.</p>
+                  </div>
+                </div>
               </div>
             )}
 
