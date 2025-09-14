@@ -112,22 +112,21 @@ export default function FinancialExpensesWidget({ selectedLocationId, selectedPe
   return (
     <Card className="bg-white shadow-sm border border-gray-200" data-testid="financial-expenses-widget">
       <CardHeader className="pb-4">
-        <CardTitle className="text-xl font-bold text-gray-900 flex items-center justify-between">
+        <CardTitle className="text-xl font-bold text-gray-900">
           Expenses
-          {/* Total Expenses with Overall Trend */}
-          <div className="flex items-center gap-2">
-            <span className="text-2xl font-bold text-red-600">{formatCurrency(totalExpenses)}</span>
-            <Badge 
-              variant="secondary" 
-              className={`${getTrendColor(weightedChange > 0 ? "up" : weightedChange < 0 ? "down" : "neutral")} border-0`}
-              data-testid="expenses-total-change"
-            >
-              {getTrendIcon(weightedChange > 0 ? "up" : weightedChange < 0 ? "down" : "neutral", weightedChange)}
-              {Math.abs(weightedChange).toFixed(1)}%
-            </Badge>
-          </div>
         </CardTitle>
-
+        {/* Total Expenses with Overall Trend */}
+        <div className="flex items-center gap-2 mt-2">
+          <span className="text-2xl font-bold text-red-600">{formatCurrency(totalExpenses)}</span>
+          <Badge 
+            variant="secondary" 
+            className={`${getTrendColor(weightedChange > 0 ? "up" : weightedChange < 0 ? "down" : "neutral")} border-0`}
+            data-testid="expenses-total-change"
+          >
+            {getTrendIcon(weightedChange > 0 ? "up" : weightedChange < 0 ? "down" : "neutral", weightedChange)}
+            {Math.abs(weightedChange).toFixed(1)}%
+          </Badge>
+        </div>
       </CardHeader>
 
       <CardContent>

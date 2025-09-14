@@ -194,22 +194,21 @@ export default function FinancialRevenueWidget({ selectedLocationId, selectedPer
   return (
     <Card className="bg-white shadow-sm border border-gray-200" data-testid="financial-revenue-widget">
       <CardHeader className="pb-4">
-        <CardTitle className="text-xl font-bold text-gray-900 flex items-center justify-between">
+        <CardTitle className="text-xl font-bold text-gray-900">
           Revenue
-          {/* Total Revenue with Overall Trend */}
-          <div className="flex items-center gap-2">
-            <span className="text-2xl font-bold text-green-600">{formatCurrency(totalRevenue)}</span>
-            <Badge 
-              variant="secondary" 
-              className="text-green-600 bg-green-50 border-0"
-              data-testid="revenue-total-change"
-            >
-              {getTrendIcon('up')}
-              {formatGrowth(totalRevenue, totalPreviousRevenue)}
-            </Badge>
-          </div>
         </CardTitle>
-
+        {/* Total Revenue with Overall Trend */}
+        <div className="flex items-center gap-2 mt-2">
+          <span className="text-2xl font-bold text-green-600">{formatCurrency(totalRevenue)}</span>
+          <Badge 
+            variant="secondary" 
+            className="text-green-600 bg-green-50 border-0"
+            data-testid="revenue-total-change"
+          >
+            {getTrendIcon('up')}
+            {formatGrowth(totalRevenue, totalPreviousRevenue)}
+          </Badge>
+        </div>
       </CardHeader>
 
       <CardContent>
