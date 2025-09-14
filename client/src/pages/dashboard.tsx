@@ -45,6 +45,8 @@ import ARBucketsWidget from "@/components/ARBucketsWidget";
 import FinancialRevenueWidget from "@/components/FinancialRevenueWidget";
 import FinancialExpensesWidget from "@/components/FinancialExpensesWidget";
 import ProfitLossWidget from "@/components/ProfitLossWidget";
+import CashInWidget from "@/components/CashInWidget";
+import CashOutWidget from "@/components/CashOutWidget";
 
 // Import brand assets for professional appearance
 import mdsLogo from "@assets/MDS Logo_1754254040718.png";
@@ -362,25 +364,33 @@ export default function Dashboard() {
                   </div>
                 </div>
                 
-                {/* Additional Financial Widgets - Placeholders */}
+                {/* Additional Financial Widgets */}
                 <div className="space-y-6">
+                  {/* P&L Statement Widget */}
                   <div data-testid="widget-profit-loss">
                     <ProfitLossWidget 
                       selectedLocationId={selectedLocationId}
                     />
                   </div>
                   
+                  {/* Cash In vs Cash Out Widgets Row */}
                   <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
-                    <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-                      <h4 className="text-lg font-semibold text-gray-900 mb-4">Cash In</h4>
-                      <p className="text-gray-600">Cash In widget will be implemented.</p>
+                    {/* Cash In Widget */}
+                    <div data-testid="widget-cash-in">
+                      <CashInWidget 
+                        selectedLocationId={selectedLocationId}
+                      />
                     </div>
-                    <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-                      <h4 className="text-lg font-semibold text-gray-900 mb-4">Cash Out</h4>
-                      <p className="text-gray-600">Cash Out widget will be implemented.</p>
+                    
+                    {/* Cash Out Widget */}
+                    <div data-testid="widget-cash-out">
+                      <CashOutWidget 
+                        selectedLocationId={selectedLocationId}
+                      />
                     </div>
                   </div>
                   
+                  {/* Cash Flow Statement Widget - Placeholder */}
                   <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
                     <h4 className="text-lg font-semibold text-gray-900 mb-4">Cash Flow Statement</h4>
                     <p className="text-gray-600">Cash Flow Statement widget will be implemented.</p>
