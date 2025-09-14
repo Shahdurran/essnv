@@ -383,6 +383,37 @@ export const performanceMetrics = pgTable("performance_metrics", {
 });
 
 /*
+ * P&L MONTHLY DATA TABLE
+ * ======================
+ * 
+ * Stores monthly Profit & Loss statement data broken down by line item.
+ * This table contains actual financial data from the uploaded CSV file,
+ * with monthly values from Sep-2024 to Aug-2025.
+ * 
+ * DESIGN PRINCIPLES:
+ * - Each row represents one line item (e.g., "Office Visits") for one month
+ * - categoryType distinguishes between revenue, direct_costs, operating_expenses, and calculated_totals
+ * - Uses decimal type for precise financial calculations
+ * - Links to practice locations for multi-location support
+ * 
+ * TIME PERIOD FILTERING:
+ * - 1 month: Show August 2025 data only
+ * - 3 months: Show June, July, August 2025 data
+ * - 6 months: Show March through August 2025 data  
+ * - 1 year: Show all data from Sep-2024 to Aug-2025
+ */
+export const plMonthlyData = pgTable("pl_monthly_data", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  locationId: varchar("location_id").references(() => practiceLocations.id),
+  lineItem: text("line_item").notNull(), // "Office Visits", "Drug Acquisition (injections)", etc.
+  categoryType: text("category_type").notNull(), // "revenue", "direct_costs", "operating_expenses", "calculated_totals"
+  monthYear: text("month_year").notNull(), // "2024-09", "2024-10", "2025-08", etc.
+  amount: decimal("amount", { precision: 15, scale: 2 }).notNull(),
+  createdAt: timestamp("created_at").default(sql`CURRENT_TIMESTAMP`),
+  updatedAt: timestamp("updated_at").default(sql`CURRENT_TIMESTAMP`),
+});
+
+/*
  * VALIDATION SCHEMAS FOR DATA INSERTION
  * =====================================
  * 
@@ -422,6 +453,7 @@ export const insertPatientVisitSchema = createInsertSchema(patientVisits).omit({
 export const insertVisitProcedureSchema = createInsertSchema(visitProcedures).omit({ id: true });
 export const insertAiQuerySchema = createInsertSchema(aiQueries).omit({ id: true, createdAt: true });
 export const insertPerformanceMetricSchema = createInsertSchema(performanceMetrics).omit({ id: true });
+export const insertPlMonthlyDataSchema = createInsertSchema(plMonthlyData).omit({ id: true, createdAt: true, updatedAt: true });
 
 /*
  * TYPESCRIPT TYPE DEFINITIONS
@@ -485,6 +517,8 @@ export type AiQuery = typeof aiQueries.$inferSelect;
 export type InsertAiQuery = z.infer<typeof insertAiQuerySchema>;
 export type PerformanceMetric = typeof performanceMetrics.$inferSelect;
 export type InsertPerformanceMetric = z.infer<typeof insertPerformanceMetricSchema>;
+export type PlMonthlyData = typeof plMonthlyData.$inferSelect;
+export type InsertPlMonthlyData = z.infer<typeof insertPlMonthlyDataSchema>;
 
 /*
  * FRONTEND-SPECIFIC TYPE DEFINITIONS
