@@ -32,6 +32,7 @@ import {
   Calendar,
   Filter
 } from "lucide-react";
+import { useQuery } from "@tanstack/react-query";
 
 /*
  * REVENUE CATEGORY DATA INTERFACE
@@ -73,85 +74,39 @@ const TIME_PERIODS = [
  */
 export default function FinancialRevenueWidget({ selectedLocationId, selectedPeriod }: FinancialRevenueWidgetProps) {
 
-  /*
-   * OPHTHALMOLOGY REVENUE CATEGORIES
-   * ================================
-   * Based on P&L file structure - simulated realistic financial data
-   */
-  const revenueCategories: RevenueCategory[] = [
-    {
-      id: 'office-visits',
-      name: 'Office Visits',
-      amount: 1200000,
-      previousAmount: 1050000,
-      percentage: 28.5,
-      trend: 'up'
-    },
-    {
-      id: 'cataract-surgeries',
-      name: 'Cataract Surgeries',
-      amount: 980000,
-      previousAmount: 850000,
-      percentage: 23.3,
-      trend: 'up'
-    },
-    {
-      id: 'intravitreal-injections',
-      name: 'Intravitreal Injections',
-      amount: 720000,
-      previousAmount: 680000,
-      percentage: 17.1,
-      trend: 'up'
-    },
-    {
-      id: 'refractive-cash',
-      name: 'Refractive Cash',
-      amount: 560000,
-      previousAmount: 520000,
-      percentage: 13.3,
-      trend: 'up'
-    },
-    {
-      id: 'diagnostics-procedures',
-      name: 'Diagnostics & Minor Procedures',
-      amount: 380000,
-      previousAmount: 390000,
-      percentage: 9.0,
-      trend: 'down'
-    },
-    {
-      id: 'corneal-procedures',
-      name: 'Corneal Procedures',
-      amount: 180000,
-      previousAmount: 165000,
-      percentage: 4.3,
-      trend: 'up'
-    },
-    {
-      id: 'oculoplastics',
-      name: 'Oculoplastics',
-      amount: 120000,
-      previousAmount: 115000,
-      percentage: 2.9,
-      trend: 'up'
-    },
-    {
-      id: 'optical-sales',
-      name: 'Optical / Contact Lens Sales',
-      amount: 80000,
-      previousAmount: 75000,
-      percentage: 1.9,
-      trend: 'up'
-    }
-  ];
+  // Fetch real revenue data from CSV-based API
+  const { data: revenueApiData, isLoading, error } = useQuery<{
+    categories: { id: string; name: string; amount: number; change: number; trend: 'up' | 'down' | 'neutral' }[];
+    totalRevenue: number;
+    period: string;
+  }>({
+    queryKey: ['/api/financial/revenue', selectedLocationId, selectedPeriod],
+    enabled: Boolean(selectedLocationId && selectedPeriod),
+  });
+
+  // Convert API data to expected format with calculated percentages
+  const revenueCategories: RevenueCategory[] = revenueApiData?.categories.map(cat => {
+    const totalRevenue = revenueApiData.totalRevenue;
+    const percentage = totalRevenue > 0 ? (cat.amount / totalRevenue) * 100 : 0;
+    const previousAmount = cat.amount / (1 + (cat.change / 100)); // Reverse calculate previous amount
+    
+    return {
+      id: cat.id,
+      name: cat.name,
+      amount: cat.amount,
+      previousAmount: Math.round(previousAmount),
+      percentage: percentage,
+      trend: cat.trend === 'up' ? 'up' : cat.trend === 'down' ? 'down' : 'stable'
+    };
+  }) || [];
 
   /*
-   * CALCULATE TOTAL REVENUE
-   * =======================
+   * CALCULATE TOTAL REVENUE FROM API DATA
+   * =====================================
    */
-  const totalRevenue = revenueCategories.reduce((sum, category) => sum + category.amount, 0);
+  const totalRevenue = revenueApiData?.totalRevenue || 0;
   const totalPreviousRevenue = revenueCategories.reduce((sum, category) => sum + category.previousAmount, 0);
-  const overallGrowth = ((totalRevenue - totalPreviousRevenue) / totalPreviousRevenue) * 100;
+  const overallGrowth = totalPreviousRevenue > 0 ? ((totalRevenue - totalPreviousRevenue) / totalPreviousRevenue) * 100 : 0;
 
   /*
    * FORMAT CURRENCY VALUES

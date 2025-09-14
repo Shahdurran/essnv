@@ -3,71 +3,19 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { TrendingDown, TrendingUp, Minus } from "lucide-react";
 import { useState } from "react";
+import { useQuery } from "@tanstack/react-query";
 
 interface FinancialExpensesWidgetProps {
   selectedLocationId: string;
   selectedPeriod: string;
 }
 
-// Expense categories specific to ophthalmology practice
-const expenseCategories = [
-  {
-    id: "staff",
-    name: "Staff Salaries & Benefits",
-    amount: 125000,
-    change: 8.5,
-    trend: "up"
-  },
-  {
-    id: "equipment",
-    name: "Medical Equipment & Supplies",
-    amount: 89500,
-    change: -3.2,
-    trend: "down"
-  },
-  {
-    id: "facility",
-    name: "Facility Rent & Utilities",
-    amount: 42000,
-    change: 2.1,
-    trend: "up"
-  },
-  {
-    id: "insurance",
-    name: "Insurance & Legal",
-    amount: 28700,
-    change: 0.0,
-    trend: "neutral"
-  },
-  {
-    id: "marketing",
-    name: "Marketing & Advertising",
-    amount: 15800,
-    change: 12.4,
-    trend: "up"
-  },
-  {
-    id: "professional",
-    name: "Professional Services",
-    amount: 22100,
-    change: -1.8,
-    trend: "down"
-  },
-  {
-    id: "technology",
-    name: "Technology & Software",
-    amount: 18900,
-    change: 5.6,
-    trend: "up"
-  },
-  {
-    id: "pharmaceuticals",
-    name: "Medical Supplies & Pharmaceuticals",
-    amount: 34200,
-    change: -4.1,
-    trend: "down"
-  }
-];
+// Interface for expense API response  
+interface ExpenseApiResponse {
+  categories: { id: string; name: string; amount: number; change: number; trend: 'up' | 'down' | 'neutral' }[];
+  totalExpenses: number;
+  period: string;
+}
 
 const timePeriods = [
   { id: "1M", label: "1 Month", active: false },
@@ -79,13 +27,22 @@ const timePeriods = [
 
 export default function FinancialExpensesWidget({ selectedLocationId, selectedPeriod }: FinancialExpensesWidgetProps) {
 
-  // Calculate total expenses
-  const totalExpenses = expenseCategories.reduce((sum, category) => sum + category.amount, 0);
+  // Fetch real expense data from CSV-based API
+  const { data: expenseApiData, isLoading, error } = useQuery<ExpenseApiResponse>({
+    queryKey: ['/api/financial/expenses', selectedLocationId, selectedPeriod],
+    enabled: Boolean(selectedLocationId && selectedPeriod),
+  });
+
+  // Use API data or fallback to empty array
+  const expenseCategories = expenseApiData?.categories || [];
+  
+  // Calculate total expenses from API data
+  const totalExpenses = expenseApiData?.totalExpenses || 0;
   
   // Calculate weighted average change
-  const weightedChange = expenseCategories.reduce((sum, category) => {
+  const weightedChange = totalExpenses > 0 ? expenseCategories.reduce((sum, category) => {
     return sum + (category.change * category.amount);
-  }, 0) / totalExpenses;
+  }, 0) / totalExpenses : 0;
 
   const getTrendIcon = (trend: string, change: number) => {
     if (trend === "up") return <TrendingUp className="h-3 w-3" />;
@@ -135,7 +92,18 @@ export default function FinancialExpensesWidget({ selectedLocationId, selectedPe
           className="space-y-3 flex-1 min-h-0 overflow-y-auto scrollbar-thin scrollbar-thumb-red-200 scrollbar-track-gray-100"
           data-testid="expenses-categories-list"
         >
-          {expenseCategories.map((category) => (
+          {isLoading ? (
+            <div className="space-y-3">
+              <div className="h-16 bg-gray-200 rounded animate-pulse"></div>
+              <div className="h-16 bg-gray-200 rounded animate-pulse"></div>
+              <div className="h-16 bg-gray-200 rounded animate-pulse"></div>
+            </div>
+          ) : error ? (
+            <div className="text-red-600 text-sm text-center">Error loading expense data</div>
+          ) : expenseCategories.length === 0 ? (
+            <div className="text-gray-500 text-sm text-center">No expense data available</div>
+          ) : (
+            expenseCategories.map((category) => (
             <div
               key={category.id}
               className="flex items-center justify-between p-3 rounded-lg border border-gray-100 hover:border-red-200 hover:bg-red-50/30 transition-all duration-200"
@@ -157,7 +125,8 @@ export default function FinancialExpensesWidget({ selectedLocationId, selectedPe
                 </Badge>
               </div>
             </div>
-          ))}
+          ))
+          )}
         </div>
 
         {/* Period Label */}
