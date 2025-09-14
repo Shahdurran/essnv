@@ -135,6 +135,22 @@ export default function Dashboard() {
   const [selectedProcedureCategory, setSelectedProcedureCategory] = useState("all");
 
   /*
+   * ANALYSIS SECTION TAB STATE
+   * ===========================
+   * 
+   * Controls which analysis section is displayed below the AI assistant.
+   * 
+   * AVAILABLE SECTIONS:
+   * - "financial": Financial Analysis (default) - P&L, Cash Flow, Revenue/Expense tracking
+   * - "clinical": Clinical Analysis - Existing clinical widgets and metrics
+   * 
+   * BUSINESS PURPOSE:
+   * Separates financial reporting from clinical analytics to provide focused views
+   * for different user roles and analytical needs.
+   */
+  const [activeTab, setActiveTab] = useState("financial");
+
+  /*
    * EVENT HANDLER FUNCTIONS
    * =======================
    * 
@@ -191,6 +207,20 @@ export default function Dashboard() {
     // - Update related widgets that show procedure-specific data
     // - Add smooth transitions when filter changes
     // - Implement filter state persistence
+  };
+
+  /*
+   * TAB CHANGE HANDLER
+   * ==================
+   * 
+   * Called when user switches between Financial Analysis and Clinical Analysis tabs.
+   * Updates the active tab state to show the appropriate analysis section.
+   * 
+   * @param {string} tab - The newly selected tab ("financial" or "clinical")
+   */
+  const handleTabChange = (tab: string) => {
+    setActiveTab(tab);
+    console.log(`Analysis tab changed to: ${tab}`);
   };
 
   return (
@@ -267,88 +297,130 @@ export default function Dashboard() {
         {/* 
           AI Business Assistant Component
           Main chat interface for natural language analytics queries
-          Powered by OpenAI GPT-4o with dermatology practice context
+          Powered by OpenAI GPT-4o with ophthalmology practice context
         */}
         <AIBusinessAssistant 
           selectedLocationId={selectedLocationId}
         />
 
         {/* 
-          Key Metrics Trends Chart Component
-          Advanced charting with actual vs projected data
-          Supports multiple time periods and metric types
+          Analysis Sections Tabs
+          Toggle between Financial Analysis and Clinical Analysis
         */}
-        <KeyMetricsTrendsChart 
-          selectedLocationId={selectedLocationId}
-        />
+        <div className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
+          {/* Tab Headers */}
+          <div className="border-b border-gray-200">
+            <nav className="-mb-px flex space-x-8 px-6" data-testid="analysis-tabs">
+              <button
+                onClick={() => handleTabChange("financial")}
+                data-testid="tab-financial"
+                className={`py-4 px-1 border-b-2 font-medium text-sm transition-colors duration-200 ${
+                  activeTab === "financial"
+                    ? "border-blue-500 text-blue-600"
+                    : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
+                }`}
+              >
+                Financial Analysis
+              </button>
+              <button
+                onClick={() => handleTabChange("clinical")}
+                data-testid="tab-clinical"
+                className={`py-4 px-1 border-b-2 font-medium text-sm transition-colors duration-200 ${
+                  activeTab === "clinical"
+                    ? "border-blue-500 text-blue-600"
+                    : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
+                }`}
+              >
+                Clinical Analysis
+              </button>
+            </nav>
+          </div>
 
-        {/* 
-          Insurance Claims Tracker Component
-          Claims organized by status (Pending, Submitted, Denied) with provider breakdown
-          Positioned below revenue chart as requested in requirements
-        */}
-        <InsuranceClaimsTracker 
-          selectedLocationId={selectedLocationId}
-        />
+          {/* Tab Content */}
+          <div className="p-6">
+            {activeTab === "financial" && (
+              <div className="space-y-6" data-testid="financial-analysis-content">
+                <h3 className="text-lg font-semibold text-gray-900 mb-4">Financial Analysis</h3>
+                <p className="text-gray-600">Financial Analysis widgets will be implemented here.</p>
+                {/* Financial Analysis widgets will be added here */}
+              </div>
+            )}
 
-        {/* 
-          Dashboard Grid Layout - Mobile Responsive
-          Two-column responsive grid for procedure analytics and practice insights
-        */}
-        <div className="grid grid-cols-1 gap-4 sm:gap-6 lg:grid-cols-2 lg:gap-8">
+            {activeTab === "clinical" && (
+              <div className="space-y-6" data-testid="clinical-analysis-content">
+                <h3 className="text-lg font-semibold text-gray-900 mb-4">Clinical Analysis</h3>
+                
+                {/* 
+                  Key Metrics Trends Chart Component
+                  Advanced charting with actual vs projected data
+                  Modified: Default to 1 year, add EBITDA, replace AR Days with Write-Offs
+                */}
+                <KeyMetricsTrendsChart 
+                  selectedLocationId={selectedLocationId}
+                />
 
-          {/* 
-            Top Revenue Procedures Component
-            Analytics for highest performing procedures with medical/cosmetic filtering
-          */}
-          <TopRevenueProcedures 
-            selectedLocationId={selectedLocationId}
-            selectedCategory={selectedProcedureCategory}
-            onCategoryChange={handleProcedureCategoryChange}
-          />
+                {/* 
+                  Insurance Claims Tracker Component
+                  Claims organized by status (Pending, Submitted, Denied) with provider breakdown
+                */}
+                <InsuranceClaimsTracker 
+                  selectedLocationId={selectedLocationId}
+                />
 
-          {/* 
-            Practice Insights Component
-            Key performance indicators and insurance payer analytics
-          */}
-          <PracticeInsights 
-            selectedLocationId={selectedLocationId}
-          />
+                {/* 
+                  Clinical Analysis Grid Layout - Mobile Responsive
+                  Two-column responsive grid for procedure analytics and practice insights
+                */}
+                <div className="grid grid-cols-1 gap-4 sm:gap-6 lg:grid-cols-2 lg:gap-8">
 
-        </div>
+                  {/* 
+                    Top Revenue Procedures Component
+                    Modified: Remove category filter, show fixed procedure list
+                  */}
+                  <TopRevenueProcedures 
+                    selectedLocationId={selectedLocationId}
+                    selectedCategory={selectedProcedureCategory}
+                    onCategoryChange={handleProcedureCategoryChange}
+                  />
 
-        {/* 
-          Revenue Projections Component - Temporarily removed from UI
-          Component still exists but not displayed per user request
-        */}
-        {/* <RevenueProjections 
-          selectedLocationId={selectedLocationId}
-        /> */}
+                  {/* 
+                    Practice Insights Component
+                    Key performance indicators and insurance payer analytics
+                  */}
+                  <PracticeInsights 
+                    selectedLocationId={selectedLocationId}
+                  />
 
-        {/* 
-          Bottom Row - Billing and AR Analytics (50/50 Layout)
-          Two-column responsive grid for billing analytics and AR aging
-        */}
-        <div className="grid grid-cols-1 gap-4 sm:gap-6 lg:grid-cols-2 lg:gap-8">
-          
-          {/* 
-            Patient Billing Analytics Component
-            Half-width widget for patient payment insights
-            Tracks overdue balances, collection rates, and aging breakdown
-          */}
-          <PatientBillingAnalytics 
-            selectedLocationId={selectedLocationId}
-          />
+                </div>
 
-          {/* 
-            AR Buckets Widget Component
-            Half-width widget for accounts receivable aging analysis
-            Shows outstanding insurance claims by aging buckets (0-30, 31-60, 61-90, 90+ days)
-          */}
-          <ARBucketsWidget 
-            selectedLocationId={selectedLocationId}
-          />
+                {/* 
+                  Bottom Row - Billing and AR Analytics (50/50 Layout)
+                  Two-column responsive grid for billing analytics and AR aging
+                */}
+                <div className="grid grid-cols-1 gap-4 sm:gap-6 lg:grid-cols-2 lg:gap-8">
+                  
+                  {/* 
+                    Patient Billing Analytics Component
+                    Half-width widget for patient payment insights
+                    Tracks overdue balances, collection rates, and aging breakdown
+                  */}
+                  <PatientBillingAnalytics 
+                    selectedLocationId={selectedLocationId}
+                  />
 
+                  {/* 
+                    AR Buckets Widget Component
+                    Half-width widget for accounts receivable aging analysis
+                    Shows outstanding insurance claims by aging buckets (0-30, 31-60, 61-90, 90+ days)
+                  */}
+                  <ARBucketsWidget 
+                    selectedLocationId={selectedLocationId}
+                  />
+
+                </div>
+              </div>
+            )}
+          </div>
         </div>
 
       </div>
