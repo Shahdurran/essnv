@@ -240,7 +240,19 @@ app.use((req, res, next) => {
       const result = await response.json();
       log(`[startup] Auto-imported ${result.recordsImported} P&L records`);
     } catch (error) {
-      log(`[startup] Warning: Failed to auto-import CSV data: ${error}`);
+      log(`[startup] Warning: Failed to auto-import P&L data: ${error}`);
+    }
+
+    // Auto-import cash flow CSV data on server startup
+    try {
+      log(`[startup] Auto-importing Cash Flow CSV data...`);
+      const cfResponse = await fetch(`http://localhost:${port}/api/cashflow/import-csv`, {
+        method: 'POST'
+      });
+      const cfResult = await cfResponse.json();
+      log(`[startup] Auto-imported ${cfResult.recordsImported} Cash Flow records`);
+    } catch (error) {
+      log(`[startup] Warning: Failed to auto-import Cash Flow data: ${error}`);
     }
   });
 })();
