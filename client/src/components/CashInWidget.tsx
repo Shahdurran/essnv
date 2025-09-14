@@ -6,6 +6,7 @@ import { useState } from "react";
 
 interface CashInWidgetProps {
   selectedLocationId: string;
+  selectedPeriod: string;
 }
 
 // Cash inflow categories specific to ophthalmology practice
@@ -62,8 +63,7 @@ const timePeriods = [
   { id: "custom", label: "Custom", active: false }
 ];
 
-export default function CashInWidget({ selectedLocationId }: CashInWidgetProps) {
-  const [selectedPeriod, setSelectedPeriod] = useState("6M");
+export default function CashInWidget({ selectedLocationId, selectedPeriod }: CashInWidgetProps) {
 
   // Calculate total cash in (excluding negative adjustments for net calculation)
   const totalCashIn = cashInCategories
@@ -120,25 +120,6 @@ export default function CashInWidget({ selectedLocationId }: CashInWidgetProps) 
           </div>
         </CardTitle>
 
-        {/* Time Period Filter */}
-        <div className="flex flex-wrap gap-2 mt-4" data-testid="cash-in-time-filters">
-          {timePeriods.map((period) => (
-            <Button
-              key={period.id}
-              variant={selectedPeriod === period.id ? "default" : "outline"}
-              size="sm"
-              onClick={() => setSelectedPeriod(period.id)}
-              className={
-                selectedPeriod === period.id
-                  ? "bg-green-600 hover:bg-green-700 text-white border-green-600"
-                  : "border-green-200 text-green-700 hover:bg-green-50 hover:border-green-300"
-              }
-              data-testid={`cash-in-filter-${period.id.toLowerCase()}`}
-            >
-              {period.label}
-            </Button>
-          ))}
-        </div>
       </CardHeader>
 
       <CardContent>

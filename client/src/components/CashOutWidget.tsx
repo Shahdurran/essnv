@@ -6,6 +6,7 @@ import { useState } from "react";
 
 interface CashOutWidgetProps {
   selectedLocationId: string;
+  selectedPeriod: string;
 }
 
 // Cash outflow categories specific to ophthalmology practice
@@ -76,8 +77,7 @@ const timePeriods = [
   { id: "custom", label: "Custom", active: false }
 ];
 
-export default function CashOutWidget({ selectedLocationId }: CashOutWidgetProps) {
-  const [selectedPeriod, setSelectedPeriod] = useState("6M");
+export default function CashOutWidget({ selectedLocationId, selectedPeriod }: CashOutWidgetProps) {
 
   // Calculate total cash out
   const totalCashOut = cashOutCategories.reduce((sum, category) => sum + category.amount, 0);
@@ -128,25 +128,6 @@ export default function CashOutWidget({ selectedLocationId }: CashOutWidgetProps
           </div>
         </CardTitle>
 
-        {/* Time Period Filter */}
-        <div className="flex flex-wrap gap-2 mt-4" data-testid="cash-out-time-filters">
-          {timePeriods.map((period) => (
-            <Button
-              key={period.id}
-              variant={selectedPeriod === period.id ? "default" : "outline"}
-              size="sm"
-              onClick={() => setSelectedPeriod(period.id)}
-              className={
-                selectedPeriod === period.id
-                  ? "bg-red-600 hover:bg-red-700 text-white border-red-600"
-                  : "border-red-200 text-red-700 hover:bg-red-50 hover:border-red-300"
-              }
-              data-testid={`cash-out-filter-${period.id.toLowerCase()}`}
-            >
-              {period.label}
-            </Button>
-          ))}
-        </div>
       </CardHeader>
 
       <CardContent>

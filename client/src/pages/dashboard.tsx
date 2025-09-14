@@ -157,6 +157,15 @@ export default function Dashboard() {
   const [activeTab, setActiveTab] = useState("financial");
 
   /*
+   * CONSOLIDATED FINANCIAL DATE FILTER STATE
+   * =========================================
+   * 
+   * Single date range filter that controls all 6 financial widgets:
+   * Revenue, Expenses, P&L Statement, Cash In, Cash Out, Cash Flow
+   */
+  const [selectedFinancialPeriod, setSelectedFinancialPeriod] = useState('1Y');
+
+  /*
    * EVENT HANDLER FUNCTIONS
    * =======================
    * 
@@ -346,7 +355,35 @@ export default function Dashboard() {
           <div className="p-6">
             {activeTab === "financial" && (
               <div className="space-y-6" data-testid="financial-analysis-content">
-                <h3 className="text-lg font-semibold text-gray-900 mb-4">Financial Analysis</h3>
+                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+                  <h3 className="text-lg font-semibold text-gray-900">Financial Analysis</h3>
+                  
+                  {/* Consolidated Date Range Filter */}
+                  <div className="flex items-center gap-2" data-testid="financial-date-filter">
+                    <span className="text-sm font-medium text-gray-700">Time Period:</span>
+                    <div className="flex bg-gray-100 rounded-lg p-1">
+                      {[
+                        { value: '1M', label: '1M' },
+                        { value: '3M', label: '3M' },
+                        { value: '6M', label: '6M' },
+                        { value: '1Y', label: '1Y' }
+                      ].map((period) => (
+                        <button
+                          key={period.value}
+                          onClick={() => setSelectedFinancialPeriod(period.value)}
+                          data-testid={`period-${period.value.toLowerCase()}`}
+                          className={`px-3 py-1.5 text-sm font-medium rounded-md transition-colors ${
+                            selectedFinancialPeriod === period.value
+                              ? 'bg-blue-600 text-white shadow-sm'
+                              : 'text-gray-600 hover:text-gray-900 hover:bg-gray-200'
+                          }`}
+                        >
+                          {period.label}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                </div>
                 
                 {/* Revenue and Expenses Widgets Row */}
                 <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
@@ -354,6 +391,7 @@ export default function Dashboard() {
                   <div data-testid="widget-financial-revenue">
                     <FinancialRevenueWidget 
                       selectedLocationId={selectedLocationId}
+                      selectedPeriod={selectedFinancialPeriod}
                     />
                   </div>
                   
@@ -361,6 +399,7 @@ export default function Dashboard() {
                   <div data-testid="widget-financial-expenses">
                     <FinancialExpensesWidget 
                       selectedLocationId={selectedLocationId}
+                      selectedPeriod={selectedFinancialPeriod}
                     />
                   </div>
                 </div>
@@ -371,6 +410,7 @@ export default function Dashboard() {
                   <div data-testid="widget-profit-loss">
                     <ProfitLossWidget 
                       selectedLocationId={selectedLocationId}
+                      selectedPeriod={selectedFinancialPeriod}
                     />
                   </div>
                   
@@ -380,6 +420,7 @@ export default function Dashboard() {
                     <div data-testid="widget-cash-in">
                       <CashInWidget 
                         selectedLocationId={selectedLocationId}
+                        selectedPeriod={selectedFinancialPeriod}
                       />
                     </div>
                     
@@ -387,6 +428,7 @@ export default function Dashboard() {
                     <div data-testid="widget-cash-out">
                       <CashOutWidget 
                         selectedLocationId={selectedLocationId}
+                        selectedPeriod={selectedFinancialPeriod}
                       />
                     </div>
                   </div>
@@ -395,6 +437,7 @@ export default function Dashboard() {
                   <div data-testid="widget-cash-flow">
                     <CashFlowWidget 
                       selectedLocationId={selectedLocationId}
+                      selectedPeriod={selectedFinancialPeriod}
                     />
                   </div>
                 </div>

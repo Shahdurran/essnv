@@ -52,6 +52,7 @@ interface RevenueCategory {
  */
 interface FinancialRevenueWidgetProps {
   selectedLocationId: string;
+  selectedPeriod: string;
 }
 
 /*
@@ -70,9 +71,7 @@ const TIME_PERIODS = [
  * MAIN FINANCIAL REVENUE WIDGET COMPONENT
  * ========================================
  */
-export default function FinancialRevenueWidget({ selectedLocationId }: FinancialRevenueWidgetProps) {
-  // State for time period filtering
-  const [selectedPeriod, setSelectedPeriod] = useState('1Y');
+export default function FinancialRevenueWidget({ selectedLocationId, selectedPeriod }: FinancialRevenueWidgetProps) {
 
   /*
    * OPHTHALMOLOGY REVENUE CATEGORIES
@@ -209,28 +208,6 @@ export default function FinancialRevenueWidget({ selectedLocationId }: Financial
             </h3>
           </div>
           
-          {/* Time Period Filter */}
-          <div className="flex items-center space-x-2">
-            <Calendar className="h-4 w-4 text-gray-500" />
-            <div className="flex space-x-1 bg-gray-100 rounded-lg p-1">
-              {TIME_PERIODS.map((period) => (
-                <Button
-                  key={period.value}
-                  variant={selectedPeriod === period.value ? "default" : "ghost"}
-                  size="sm"
-                  onClick={() => setSelectedPeriod(period.value)}
-                  className={`px-2 py-1 text-xs font-medium transition-all ${
-                    selectedPeriod === period.value
-                      ? 'bg-green-600 text-white shadow-sm'
-                      : 'text-gray-600 hover:text-gray-900'
-                  }`}
-                  data-testid={`filter-time-${period.value}`}
-                >
-                  {period.label}
-                </Button>
-              ))}
-            </div>
-          </div>
         </div>
 
         {/* Total Revenue Summary */}

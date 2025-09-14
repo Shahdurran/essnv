@@ -28,6 +28,7 @@ ChartJS.register(
 
 interface CashFlowWidgetProps {
   selectedLocationId: string;
+  selectedPeriod: string;
 }
 
 // Cash Flow Statement data structure for ophthalmology practice
@@ -119,8 +120,7 @@ const chartOptions = {
   }
 };
 
-export default function CashFlowWidget({ selectedLocationId }: CashFlowWidgetProps) {
-  const [selectedPeriod, setSelectedPeriod] = useState("6M");
+export default function CashFlowWidget({ selectedLocationId, selectedPeriod }: CashFlowWidgetProps) {
   const [viewMode, setViewMode] = useState<"list" | "graph">("list");
 
   // Calculate totals
@@ -181,25 +181,6 @@ export default function CashFlowWidget({ selectedLocationId }: CashFlowWidgetPro
           </div>
         </CardTitle>
 
-        {/* Time Period Filter */}
-        <div className="flex flex-wrap gap-2 mt-4" data-testid="cf-time-filters">
-          {timePeriods.map((period) => (
-            <Button
-              key={period.id}
-              variant={selectedPeriod === period.id ? "default" : "outline"}
-              size="sm"
-              onClick={() => setSelectedPeriod(period.id)}
-              className={
-                selectedPeriod === period.id
-                  ? "bg-blue-600 hover:bg-blue-700 text-white border-blue-600"
-                  : "border-blue-200 text-blue-700 hover:bg-blue-50 hover:border-blue-300"
-              }
-              data-testid={`cf-filter-${period.id.toLowerCase()}`}
-            >
-              {period.label}
-            </Button>
-          ))}
-        </div>
       </CardHeader>
 
       <CardContent>
