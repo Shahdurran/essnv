@@ -390,10 +390,11 @@ export default function Dashboard() {
                     </div>
                   </div>
                   
-                  {/* Cash Flow Statement Widget - Placeholder */}
-                  <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-                    <h4 className="text-lg font-semibold text-gray-900 mb-4">Cash Flow Statement</h4>
-                    <p className="text-gray-600">Cash Flow Statement widget will be implemented.</p>
+                  {/* Cash Flow Statement Widget */}
+                  <div data-testid="widget-cash-flow">
+                    <CashFlowWidget 
+                      selectedLocationId={selectedLocationId}
+                    />
                   </div>
                 </div>
               </div>
