@@ -47,6 +47,7 @@ import FinancialExpensesWidget from "@/components/FinancialExpensesWidget";
 import ProfitLossWidget from "@/components/ProfitLossWidget";
 import CashInWidget from "@/components/CashInWidget";
 import CashOutWidget from "@/components/CashOutWidget";
+import CashFlowWidget from "@/components/CashFlowWidget";
 
 // Import brand assets for professional appearance
 import mdsLogo from "@assets/MDS Logo_1754254040718.png";
