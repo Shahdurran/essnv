@@ -142,7 +142,7 @@ interface KeyMetricsTrendsChartProps {
 export default function KeyMetricsTrendsChart({ selectedLocationId }: KeyMetricsTrendsChartProps) {
   
   // State management for chart controls
-  const [selectedTimePeriod, setSelectedTimePeriod] = useState<string>("2yr");
+  const [selectedTimePeriod, setSelectedTimePeriod] = useState<string>("1yr");
   const [selectedMetric, setSelectedMetric] = useState<string>("revenue");
   
   // Chart.js instance reference
@@ -183,8 +183,10 @@ export default function KeyMetricsTrendsChart({ selectedLocationId }: KeyMetrics
           return item.revenue || 0;
         case 'patients':
           return item.patientCount || 0;
-        case 'arDays':
-          return item.arDays || 0;
+        case 'ebitda':
+          return item.ebitda || 0;
+        case 'writeOffs':
+          return item.writeOffs || 0;
         default:
           return item.revenue || 0;
       }
@@ -212,7 +214,7 @@ export default function KeyMetricsTrendsChart({ selectedLocationId }: KeyMetrics
         labels,
         datasets: [
           {
-            label: `Actual ${selectedMetric === 'revenue' ? 'Revenue' : selectedMetric === 'patients' ? 'Patients' : 'AR Days'}`,
+            label: `Actual ${selectedMetric === 'revenue' ? 'Revenue' : selectedMetric === 'patients' ? 'Patients' : selectedMetric === 'ebitda' ? 'EBITDA' : 'Write-Offs'}`,
             data: actualValues,
             borderColor: '#0EA5E9',
             backgroundColor: 'rgba(14, 165, 233, 0.1)',
@@ -226,7 +228,7 @@ export default function KeyMetricsTrendsChart({ selectedLocationId }: KeyMetrics
             pointBorderWidth: 2
           },
           {
-            label: `Projected ${selectedMetric === 'revenue' ? 'Revenue' : selectedMetric === 'patients' ? 'Patients' : 'AR Days'}`,
+            label: `Projected ${selectedMetric === 'revenue' ? 'Revenue' : selectedMetric === 'patients' ? 'Patients' : selectedMetric === 'ebitda' ? 'EBITDA' : 'Write-Offs'}`,
             data: projectedValues,
             borderColor: '#10B981',
             backgroundColor: 'rgba(16, 185, 129, 0.1)',
@@ -351,7 +353,7 @@ export default function KeyMetricsTrendsChart({ selectedLocationId }: KeyMetrics
    * Format metric values for display
    */
   const formatMetricValue = (value: number, metric: string): string => {
-    if (metric === 'revenue') {
+    if (metric === 'revenue' || metric === 'ebitda' || metric === 'writeOffs') {
       return new Intl.NumberFormat('en-US', {
         style: 'currency',
         currency: 'USD',
@@ -360,8 +362,6 @@ export default function KeyMetricsTrendsChart({ selectedLocationId }: KeyMetrics
       }).format(value);
     } else if (metric === 'patients') {
       return new Intl.NumberFormat('en-US').format(value);
-    } else if (metric === 'arDays') {
-      return `${value} days`;
     }
     return value.toString();
   };
@@ -375,8 +375,10 @@ export default function KeyMetricsTrendsChart({ selectedLocationId }: KeyMetrics
         return 'Revenue ($)';
       case 'patients':
         return 'Patient Count';
-      case 'arDays':
-        return 'AR Days';
+      case 'ebitda':
+        return 'EBITDA ($)';
+      case 'writeOffs':
+        return 'Write-Offs ($)';
       default:
         return 'Value';
     }
@@ -455,30 +457,24 @@ export default function KeyMetricsTrendsChart({ selectedLocationId }: KeyMetrics
                 <SelectContent>
                   <SelectItem value="revenue">Revenue</SelectItem>
                   <SelectItem value="patients">Patient Count</SelectItem>
-                  <SelectItem value="arDays">AR Days</SelectItem>
+                  <SelectItem value="ebitda">EBITDA</SelectItem>
+                  <SelectItem value="writeOffs">Write-Offs</SelectItem>
                 </SelectContent>
               </Select>
             </div>
 
-            {/* Time Period Selection */}
+            {/* Time Period - Fixed to 1 Year as per requirements */}
             <div className="flex items-center space-x-2">
               <Calendar className="h-4 w-4 text-slate-500" />
-              <div className="flex space-x-1 bg-slate-100 rounded-lg p-1 w-full sm:w-auto">
-                {['1yr', '2yr', '5yr'].map((period) => (
-                  <Button
-                    key={period}
-                    variant={selectedTimePeriod === period ? "default" : "ghost"}
-                    size="sm"
-                    onClick={() => handleTimePeriodChange(period)}
-                    className={`flex-1 sm:flex-none px-2 sm:px-3 py-1 text-xs font-medium transition-all ${
-                      selectedTimePeriod === period
-                        ? 'bg-white shadow-sm text-slate-900'
-                        : 'text-slate-600 hover:text-slate-900'
-                    }`}
-                  >
-                    {period.toUpperCase()}
-                  </Button>
-                ))}
+              <div className="bg-slate-100 rounded-lg p-1">
+                <Button
+                  variant="default"
+                  size="sm"
+                  className="px-3 py-1 text-xs font-medium bg-white shadow-sm text-slate-900"
+                  disabled
+                >
+                  1 YEAR
+                </Button>
               </div>
             </div>
           </div>

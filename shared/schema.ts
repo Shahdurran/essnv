@@ -516,7 +516,8 @@ export type InsertPerformanceMetric = z.infer<typeof insertPerformanceMetricSche
  * - projectedRevenue: Forecasted data (null for past months)
  * - date: JavaScript Date object for easy date manipulation
  * - isProjected: Boolean flag - true for forecast data, false for historical
- * - arDays: Accounts Receivable days (how long it takes to collect payment)
+ * - ebitda: Earnings Before Interest, Taxes, Depreciation, and Amortization
+ * - writeOffs: Amount of revenue written off as uncollectible
  * 
  * OPTIONAL FIELDS EXPLANATION:
  * Fields marked with "?" are optional and might not be present in all scenarios:
@@ -537,7 +538,8 @@ export interface RevenueDataPoint {
   projectedRevenue?: number | null;
   date: Date;
   isProjected: boolean;
-  arDays?: number;
+  ebitda?: number;
+  writeOffs?: number;
 }
 
 /*
