@@ -379,8 +379,6 @@ export default function Dashboard() {
                   */}
                   <TopRevenueProcedures 
                     selectedLocationId={selectedLocationId}
-                    selectedCategory={selectedProcedureCategory}
-                    onCategoryChange={handleProcedureCategoryChange}
                   />
 
                   {/* 

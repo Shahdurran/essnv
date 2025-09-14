@@ -62,12 +62,10 @@ import type { ProcedureAnalytics } from "../../../shared/schema";
  * ===============================
  * 
  * Define the component props interface for type safety and clear API documentation.
- * This component needs location and category context from parent components.
+ * This component only needs location context for display purposes.
  */
 interface TopRevenueProceduresProps {
-  selectedLocationId: string;                           // Location filter for procedure data
-  selectedCategory: string;                             // Procedure category filter
-  onCategoryChange: (category: string) => void;         // Callback for category changes
+  selectedLocationId: string;                           // Location filter for display context
 }
 
 /*
@@ -96,73 +94,122 @@ interface TopRevenueProceduresProps {
  * @param {TopRevenueProceduresProps} props - Component properties
  */
 export default function TopRevenueProcedures({ 
-  selectedLocationId, 
-  selectedCategory, 
-  onCategoryChange 
+  selectedLocationId
 }: TopRevenueProceduresProps) {
 
-  // State for time range filtering - default to 1 month
-  const [timeRange, setTimeRange] = useState("1");
-
   /**
-   * Fetch top revenue procedures from API
-   * Includes location and category filtering
+   * Fixed ophthalmology procedures list as per requirements
+   * No API call needed - this is a static list for clinical analysis
    */
-  const { data: procedures = [], isLoading, error } = useQuery<ProcedureAnalytics[]>({
-    queryKey: ['/api/analytics/top-procedures', selectedLocationId, selectedCategory, timeRange],
-    queryFn: async () => {
-      const response = await fetch(`/api/analytics/top-procedures/${selectedLocationId}/${selectedCategory}?timeRange=${timeRange}`);
-      if (!response.ok) {
-        throw new Error('Failed to fetch top procedures data');
-      }
-      return response.json();
+  const procedures: ProcedureAnalytics[] = [
+    {
+      cptCode: "99213",
+      description: "Office Visits",
+      category: "medical" as const,
+      revenue: 850000,
+      growth: "+12.5",
+      basePrice: "$280",
+      monthlyVolume: 1250
     },
-    staleTime: 2 * 60 * 1000, // Cache for 2 minutes for fresh analytics
-  });
+    {
+      cptCode: "92235",
+      description: "Diagnostics & Minor Procedures",
+      category: "medical" as const,
+      revenue: 680000,
+      growth: "+8.3",
+      basePrice: "$180",
+      monthlyVolume: 890
+    },
+    {
+      cptCode: "66984",
+      description: "Cataract Surgeries",
+      category: "medical" as const,
+      revenue: 2200000,
+      growth: "+15.8",
+      basePrice: "$3200",
+      monthlyVolume: 185
+    },
+    {
+      cptCode: "67028",
+      description: "Intravitreal Injections",
+      category: "medical" as const,
+      revenue: 1800000,
+      growth: "+22.1",
+      basePrice: "$2100",
+      monthlyVolume: 240
+    },
+    {
+      cptCode: "LASIK",
+      description: "Refractive Cash",
+      category: "cosmetic" as const,
+      revenue: 1200000,
+      growth: "+18.7",
+      basePrice: "$4500",
+      monthlyVolume: 75
+    },
+    {
+      cptCode: "65710",
+      description: "Corneal Procedures",
+      category: "medical" as const,
+      revenue: 450000,
+      growth: "+5.2",
+      basePrice: "$2800",
+      monthlyVolume: 45
+    },
+    {
+      cptCode: "15823",
+      description: "Oculoplastics",
+      category: "cosmetic" as const,
+      revenue: 380000,
+      growth: "+9.8",
+      basePrice: "$3500",
+      monthlyVolume: 28
+    },
+    {
+      cptCode: "OPTICAL",
+      description: "Optical / Contact Lens Sales",
+      category: "medical" as const,
+      revenue: 320000,
+      growth: "+6.4",
+      basePrice: "$350",
+      monthlyVolume: 450
+    }
+  ];
+
+  // No loading state needed since this is static data
+  const isLoading = false;
+  const error = null;
 
   /**
-   * Handle procedure category filter change
-   * @param {string} category - The selected category (medical|cosmetic|all)
-   */
-  const handleCategoryChange = (category: string): void => {
-    onCategoryChange(category);
-  };
-
-  /**
-   * Get appropriate icon for each procedure type
+   * Get appropriate icon for each ophthalmology procedure type
    * @param {string} cptCode - The CPT code or procedure identifier
    * @returns {JSX.Element} The appropriate icon component
    */
   const getProcedureIcon = (cptCode: string) => {
     const iconMap = {
-      // Mohs surgery procedures
-      "17311": Activity,
-      "17312": Activity,
-      
-      // Biopsy procedures  
-      "11104": Microscope,
-      "11105": Microscope,
-      "11106": Microscope,
-      
-      // Excision procedures
-      "11603": Search,
-      "11604": Search,
-      
-      // Destruction procedures
-      "17000": Zap,
-      "17003": Zap,
-      "17110": Zap,
-      
-      // E/M codes
-      "99202": Stethoscope,
+      // Office visits
       "99213": Stethoscope,
-      "99214": Stethoscope,
       
-      // Cosmetic procedures
-      "BOTOX": Syringe,
-      "FILLER": Syringe,
-      "CHEM_PEEL": Activity,
-      "LASER_HAIR": Zap,
+      // Diagnostics
+      "92235": Search,
+      
+      // Cataract surgeries
+      "66984": Activity,
+      
+      // Intravitreal injections
+      "67028": Syringe,
+      
+      // Refractive surgery
+      "LASIK": Zap,
+      
+      // Corneal procedures
+      "65710": Microscope,
+      
+      // Oculoplastics
+      "15823": Activity,
+      
+      // Optical sales
+      "OPTICAL": UserCheck,
       
       // Default
       "default": UserCheck
@@ -173,14 +220,14 @@ export default function TopRevenueProcedures({
   };
 
   /**
-   * Get color scheme for procedure categories
+   * Get color scheme for ophthalmology procedure categories
    * @param {string} category - The procedure category
    * @returns {string} CSS class for background color
    */
   const getProcedureColor = (category: string): string => {
     const colorMap = {
       medical: "bg-blue-500",
-      cosmetic: "bg-purple-500",
+      cosmetic: "bg-green-500",
       default: "bg-teal-500"
     };
     
@@ -297,57 +344,17 @@ export default function TopRevenueProcedures({
     <Card className="bg-white rounded-xl shadow-sm border border-gray-200">
       <CardContent className="p-6">
         
-        {/* Header with Category Toggle - Mobile Responsive */}
-        <div className="flex flex-col space-y-4 mb-4 sm:flex-row sm:items-center sm:justify-between sm:space-y-0">
+        {/* Header - Simplified for Fixed Procedure List */}
+        <div className="mb-6">
           <div className="min-w-0">
             <h3 className="text-lg font-semibold text-gray-900 flex items-center">
               <DollarSign className="h-5 w-5 mr-2 text-primary flex-shrink-0" />
               <span className="truncate">Top Revenue Procedures</span>
             </h3>
-            <p className="text-sm text-gray-600 mt-1">Highest performing services by revenue</p>
-          </div>
-          
-          {/* Procedure Type Toggle - Mobile Optimized */}
-          <div className="flex bg-gray-100 rounded-lg p-1 self-start sm:self-auto">
-            {['medical', 'cosmetic', 'all'].map((category) => (
-              <Button
-                key={category}
-                variant="ghost"
-                size="sm"
-                className={`px-2 py-1 text-xs sm:px-3 sm:text-sm font-medium rounded transition-colors ${
-                  selectedCategory === category
-                    ? 'bg-white text-primary shadow-sm'
-                    : 'text-gray-600 hover:text-gray-900'
-                }`}
-                onClick={() => handleCategoryChange(category)}
-              >
-                {category.charAt(0).toUpperCase() + category.slice(1)}
-              </Button>
-            ))}
+            <p className="text-sm text-gray-600 mt-1">Ophthalmology practice services by revenue</p>
           </div>
         </div>
 
-        {/* Time Range Filter - Mobile Responsive */}
-        <div className="flex flex-col space-y-2 mb-6 sm:flex-row sm:items-center sm:space-y-0 sm:gap-2">
-          <span className="text-sm font-medium text-gray-700 flex-shrink-0">Time Range:</span>
-          <div className="grid grid-cols-2 gap-2 sm:flex sm:gap-2">
-            {['1', '3', '6', '12'].map((months) => (
-              <Button
-                key={months}
-                variant="ghost"
-                size="sm"
-                className={`px-2 py-1 text-xs sm:px-3 sm:text-sm rounded transition-colors ${
-                  timeRange === months
-                    ? 'bg-blue-600 text-white'
-                    : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                }`}
-                onClick={() => setTimeRange(months)}
-              >
-                {months === '1' ? '1 Month' : months === '3' ? '3 Months' : months === '6' ? '6 Months' : '1 Year'}
-              </Button>
-            ))}
-          </div>
-        </div>
 
         {/* Procedures List - Scrollable Container (shows 5 items max) */}
         <div className="max-h-[400px] overflow-y-auto scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-gray-100">
@@ -357,10 +364,7 @@ export default function TopRevenueProcedures({
                 <DollarSign className="h-12 w-12 text-gray-400 mx-auto mb-4" />
                 <p className="text-gray-600">No procedure data available</p>
                 <p className="text-sm text-gray-500 mt-2">
-                  {selectedLocationId === "all" 
-                    ? "Data will appear when procedures are recorded"
-                    : "Try selecting 'All Locations' or a different location"
-                  }
+                  Procedure list is currently empty
                 </p>
               </div>
             ) : (
@@ -419,12 +423,12 @@ export default function TopRevenueProcedures({
           </div>
         </div>
 
-        {/* Category Summary */}
+        {/* Procedure Summary */}
         {procedures.length > 0 && (
           <div className="mt-6 pt-4 border-t border-gray-100">
             <div className="flex items-center justify-between text-sm">
               <span className="text-gray-600">
-                Showing {procedures.length} {selectedCategory === 'all' ? '' : selectedCategory} procedures
+                Showing {procedures.length} ophthalmology procedures
                 {selectedLocationId !== 'all' && ` for selected location`}
               </span>
               <div className="flex items-center space-x-4">
