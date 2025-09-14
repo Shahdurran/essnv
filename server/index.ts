@@ -227,8 +227,20 @@ app.use((req, res, next) => {
     port,
     host: "0.0.0.0",      // Listen on all network interfaces
     reusePort: true,       // Allow port reuse for deployments
-  }, () => {
+  }, async () => {
     // This callback runs when the server successfully starts
     log(`serving on port ${port}`);
+    
+    // Auto-import CSV data on server startup to prevent data loss
+    try {
+      log(`[startup] Auto-importing P&L CSV data...`);
+      const response = await fetch(`http://localhost:${port}/api/pl/import-csv`, {
+        method: 'POST'
+      });
+      const result = await response.json();
+      log(`[startup] Auto-imported ${result.recordsImported} P&L records`);
+    } catch (error) {
+      log(`[startup] Warning: Failed to auto-import CSV data: ${error}`);
+    }
   });
 })();
