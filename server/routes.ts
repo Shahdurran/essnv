@@ -119,6 +119,157 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // ============================================================================
+  // FINANCIAL ANALYSIS ROUTES
+  // ============================================================================
+
+  // Helper function to validate financial route parameters
+  const validateFinancialParams = (locationId: string, period: string) => {
+    const validPeriods = ['1M', '3M', '6M', '1Y', 'CUSTOM'];
+    if (!validPeriods.includes(period.toUpperCase())) {
+      return { valid: false, error: `Invalid period. Must be one of: ${validPeriods.join(', ')}` };
+    }
+    
+    // Allow 'all', UUIDs, and location slugs like 'fairfax', 'gainesville'
+    if (locationId !== 'all' && !locationId.match(/^[a-z0-9-]+$/i)) {
+      return { valid: false, error: 'Invalid locationId format' };
+    }
+    
+    return { valid: true };
+  };
+
+  /**
+   * GET /api/financial/revenue/:locationId/:period - Get financial revenue data
+   * Path params: locationId (or 'all'), period (1M|3M|6M|1Y|custom)
+   */
+  app.get("/api/financial/revenue/:locationId/:period", async (req, res) => {
+    try {
+      const { locationId, period } = req.params;
+      
+      const validation = validateFinancialParams(locationId, period);
+      if (!validation.valid) {
+        return res.status(400).json({ message: validation.error });
+      }
+      
+      const finalLocationId = locationId === 'all' ? undefined : locationId.toLowerCase();
+      const revenueData = await storage.getFinancialRevenueData(finalLocationId, period.toUpperCase());
+      res.json(revenueData);
+    } catch (error) {
+      console.error("Error fetching financial revenue data:", error);
+      res.status(500).json({ message: "Failed to fetch financial revenue data" });
+    }
+  });
+
+  /**
+   * GET /api/financial/expenses/:locationId/:period - Get financial expenses data
+   * Path params: locationId (or 'all'), period (1M|3M|6M|1Y|custom)
+   */
+  app.get("/api/financial/expenses/:locationId/:period", async (req, res) => {
+    try {
+      const { locationId, period } = req.params;
+      
+      const validation = validateFinancialParams(locationId, period);
+      if (!validation.valid) {
+        return res.status(400).json({ message: validation.error });
+      }
+      
+      const finalLocationId = locationId === 'all' ? undefined : locationId.toLowerCase();
+      const expensesData = await storage.getFinancialExpensesData(finalLocationId, period.toUpperCase());
+      res.json(expensesData);
+    } catch (error) {
+      console.error("Error fetching financial expenses data:", error);
+      res.status(500).json({ message: "Failed to fetch financial expenses data" });
+    }
+  });
+
+  /**
+   * GET /api/financial/profit-loss/:locationId/:period - Get profit & loss statement data
+   * Path params: locationId (or 'all'), period (1M|3M|6M|1Y|custom)
+   */
+  app.get("/api/financial/profit-loss/:locationId/:period", async (req, res) => {
+    try {
+      const { locationId, period } = req.params;
+      
+      const validation = validateFinancialParams(locationId, period);
+      if (!validation.valid) {
+        return res.status(400).json({ message: validation.error });
+      }
+      
+      const finalLocationId = locationId === 'all' ? undefined : locationId.toLowerCase();
+      const profitLossData = await storage.getProfitLossData(finalLocationId, period.toUpperCase());
+      res.json(profitLossData);
+    } catch (error) {
+      console.error("Error fetching profit & loss data:", error);
+      res.status(500).json({ message: "Failed to fetch profit & loss data" });
+    }
+  });
+
+  /**
+   * GET /api/financial/cash-in/:locationId/:period - Get cash inflow data
+   * Path params: locationId (or 'all'), period (1M|3M|6M|1Y|custom)
+   */
+  app.get("/api/financial/cash-in/:locationId/:period", async (req, res) => {
+    try {
+      const { locationId, period } = req.params;
+      
+      const validation = validateFinancialParams(locationId, period);
+      if (!validation.valid) {
+        return res.status(400).json({ message: validation.error });
+      }
+      
+      const finalLocationId = locationId === 'all' ? undefined : locationId.toLowerCase();
+      const cashInData = await storage.getCashInData(finalLocationId, period.toUpperCase());
+      res.json(cashInData);
+    } catch (error) {
+      console.error("Error fetching cash in data:", error);
+      res.status(500).json({ message: "Failed to fetch cash in data" });
+    }
+  });
+
+  /**
+   * GET /api/financial/cash-out/:locationId/:period - Get cash outflow data
+   * Path params: locationId (or 'all'), period (1M|3M|6M|1Y|custom)
+   */
+  app.get("/api/financial/cash-out/:locationId/:period", async (req, res) => {
+    try {
+      const { locationId, period } = req.params;
+      
+      const validation = validateFinancialParams(locationId, period);
+      if (!validation.valid) {
+        return res.status(400).json({ message: validation.error });
+      }
+      
+      const finalLocationId = locationId === 'all' ? undefined : locationId.toLowerCase();
+      const cashOutData = await storage.getCashOutData(finalLocationId, period.toUpperCase());
+      res.json(cashOutData);
+    } catch (error) {
+      console.error("Error fetching cash out data:", error);
+      res.status(500).json({ message: "Failed to fetch cash out data" });
+    }
+  });
+
+  /**
+   * GET /api/financial/cash-flow/:locationId/:period - Get cash flow statement data
+   * Path params: locationId (or 'all'), period (1M|3M|6M|1Y|custom)
+   */
+  app.get("/api/financial/cash-flow/:locationId/:period", async (req, res) => {
+    try {
+      const { locationId, period } = req.params;
+      
+      const validation = validateFinancialParams(locationId, period);
+      if (!validation.valid) {
+        return res.status(400).json({ message: validation.error });
+      }
+      
+      const finalLocationId = locationId === 'all' ? undefined : locationId.toLowerCase();
+      const cashFlowData = await storage.getCashFlowData(finalLocationId, period.toUpperCase());
+      res.json(cashFlowData);
+    } catch (error) {
+      console.error("Error fetching cash flow data:", error);
+      res.status(500).json({ message: "Failed to fetch cash flow data" });
+    }
+  });
+
   /**
    * GET /api/analytics/revenue-trends/:locationId/:period - Get monthly revenue trend data
    * Path params: locationId (or 'all'), period (1yr|2yr|5yr)

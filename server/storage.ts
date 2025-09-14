@@ -14,7 +14,13 @@ import {
   type AiQuery,
   type InsertAiQuery,
   type PerformanceMetric,
-  type InsertPerformanceMetric
+  type InsertPerformanceMetric,
+  type FinancialRevenueCategory,
+  type FinancialExpenseCategory, 
+  type ProfitLossData,
+  type CashInCategory,
+  type CashOutCategory,
+  type CashFlowData
 } from "@shared/schema";
 import { randomUUID } from "crypto";
 
@@ -67,6 +73,40 @@ export interface IStorage {
   getPatientVolumeProjections(locationId?: string): Promise<any[]>;
   getKeyMetrics(locationId?: string, timeRangeMonths?: number): Promise<any>;
   getDenialReasonsData(): any;
+
+  // Financial Analysis methods
+  getFinancialRevenueData(locationId?: string, period?: string): Promise<{
+    categories: FinancialRevenueCategory[];
+    totalRevenue: number;
+    period: string;
+  }>;
+  getFinancialExpensesData(locationId?: string, period?: string): Promise<{
+    categories: FinancialExpenseCategory[];
+    totalExpenses: number;
+    period: string;
+  }>;
+  getProfitLossData(locationId?: string, period?: string): Promise<ProfitLossData & {
+    totalRevenue: number;
+    totalExpenses: number;
+    netProfit: number;
+  }>;
+  getCashInData(locationId?: string, period?: string): Promise<{
+    categories: CashInCategory[];
+    totalCashIn: number;
+    netCashIn: number;
+    period: string;
+  }>;
+  getCashOutData(locationId?: string, period?: string): Promise<{
+    categories: CashOutCategory[];
+    totalCashOut: number;
+    period: string;
+  }>;
+  getCashFlowData(locationId?: string, period?: string): Promise<CashFlowData & {
+    operatingCashFlow: number;
+    investingCashFlow: number;
+    financingCashFlow: number;
+    netCashFlow: number;
+  }>;
 }
 
 /**
@@ -813,7 +853,231 @@ export class MemStorage implements IStorage {
     };
   }
 
-  // Additional methods using Master Data Consistency would go here...
+  // Helper method to calculate period multiplier
+  private getPeriodMultiplier(period?: string): number {
+    if (!period) return 6; // Default to 6M
+    
+    switch (period.toUpperCase()) {
+      case '1M': return 1;
+      case '3M': return 3;
+      case '6M': return 6;
+      case '1Y': return 12;
+      case 'CUSTOM': return 6; // Default for custom, could be enhanced
+      default: return 6; // Default fallback
+    }
+  }
+
+  // Financial Analysis methods implementation
+  async getFinancialRevenueData(locationId?: string, period?: string): Promise<{
+    categories: FinancialRevenueCategory[];
+    totalRevenue: number;
+    period: string;
+  }> {
+    const isAllLocations = !locationId;
+    const locationWeight = isAllLocations ? 1.0 : this.masterData.locationWeights[locationId as keyof typeof this.masterData.locationWeights] || 0.5;
+    const periodMultiplier = this.getPeriodMultiplier(period);
+    const finalPeriod = period || "6M";
+    
+    const revenueCategories = [
+      { id: "office-visits", name: "Office Visits", baseAmount: 180000, change: 8.3, trend: "up" as const },
+      { id: "cataract-surgeries", name: "Cataract Surgeries", baseAmount: 145000, change: 12.1, trend: "up" as const },
+      { id: "intravitreal-injections", name: "Intravitreal Injections", baseAmount: 95000, change: 6.7, trend: "up" as const },
+      { id: "diagnostics", name: "Diagnostics & Minor Procedures", baseAmount: 72000, change: -2.1, trend: "down" as const },
+      { id: "refractive-cash", name: "Refractive Cash", baseAmount: 55000, change: 15.2, trend: "up" as const },
+      { id: "corneal-procedures", name: "Corneal Procedures", baseAmount: 48000, change: 3.8, trend: "up" as const },
+      { id: "oculoplastics", name: "Oculoplastics", baseAmount: 35000, change: 9.4, trend: "up" as const },
+      { id: "optical-sales", name: "Optical/Contact Lens Sales", baseAmount: 28000, change: -1.5, trend: "down" as const }
+    ];
+
+    return {
+      categories: revenueCategories.map(cat => ({
+        ...cat,
+        amount: Math.round(cat.baseAmount * locationWeight * periodMultiplier)
+      })),
+      totalRevenue: Math.round(revenueCategories.reduce((sum, cat) => sum + cat.baseAmount, 0) * locationWeight * periodMultiplier),
+      period: finalPeriod
+    };
+  }
+
+  async getFinancialExpensesData(locationId?: string, period?: string): Promise<{
+    categories: FinancialExpenseCategory[];
+    totalExpenses: number;
+    period: string;
+  }> {
+    const isAllLocations = !locationId;
+    const locationWeight = isAllLocations ? 1.0 : this.masterData.locationWeights[locationId as keyof typeof this.masterData.locationWeights] || 0.5;
+    const periodMultiplier = this.getPeriodMultiplier(period);
+    const finalPeriod = period || "6M";
+    
+    const expenseCategories = [
+      { id: "staff-salaries", name: "Staff Salaries & Benefits", baseAmount: 125000, change: 8.5, trend: "up" as const },
+      { id: "medical-equipment", name: "Medical Equipment & Supplies", baseAmount: 89500, change: -3.2, trend: "down" as const },
+      { id: "facility-rent", name: "Facility Rent & Utilities", baseAmount: 42000, change: 2.1, trend: "up" as const },
+      { id: "insurance-legal", name: "Insurance & Legal", baseAmount: 28700, change: 0.0, trend: "neutral" as const },
+      { id: "marketing", name: "Marketing & Advertising", baseAmount: 15800, change: 12.4, trend: "up" as const },
+      { id: "professional-services", name: "Professional Services", baseAmount: 22100, change: -1.8, trend: "down" as const },
+      { id: "technology", name: "Technology & Software", baseAmount: 18900, change: 5.6, trend: "up" as const },
+      { id: "pharmaceuticals", name: "Medical Supplies & Pharmaceuticals", baseAmount: 34200, change: -4.1, trend: "down" as const }
+    ];
+
+    return {
+      categories: expenseCategories.map(cat => ({
+        ...cat,
+        amount: Math.round(cat.baseAmount * locationWeight * periodMultiplier)
+      })),
+      totalExpenses: Math.round(expenseCategories.reduce((sum, cat) => sum + cat.baseAmount, 0) * locationWeight * periodMultiplier),
+      period: finalPeriod
+    };
+  }
+
+  async getProfitLossData(locationId?: string, period?: string): Promise<ProfitLossData & {
+    totalRevenue: number;
+    totalExpenses: number;
+    netProfit: number;
+  }> {
+    const revenueData = await this.getFinancialRevenueData(locationId, period);
+    const expensesData = await this.getFinancialExpensesData(locationId, period);
+    const finalPeriod = period || "6M";
+    
+    return {
+      revenue: revenueData.categories.reduce((acc: Record<string, number>, cat) => {
+        acc[cat.id] = cat.amount;
+        return acc;
+      }, {}),
+      expenses: expensesData.categories.reduce((acc: Record<string, number>, cat) => {
+        acc[cat.id] = cat.amount;
+        return acc;
+      }, {}),
+      totalRevenue: revenueData.totalRevenue,
+      totalExpenses: expensesData.totalExpenses,
+      netProfit: revenueData.totalRevenue - expensesData.totalExpenses,
+      period: finalPeriod,
+      locationId
+    };
+  }
+
+  async getCashInData(locationId?: string, period?: string): Promise<{
+    categories: CashInCategory[];
+    totalCashIn: number;
+    netCashIn: number;
+    period: string;
+  }> {
+    const isAllLocations = !locationId;
+    const locationWeight = isAllLocations ? 1.0 : this.masterData.locationWeights[locationId as keyof typeof this.masterData.locationWeights] || 0.5;
+    const periodMultiplier = this.getPeriodMultiplier(period);
+    const finalPeriod = period || "6M";
+    
+    const cashInCategories = [
+      { id: "patient-payments", name: "Patient Payments", baseAmount: 95000, change: 8.3, trend: "up" as const },
+      { id: "insurance-reimbursements", name: "Insurance Reimbursements", baseAmount: 185000, change: 4.7, trend: "up" as const },
+      { id: "procedure-payments", name: "Procedure Payments", baseAmount: 145000, change: 12.1, trend: "up" as const },
+      { id: "optical-sales", name: "Optical & Contact Lens Sales", baseAmount: 28000, change: -2.4, trend: "down" as const },
+      { id: "cash-procedures", name: "Cash-Pay Procedures", baseAmount: 55000, change: 15.6, trend: "up" as const },
+      { id: "refunds-adjustments", name: "Refunds & Adjustments", baseAmount: -8200, change: -5.1, trend: "down" as const }
+    ];
+
+    return {
+      categories: cashInCategories.map(cat => ({
+        ...cat,
+        amount: Math.round(cat.baseAmount * locationWeight * periodMultiplier)
+      })),
+      totalCashIn: Math.round(cashInCategories.filter(cat => cat.baseAmount > 0).reduce((sum, cat) => sum + cat.baseAmount, 0) * locationWeight * periodMultiplier),
+      netCashIn: Math.round(cashInCategories.reduce((sum, cat) => sum + cat.baseAmount, 0) * locationWeight * periodMultiplier),
+      period: finalPeriod
+    };
+  }
+
+  async getCashOutData(locationId?: string, period?: string): Promise<{
+    categories: CashOutCategory[];
+    totalCashOut: number;
+    period: string;
+  }> {
+    const isAllLocations = !locationId;
+    const locationWeight = isAllLocations ? 1.0 : this.masterData.locationWeights[locationId as keyof typeof this.masterData.locationWeights] || 0.5;
+    const periodMultiplier = this.getPeriodMultiplier(period);
+    const finalPeriod = period || "6M";
+    
+    const cashOutCategories = [
+      { id: "staff-salaries", name: "Staff Salaries & Payroll", baseAmount: 125000, change: 6.2, trend: "up" as const },
+      { id: "equipment-purchases", name: "Medical Equipment Purchases", baseAmount: 45000, change: -12.8, trend: "down" as const },
+      { id: "rent-utilities", name: "Rent & Utilities", baseAmount: 42000, change: 3.1, trend: "up" as const },
+      { id: "supplier-payments", name: "Supplier Payments", baseAmount: 38700, change: -2.4, trend: "down" as const },
+      { id: "insurance-premiums", name: "Insurance Premiums", baseAmount: 22100, change: 8.9, trend: "up" as const },
+      { id: "loan-payments", name: "Loan & Interest Payments", baseAmount: 15800, change: 0.0, trend: "neutral" as const },
+      { id: "marketing-advertising", name: "Marketing & Advertising", baseAmount: 12500, change: 15.2, trend: "up" as const },
+      { id: "professional-services", name: "Professional Services", baseAmount: 18900, change: -1.6, trend: "down" as const }
+    ];
+
+    return {
+      categories: cashOutCategories.map(cat => ({
+        ...cat,
+        amount: Math.round(cat.baseAmount * locationWeight * periodMultiplier)
+      })),
+      totalCashOut: Math.round(cashOutCategories.reduce((sum, cat) => sum + cat.baseAmount, 0) * locationWeight * periodMultiplier),
+      period: finalPeriod
+    };
+  }
+
+  async getCashFlowData(locationId?: string, period?: string): Promise<CashFlowData & {
+    operatingCashFlow: number;
+    investingCashFlow: number;
+    financingCashFlow: number;
+    netCashFlow: number;
+  }> {
+    const isAllLocations = !locationId;
+    const locationWeight = isAllLocations ? 1.0 : this.masterData.locationWeights[locationId as keyof typeof this.masterData.locationWeights] || 0.5;
+    const periodMultiplier = this.getPeriodMultiplier(period);
+    const finalPeriod = period || "6M";
+    
+    const operating = {
+      patientCollections: 285000,
+      insuranceReimbursements: 175000,
+      supplierPayments: -89500,
+      staffPayroll: -125000,
+      rentUtilities: -42000,
+      otherOperating: -15200
+    };
+
+    const investing = {
+      equipmentPurchases: -45000,
+      technologyInvestments: -18900,
+      facilityImprovements: -12000,
+      assetSales: 8500
+    };
+
+    const financing = {
+      loanPayments: -15800,
+      ownerDraws: -25000,
+      lineOfCredit: 12000,
+      equipmentFinancing: -8200
+    };
+
+    const scaledOperating = Object.fromEntries(
+      Object.entries(operating).map(([key, value]) => [key, Math.round(value * locationWeight * periodMultiplier)])
+    );
+    const scaledInvesting = Object.fromEntries(
+      Object.entries(investing).map(([key, value]) => [key, Math.round(value * locationWeight * periodMultiplier)])
+    );
+    const scaledFinancing = Object.fromEntries(
+      Object.entries(financing).map(([key, value]) => [key, Math.round(value * locationWeight * periodMultiplier)])
+    );
+
+    const operatingCashFlow = Object.values(scaledOperating).reduce((sum, val) => sum + val, 0);
+    const investingCashFlow = Object.values(scaledInvesting).reduce((sum, val) => sum + val, 0);
+    const financingCashFlow = Object.values(scaledFinancing).reduce((sum, val) => sum + val, 0);
+
+    return {
+      operating: scaledOperating,
+      investing: scaledInvesting,
+      financing: scaledFinancing,
+      operatingCashFlow,
+      investingCashFlow,
+      financingCashFlow,
+      netCashFlow: operatingCashFlow + investingCashFlow + financingCashFlow,
+      period: finalPeriod,
+      locationId
+    };
+  }
 }
 
 // Create and export the storage instance

@@ -501,6 +501,61 @@ export type InsertPerformanceMetric = z.infer<typeof insertPerformanceMetricSche
  */
 
 /*
+ * FINANCIAL ANALYSIS DATA TYPES
+ * ==============================
+ * 
+ * These interfaces define data structures for the Financial Analysis widgets
+ * including Revenue, Expenses, P&L Statement, Cash Flow, and Cash In/Out data.
+ */
+
+export interface FinancialRevenueCategory {
+  id: string;
+  name: string;
+  amount: number;
+  change: number;
+  trend: "up" | "down" | "neutral";
+}
+
+export interface FinancialExpenseCategory {
+  id: string;
+  name: string;
+  amount: number;
+  change: number;
+  trend: "up" | "down" | "neutral";
+}
+
+export interface ProfitLossData {
+  revenue: Record<string, number>;
+  expenses: Record<string, number>;
+  period: string;
+  locationId?: string;
+}
+
+export interface CashInCategory {
+  id: string;
+  name: string;
+  amount: number;
+  change: number;
+  trend: "up" | "down" | "neutral";
+}
+
+export interface CashOutCategory {
+  id: string;
+  name: string;
+  amount: number;
+  change: number;
+  trend: "up" | "down" | "neutral";
+}
+
+export interface CashFlowData {
+  operating: Record<string, number>;
+  investing: Record<string, number>;
+  financing: Record<string, number>;
+  period: string;
+  locationId?: string;
+}
+
+/*
  * REVENUE DATA POINT INTERFACE
  * ============================
  * 
