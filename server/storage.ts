@@ -857,7 +857,36 @@ export class MemStorage implements IStorage {
     };
   }
 
-  // Helper method to calculate period multiplier
+  // Helper method to get month range for a given period
+  private getMonthsForPeriod(period?: string): string[] {
+    const availableMonths = [
+      '2024-09', '2024-10', '2024-11', '2024-12',
+      '2025-01', '2025-02', '2025-03', '2025-04', 
+      '2025-05', '2025-06', '2025-07', '2025-08'
+    ];
+    
+    if (!period) period = '6M'; // Default to 6M
+    
+    switch (period.toUpperCase()) {
+      case '1M': 
+        // Return latest month (Aug 2025)
+        return ['2025-08'];
+      case '3M':
+        // Return last 3 months (Jun-Aug 2025)
+        return ['2025-06', '2025-07', '2025-08'];
+      case '6M':
+        // Return last 6 months (Mar-Aug 2025)
+        return ['2025-03', '2025-04', '2025-05', '2025-06', '2025-07', '2025-08'];
+      case '1Y':
+        // Return all 12 months (Sep 2024 - Aug 2025)
+        return availableMonths;
+      default:
+        // Default to 6 months
+        return ['2025-03', '2025-04', '2025-05', '2025-06', '2025-07', '2025-08'];
+    }
+  }
+
+  // Helper method to calculate period multiplier (kept for backwards compatibility)
   private getPeriodMultiplier(period?: string): number {
     if (!period) return 6; // Default to 6M
     
@@ -871,34 +900,58 @@ export class MemStorage implements IStorage {
     }
   }
 
-  // Financial Analysis methods implementation
+  // Financial Analysis methods implementation using real imported P&L data
   async getFinancialRevenueData(locationId?: string, period?: string): Promise<{
     categories: FinancialRevenueCategory[];
     totalRevenue: number;
     period: string;
   }> {
-    const isAllLocations = !locationId;
-    const locationWeight = isAllLocations ? 1.0 : this.masterData.locationWeights[locationId as keyof typeof this.masterData.locationWeights] || 0.5;
-    const periodMultiplier = this.getPeriodMultiplier(period);
     const finalPeriod = period || "6M";
+    const monthsToInclude = this.getMonthsForPeriod(period);
     
-    const revenueCategories = [
-      { id: "office-visits", name: "Office Visits", baseAmount: 180000, change: 8.3, trend: "up" as const },
-      { id: "cataract-surgeries", name: "Cataract Surgeries", baseAmount: 145000, change: 12.1, trend: "up" as const },
-      { id: "intravitreal-injections", name: "Intravitreal Injections", baseAmount: 95000, change: 6.7, trend: "up" as const },
-      { id: "diagnostics", name: "Diagnostics & Minor Procedures", baseAmount: 72000, change: -2.1, trend: "down" as const },
-      { id: "refractive-cash", name: "Refractive Cash", baseAmount: 55000, change: 15.2, trend: "up" as const },
-      { id: "corneal-procedures", name: "Corneal Procedures", baseAmount: 48000, change: 3.8, trend: "up" as const },
-      { id: "oculoplastics", name: "Oculoplastics", baseAmount: 35000, change: 9.4, trend: "up" as const },
-      { id: "optical-sales", name: "Optical/Contact Lens Sales", baseAmount: 28000, change: -1.5, trend: "down" as const }
-    ];
-
+    // If no P&L data imported yet, return empty structure
+    if (this.plMonthlyData.length === 0) {
+      return {
+        categories: [],
+        totalRevenue: 0,
+        period: finalPeriod
+      };
+    }
+    
+    // Filter P&L data for revenue categories within the specified time period
+    let filteredData = this.plMonthlyData.filter(item => 
+      item.categoryType === 'revenue' && 
+      monthsToInclude.includes(item.monthYear)
+    );
+    
+    // Filter by location if specified
+    if (locationId && locationId !== 'all') {
+      filteredData = filteredData.filter(item => item.locationId === locationId);
+    }
+    
+    // Aggregate by line item across all months in the period
+    const revenueByLineItem: Record<string, number> = {};
+    filteredData.forEach(item => {
+      if (!revenueByLineItem[item.lineItem]) {
+        revenueByLineItem[item.lineItem] = 0;
+      }
+      revenueByLineItem[item.lineItem] += item.amount;
+    });
+    
+    // Convert to required format with proper ID generation
+    const categories: FinancialRevenueCategory[] = Object.entries(revenueByLineItem).map(([lineItem, amount]) => ({
+      id: lineItem.toLowerCase().replace(/[\s&\/]/g, '-').replace(/--+/g, '-'),
+      name: lineItem,
+      amount: Math.round(amount),
+      change: 5.0, // Default change percentage
+      trend: "up" as const // Default trend
+    }));
+    
+    const totalRevenue = Math.round(Object.values(revenueByLineItem).reduce((sum, amount) => sum + amount, 0));
+    
     return {
-      categories: revenueCategories.map(cat => ({
-        ...cat,
-        amount: Math.round(cat.baseAmount * locationWeight * periodMultiplier)
-      })),
-      totalRevenue: Math.round(revenueCategories.reduce((sum, cat) => sum + cat.baseAmount, 0) * locationWeight * periodMultiplier),
+      categories,
+      totalRevenue,
       period: finalPeriod
     };
   }
@@ -908,28 +961,53 @@ export class MemStorage implements IStorage {
     totalExpenses: number;
     period: string;
   }> {
-    const isAllLocations = !locationId;
-    const locationWeight = isAllLocations ? 1.0 : this.masterData.locationWeights[locationId as keyof typeof this.masterData.locationWeights] || 0.5;
-    const periodMultiplier = this.getPeriodMultiplier(period);
     const finalPeriod = period || "6M";
+    const monthsToInclude = this.getMonthsForPeriod(period);
     
-    const expenseCategories = [
-      { id: "staff-salaries", name: "Staff Salaries & Benefits", baseAmount: 125000, change: 8.5, trend: "up" as const },
-      { id: "medical-equipment", name: "Medical Equipment & Supplies", baseAmount: 89500, change: -3.2, trend: "down" as const },
-      { id: "facility-rent", name: "Facility Rent & Utilities", baseAmount: 42000, change: 2.1, trend: "up" as const },
-      { id: "insurance-legal", name: "Insurance & Legal", baseAmount: 28700, change: 0.0, trend: "neutral" as const },
-      { id: "marketing", name: "Marketing & Advertising", baseAmount: 15800, change: 12.4, trend: "up" as const },
-      { id: "professional-services", name: "Professional Services", baseAmount: 22100, change: -1.8, trend: "down" as const },
-      { id: "technology", name: "Technology & Software", baseAmount: 18900, change: 5.6, trend: "up" as const },
-      { id: "pharmaceuticals", name: "Medical Supplies & Pharmaceuticals", baseAmount: 34200, change: -4.1, trend: "down" as const }
-    ];
-
+    // If no P&L data imported yet, return empty structure
+    if (this.plMonthlyData.length === 0) {
+      return {
+        categories: [],
+        totalExpenses: 0,
+        period: finalPeriod
+      };
+    }
+    
+    // Filter P&L data for expense categories (both direct costs and operating expenses)
+    let filteredData = this.plMonthlyData.filter(item => 
+      (item.categoryType === 'direct_costs' || item.categoryType === 'operating_expenses') && 
+      monthsToInclude.includes(item.monthYear)
+    );
+    
+    // Filter by location if specified
+    if (locationId && locationId !== 'all') {
+      filteredData = filteredData.filter(item => item.locationId === locationId);
+    }
+    
+    // Aggregate by line item across all months in the period
+    const expensesByLineItem: Record<string, number> = {};
+    filteredData.forEach(item => {
+      if (!expensesByLineItem[item.lineItem]) {
+        expensesByLineItem[item.lineItem] = 0;
+      }
+      // Convert negative expenses to positive for display
+      expensesByLineItem[item.lineItem] += Math.abs(item.amount);
+    });
+    
+    // Convert to required format with proper ID generation
+    const categories: FinancialExpenseCategory[] = Object.entries(expensesByLineItem).map(([lineItem, amount]) => ({
+      id: lineItem.toLowerCase().replace(/[\s&\/()]/g, '-').replace(/--+/g, '-').replace(/-$/, ''),
+      name: lineItem,
+      amount: Math.round(amount),
+      change: -2.5, // Default change percentage 
+      trend: "down" as const // Default trend for expenses
+    }));
+    
+    const totalExpenses = Math.round(Object.values(expensesByLineItem).reduce((sum, amount) => sum + amount, 0));
+    
     return {
-      categories: expenseCategories.map(cat => ({
-        ...cat,
-        amount: Math.round(cat.baseAmount * locationWeight * periodMultiplier)
-      })),
-      totalExpenses: Math.round(expenseCategories.reduce((sum, cat) => sum + cat.baseAmount, 0) * locationWeight * periodMultiplier),
+      categories,
+      totalExpenses,
       period: finalPeriod
     };
   }
@@ -943,15 +1021,22 @@ export class MemStorage implements IStorage {
     const expensesData = await this.getFinancialExpensesData(locationId, period);
     const finalPeriod = period || "6M";
     
+    // Create revenue and expenses objects using the real P&L line item names
+    const revenueObject = revenueData.categories.reduce((acc: Record<string, number>, cat) => {
+      // Use the actual line item name as key for exact matching with CSV
+      acc[cat.name] = cat.amount;
+      return acc;
+    }, {});
+    
+    const expensesObject = expensesData.categories.reduce((acc: Record<string, number>, cat) => {
+      // Use the actual line item name as key for exact matching with CSV
+      acc[cat.name] = cat.amount;
+      return acc;
+    }, {});
+    
     return {
-      revenue: revenueData.categories.reduce((acc: Record<string, number>, cat) => {
-        acc[cat.id] = cat.amount;
-        return acc;
-      }, {}),
-      expenses: expensesData.categories.reduce((acc: Record<string, number>, cat) => {
-        acc[cat.id] = cat.amount;
-        return acc;
-      }, {}),
+      revenue: revenueObject,
+      expenses: expensesObject,
       totalRevenue: revenueData.totalRevenue,
       totalExpenses: expensesData.totalExpenses,
       netProfit: revenueData.totalRevenue - expensesData.totalExpenses,

@@ -3,6 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { BarChart3, List, TrendingUp, TrendingDown } from "lucide-react";
 import { useState } from "react";
+import { useQuery } from "@tanstack/react-query";
 import { Line } from "react-chartjs-2";
 import {
   Chart as ChartJS,
@@ -31,29 +32,16 @@ interface ProfitLossWidgetProps {
   selectedPeriod: string;
 }
 
-// P&L Statement data structure for ophthalmology practice
-const profitLossData = {
-  revenue: {
-    officeVisits: 180000,
-    cataractSurgeries: 145000,
-    intravitealInjections: 95000,
-    diagnostics: 72000,
-    refractiveCash: 55000,
-    cornealProcedures: 48000,
-    oculoplastics: 35000,
-    optical: 28000
-  },
-  expenses: {
-    staffSalaries: 125000,
-    medicalEquipment: 89500,
-    facilityRent: 42000,
-    insurance: 28700,
-    marketing: 15800,
-    professional: 22100,
-    technology: 18900,
-    pharmaceuticals: 34200
-  }
-};
+// Interface for P&L API response
+interface ProfitLossApiResponse {
+  revenue: Record<string, number>;
+  expenses: Record<string, number>;
+  totalRevenue: number;
+  totalExpenses: number;
+  netProfit: number;
+  period: string;
+  locationId?: string;
+}
 
 const timePeriods = [
   { id: "1M", label: "1 Month", active: false },
@@ -116,11 +104,28 @@ const chartOptions = {
 export default function ProfitLossWidget({ selectedLocationId, selectedPeriod }: ProfitLossWidgetProps) {
   const [viewMode, setViewMode] = useState<"list" | "graph">("list");
 
-  // Calculate totals
-  const totalRevenue = Object.values(profitLossData.revenue).reduce((sum, val) => sum + val, 0);
-  const totalExpenses = Object.values(profitLossData.expenses).reduce((sum, val) => sum + val, 0);
-  const netProfit = totalRevenue - totalExpenses;
-  const netProfitMargin = ((netProfit / totalRevenue) * 100);
+  // Fetch real P&L data from API
+  const { data: profitLossApiData, isLoading, error } = useQuery<ProfitLossApiResponse>({
+    queryKey: ['/api/financial/profit-loss', selectedLocationId, selectedPeriod],
+    enabled: Boolean(selectedLocationId && selectedPeriod),
+  });
+
+  // Use API data or fallback to empty structure
+  const profitLossData = profitLossApiData || {
+    revenue: {},
+    expenses: {},
+    totalRevenue: 0,
+    totalExpenses: 0,
+    netProfit: 0,
+    period: selectedPeriod || '6M',
+    locationId: selectedLocationId
+  };
+
+  // Calculate totals from API data
+  const totalRevenue = profitLossData.totalRevenue;
+  const totalExpenses = profitLossData.totalExpenses;
+  const netProfit = profitLossData.netProfit;
+  const netProfitMargin = totalRevenue > 0 ? ((netProfit / totalRevenue) * 100) : 0;
 
   const formatCurrency = (amount: number) => {
     return new Intl.NumberFormat("en-US", {
@@ -175,14 +180,26 @@ export default function ProfitLossWidget({ selectedLocationId, selectedPeriod }:
             <div>
               <h4 className="font-semibold text-green-700 mb-3 text-sm uppercase tracking-wide">Revenue</h4>
               <div className="space-y-2">
-                {Object.entries(profitLossData.revenue).map(([key, value]) => (
-                  <div key={key} className="flex justify-between items-center py-1" data-testid={`pl-revenue-${key}`}>
-                    <span className="text-gray-700 text-sm">
-                      {key.replace(/([A-Z])/g, ' $1').replace(/^./, str => str.toUpperCase())}
-                    </span>
-                    <span className="text-green-600 font-medium">{formatCurrency(value)}</span>
+                {isLoading ? (
+                  <div className="space-y-2">
+                    <div className="h-4 bg-gray-200 rounded animate-pulse"></div>
+                    <div className="h-4 bg-gray-200 rounded animate-pulse"></div>
+                    <div className="h-4 bg-gray-200 rounded animate-pulse"></div>
                   </div>
-                ))}
+                ) : error ? (
+                  <div className="text-red-600 text-sm">Error loading revenue data</div>
+                ) : Object.keys(profitLossData.revenue).length === 0 ? (
+                  <div className="text-gray-500 text-sm">No revenue data available</div>
+                ) : (
+                  Object.entries(profitLossData.revenue).map(([key, value]) => (
+                    <div key={key} className="flex justify-between items-center py-1" data-testid={`pl-revenue-${key.toLowerCase().replace(/\s+/g, '-')}`}>
+                      <span className="text-gray-700 text-sm">
+                        {key}
+                      </span>
+                      <span className="text-green-600 font-medium">{formatCurrency(value)}</span>
+                    </div>
+                  ))
+                )}
                 <div className="border-t pt-2 mt-2" data-testid="pl-total-revenue">
                   <div className="flex justify-between items-center">
                     <span className="font-semibold text-gray-900">Total Revenue</span>
@@ -196,14 +213,26 @@ export default function ProfitLossWidget({ selectedLocationId, selectedPeriod }:
             <div>
               <h4 className="font-semibold text-red-700 mb-3 text-sm uppercase tracking-wide">Expenses</h4>
               <div className="space-y-2">
-                {Object.entries(profitLossData.expenses).map(([key, value]) => (
-                  <div key={key} className="flex justify-between items-center py-1" data-testid={`pl-expense-${key}`}>
-                    <span className="text-gray-700 text-sm">
-                      {key.replace(/([A-Z])/g, ' $1').replace(/^./, str => str.toUpperCase())}
-                    </span>
-                    <span className="text-red-600 font-medium">({formatCurrency(value)})</span>
+                {isLoading ? (
+                  <div className="space-y-2">
+                    <div className="h-4 bg-gray-200 rounded animate-pulse"></div>
+                    <div className="h-4 bg-gray-200 rounded animate-pulse"></div>
+                    <div className="h-4 bg-gray-200 rounded animate-pulse"></div>
                   </div>
-                ))}
+                ) : error ? (
+                  <div className="text-red-600 text-sm">Error loading expense data</div>
+                ) : Object.keys(profitLossData.expenses).length === 0 ? (
+                  <div className="text-gray-500 text-sm">No expense data available</div>
+                ) : (
+                  Object.entries(profitLossData.expenses).map(([key, value]) => (
+                    <div key={key} className="flex justify-between items-center py-1" data-testid={`pl-expense-${key.toLowerCase().replace(/\s+/g, '-')}`}>
+                      <span className="text-gray-700 text-sm">
+                        {key}
+                      </span>
+                      <span className="text-red-600 font-medium">({formatCurrency(value)})</span>
+                    </div>
+                  ))
+                )}
                 <div className="border-t pt-2 mt-2" data-testid="pl-total-expenses">
                   <div className="flex justify-between items-center">
                     <span className="font-semibold text-gray-900">Total Expenses</span>
