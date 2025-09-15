@@ -336,44 +336,42 @@ export default function TopRevenueProcedures({
   }
 
   return (
-    <Card className="bg-white rounded-xl shadow-sm border border-gray-200">
-      <CardContent className="p-6">
+    <Card className="bg-white rounded-xl shadow-sm border border-gray-200 h-full">
+      <CardContent className="p-6 flex flex-col h-full">
         
-        {/* Header with Date Filter */}
-        <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between mb-6 space-y-3 lg:space-y-0">
-          <div className="min-w-0">
-            <h3 className="text-lg font-semibold text-gray-900 flex items-center">
-              <DollarSign className="h-5 w-5 mr-2 text-primary flex-shrink-0" />
-              <span className="truncate">Top Revenue Procedures</span>
-            </h3>
-          </div>
-          
-          {/* Time Range Filter - Button Style */}
-          <div className="flex flex-col space-y-2 sm:flex-row sm:items-center sm:space-y-0 sm:gap-2">
-            <span className="text-sm font-medium text-gray-700 flex-shrink-0">Time Range:</span>
-            <div className="grid grid-cols-2 gap-2 sm:flex sm:gap-2">
-              {['1M', '3M', '6M', '1Y'].map((period) => (
-                <Button
-                  key={period}
-                  variant="ghost"
-                  size="sm"
-                  className={`px-2 py-1 text-xs sm:px-3 sm:text-sm rounded transition-colors ${
-                    selectedPeriod === period
-                      ? 'bg-blue-600 text-white'
-                      : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                  }`}
-                  onClick={() => setSelectedPeriod(period)}
-                >
-                  {period === '1M' ? '1 Month' : period === '3M' ? '3 Months' : period === '6M' ? '6 Months' : '1 Year'}
-                </Button>
-              ))}
-            </div>
+        {/* Header */}
+        <div className="mb-4">
+          <h3 className="text-lg font-semibold text-gray-900 flex items-center">
+            <DollarSign className="h-5 w-5 mr-2 text-primary flex-shrink-0" />
+            <span className="truncate">Top Revenue Procedures</span>
+          </h3>
+        </div>
+        
+        {/* Time Range Filter - Button Style */}
+        <div className="flex flex-col space-y-2 mb-6 sm:flex-row sm:items-center sm:space-y-0 sm:gap-2">
+          <span className="text-sm font-medium text-gray-700 flex-shrink-0">Time Range:</span>
+          <div className="grid grid-cols-2 gap-2 sm:flex sm:gap-2">
+            {['1M', '3M', '6M', '1Y'].map((period) => (
+              <Button
+                key={period}
+                variant="ghost"
+                size="sm"
+                className={`px-2 py-1 text-xs sm:px-3 sm:text-sm rounded transition-colors ${
+                  selectedPeriod === period
+                    ? 'bg-blue-600 text-white'
+                    : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                }`}
+                onClick={() => setSelectedPeriod(period)}
+              >
+                {period === '1M' ? '1 Month' : period === '3M' ? '3 Months' : period === '6M' ? '6 Months' : '1 Year'}
+              </Button>
+            ))}
           </div>
         </div>
 
 
-        {/* Procedures List - Scrollable Container (shows 5 items max) */}
-        <div className="max-h-[400px] overflow-y-auto scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-gray-100">
+        {/* Procedures List - Scrollable Container (taller to fill widget space) */}
+        <div className="flex-1 overflow-y-auto scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-gray-100 min-h-[500px]">
           <div className="space-y-4 pr-2">
             {procedures.length === 0 ? (
               <div className="text-center py-8">
