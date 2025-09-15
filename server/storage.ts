@@ -661,7 +661,7 @@ export class MemStorage implements IStorage {
       
       // Get revenue data using existing method
       const revenueData = await this.getFinancialRevenueData(locationId, period);
-      monthlyRevenue = Math.round(revenueData.totalRevenue / timeRange); // Convert to monthly average
+      monthlyRevenue = revenueData.totalRevenue; // Use total revenue for the period, not monthly average
       revenueGrowth = "+5.2"; // Realistic growth rate
     } else {
       // Fallback to estimated revenue based on location
