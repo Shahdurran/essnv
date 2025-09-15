@@ -103,8 +103,8 @@ const chartOptions = {
 
 export default function ProfitLossWidget({ selectedLocationId, selectedPeriod }: ProfitLossWidgetProps) {
   const [viewMode, setViewMode] = useState<"list" | "graph">("list");
-  const [revenueCollapsed, setRevenueCollapsed] = useState(false);
-  const [expensesCollapsed, setExpensesCollapsed] = useState(false);
+  const [revenueCollapsed, setRevenueCollapsed] = useState(true);
+  const [expensesCollapsed, setExpensesCollapsed] = useState(true);
 
   // Fetch real P&L data from API
   const { data: profitLossApiData, isLoading, error } = useQuery<ProfitLossApiResponse>({
