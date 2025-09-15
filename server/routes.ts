@@ -548,7 +548,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         },
         {
           id: "refractive-vs-medical",
-          question: "Refractive vs Medical revenue",
+          question: "Bad debt analysis",
           icon: "balance-scale",
           category: "revenue"
         },
