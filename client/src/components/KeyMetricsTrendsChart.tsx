@@ -158,12 +158,11 @@ export default function KeyMetricsTrendsChart({ selectedLocationId }: KeyMetrics
   });
 
   /**
-   * Process chart data - server already filters by time period
+   * Process chart data - filter out projections and use only historical data
    */
   const processChartData = (): RevenueDataPoint[] => {
-    // Server already provides filtered data based on selectedTimePeriod via API queryKey
-    // No need to filter again on the client side
-    return revenueData;
+    // Filter out projected data points to show only historical data
+    return revenueData.filter(item => !item.isProjected);
   };
 
   /**
@@ -192,29 +191,17 @@ export default function KeyMetricsTrendsChart({ selectedLocationId }: KeyMetrics
       }
     };
 
-    // Create separate datasets with index-based data points
-    const actualValues: (number | null)[] = [];
-    const projectedValues: (number | null)[] = [];
-    
-    data.forEach((item: RevenueDataPoint) => {
-      const value = getMetricValue(item);
-      if (item.isProjected) {
-        actualValues.push(null);
-        projectedValues.push(value);
-      } else {
-        actualValues.push(value);
-        projectedValues.push(null);
-      }
-    });
+    // Create single dataset with only actual values (no projections)
+    const actualValues: number[] = data.map((item: RevenueDataPoint) => getMetricValue(item));
 
-    // Chart configuration with separate datasets
+    // Chart configuration with single dataset (no projections)
     const config: ChartConfiguration<'line'> = {
       type: 'line' as const,
       data: {
         labels,
         datasets: [
           {
-            label: `Actual ${selectedMetric === 'revenue' ? 'Revenue' : selectedMetric === 'patients' ? 'Patients' : selectedMetric === 'ebitda' ? 'EBITDA' : 'Write-Offs'}`,
+            label: `${selectedMetric === 'revenue' ? 'Revenue' : selectedMetric === 'patients' ? 'Patients' : selectedMetric === 'ebitda' ? 'EBITDA' : 'Write-Offs'}`,
             data: actualValues,
             borderColor: '#0EA5E9',
             backgroundColor: 'rgba(14, 165, 233, 0.1)',
@@ -226,21 +213,6 @@ export default function KeyMetricsTrendsChart({ selectedLocationId }: KeyMetrics
             pointBackgroundColor: '#0EA5E9',
             pointBorderColor: '#ffffff',
             pointBorderWidth: 2
-          },
-          {
-            label: `Projected ${selectedMetric === 'revenue' ? 'Revenue' : selectedMetric === 'patients' ? 'Patients' : selectedMetric === 'ebitda' ? 'EBITDA' : 'Write-Offs'}`,
-            data: projectedValues,
-            borderColor: '#10B981',
-            backgroundColor: 'rgba(16, 185, 129, 0.1)',
-            borderWidth: 3,
-            fill: false,
-            tension: 0.4,
-            pointRadius: 6,
-            pointHoverRadius: 8,
-            pointBackgroundColor: '#10B981',
-            pointBorderColor: '#ffffff',
-            pointBorderWidth: 2,
-            borderDash: [8, 4]
           }
         ]
       },
@@ -463,20 +435,6 @@ export default function KeyMetricsTrendsChart({ selectedLocationId }: KeyMetrics
               </Select>
             </div>
 
-            {/* Time Period - Fixed to 1 Year as per requirements */}
-            <div className="flex items-center space-x-2">
-              <Calendar className="h-4 w-4 text-slate-500" />
-              <div className="bg-slate-100 rounded-lg p-1">
-                <Button
-                  variant="default"
-                  size="sm"
-                  className="px-3 py-1 text-xs font-medium bg-white shadow-sm text-slate-900"
-                  disabled
-                >
-                  1 YEAR
-                </Button>
-              </div>
-            </div>
           </div>
         </div>
 
@@ -489,11 +447,7 @@ export default function KeyMetricsTrendsChart({ selectedLocationId }: KeyMetrics
         <div className="flex flex-wrap items-center justify-center mt-4 space-x-6 text-sm text-slate-600">
           <div className="flex items-center space-x-2">
             <div className="w-3 h-3 bg-blue-500 rounded-full"></div>
-            <span>Actual Performance</span>
-          </div>
-          <div className="flex items-center space-x-2">
-            <div className="w-3 h-1 bg-green-500 rounded" style={{ borderTop: '2px dashed #10B981' }}></div>
-            <span>Projected Trends</span>
+            <span>Historical Performance</span>
           </div>
         </div>
       </CardContent>
