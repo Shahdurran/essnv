@@ -70,7 +70,7 @@ const chartData = {
       tension: 0.3,
     },
     {
-      label: "Net Profit",
+      label: "EBITDA",
       data: [243800, 253000, 263000, 253500, 274000, 281800],
       borderColor: "rgb(59, 130, 246)",
       backgroundColor: "rgba(59, 130, 246, 0.1)",
@@ -246,13 +246,13 @@ export default function ProfitLossWidget({ selectedLocationId, selectedPeriod }:
             <div className="border-t pt-4">
               <div className="space-y-3">
                 <div className="flex justify-between items-center" data-testid="pl-net-profit">
-                  <span className="font-semibold text-gray-900">Net Profit</span>
+                  <span className="font-semibold text-gray-900">EBITDA</span>
                   <span className={`font-bold text-lg ${netProfit >= 0 ? 'text-blue-600' : 'text-red-600'}`}>
                     {formatCurrency(netProfit)}
                   </span>
                 </div>
                 <div className="flex justify-between items-center" data-testid="pl-profit-margin">
-                  <span className="font-semibold text-gray-900">Net Profit Margin</span>
+                  <span className="font-semibold text-gray-900">EBITDA Margin</span>
                   <div className="flex items-center gap-2">
                     <span className={`font-bold ${netProfitMargin >= 0 ? 'text-blue-600' : 'text-red-600'}`}>
                       {formatPercentage(netProfitMargin)}
@@ -285,7 +285,7 @@ export default function ProfitLossWidget({ selectedLocationId, selectedPeriod }:
                 <p className="font-semibold text-red-600">{formatCurrency(totalExpenses)}</p>
               </div>
               <div>
-                <p className="text-xs text-gray-500">Avg Profit</p>
+                <p className="text-xs text-gray-500">Avg EBITDA</p>
                 <p className="font-semibold text-blue-600">{formatCurrency(netProfit)}</p>
               </div>
             </div>
