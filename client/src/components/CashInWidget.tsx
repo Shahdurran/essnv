@@ -1,59 +1,39 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { TrendingDown, TrendingUp, Minus } from "lucide-react";
+import { TrendingDown, TrendingUp, Minus, Loader2 } from "lucide-react";
 import { useState } from "react";
+import { useQuery } from "@tanstack/react-query";
 
 interface CashInWidgetProps {
   selectedLocationId: string;
   selectedPeriod: string;
 }
 
-// Cash inflow categories specific to ophthalmology practice
-const cashInCategories = [
-  {
-    id: "patient-payments",
-    name: "Patient Payments",
-    amount: 95000,
-    change: 8.3,
-    trend: "up"
-  },
-  {
-    id: "insurance-reimbursements",
-    name: "Insurance Reimbursements",
-    amount: 185000,
-    change: 4.7,
-    trend: "up"
-  },
-  {
-    id: "procedure-payments",
-    name: "Procedure Payments",
-    amount: 145000,
-    change: 12.1,
-    trend: "up"
-  },
-  {
-    id: "optical-sales",
-    name: "Optical & Contact Lens Sales",
-    amount: 28000,
-    change: -2.4,
-    trend: "down"
-  },
-  {
-    id: "cash-procedures",
-    name: "Cash-Pay Procedures",
-    amount: 55000,
-    change: 15.6,
-    trend: "up"
-  },
-  {
-    id: "refunds-adjustments",
-    name: "Refunds & Adjustments",
-    amount: -8200,
-    change: -5.1,
-    trend: "down"
-  }
-];
+// Define the cash flow API response interface
+interface CashFlowItem {
+  name: string;
+  amount: number;
+  change: number;
+  trend: string;
+}
+
+interface CashFlowApiResponse {
+  operating: CashFlowItem[];
+  investing: CashFlowItem[];
+  financing: CashFlowItem[];
+  operatingCashFlow: number;
+  investingCashFlow: number;
+  financingCashFlow: number;
+  netCashFlow: number;
+  period: string;
+  totals: {
+    operating: number;
+    investing: number;
+    financing: number;
+    netCashFlow: number;
+  };
+}
 
 const timePeriods = [
   { id: "1M", label: "1 Month", active: false },
@@ -64,20 +44,28 @@ const timePeriods = [
 ];
 
 export default function CashInWidget({ selectedLocationId, selectedPeriod }: CashInWidgetProps) {
+  // Fetch real cash flow data from API
+  const { data: cashFlowData, isLoading, isError } = useQuery<CashFlowApiResponse>({
+    queryKey: ['/api/financial/cashflow', selectedLocationId, selectedPeriod],
+    queryFn: () => 
+      fetch(`/api/financial/cashflow/${selectedLocationId}/${selectedPeriod}`).then(res => {
+        if (!res.ok) throw new Error('Failed to fetch cash flow data');
+        return res.json();
+      })
+  });
 
-  // Calculate total cash in (excluding negative adjustments for net calculation)
-  const totalCashIn = cashInCategories
-    .filter(category => category.amount > 0)
-    .reduce((sum, category) => sum + category.amount, 0);
+  // Filter operating activities for positive cash flows (Cash In)
+  const cashInCategories = cashFlowData?.operating.filter(item => item.amount > 0) || [];
   
-  // Calculate net cash in (including negative adjustments)
-  const netCashIn = cashInCategories.reduce((sum, category) => sum + category.amount, 0);
+  // Calculate total cash in
+  const totalCashIn = cashInCategories.reduce((sum, category) => sum + category.amount, 0);
   
-  // Calculate weighted average change for positive cash flows
-  const positiveCashFlows = cashInCategories.filter(category => category.amount > 0);
-  const weightedChange = positiveCashFlows.reduce((sum, category) => {
-    return sum + (category.change * category.amount);
-  }, 0) / totalCashIn;
+  // Calculate weighted average change for cash inflows
+  const weightedChange = totalCashIn > 0 
+    ? cashInCategories.reduce((sum, category) => {
+        return sum + (category.change * category.amount);
+      }, 0) / totalCashIn
+    : 0;
 
   const getTrendIcon = (trend: string, change: number) => {
     if (trend === "up") return <TrendingUp className="h-3 w-3" />;
@@ -101,6 +89,35 @@ export default function CashInWidget({ selectedLocationId, selectedPeriod }: Cas
     }).format(Math.abs(amount));
   };
 
+  // Show loading state
+  if (isLoading) {
+    return (
+      <Card className="bg-white shadow-sm border border-gray-200" data-testid="cash-in-widget">
+        <CardHeader className="pb-4">
+          <CardTitle className="text-xl font-bold text-gray-900">Cash In</CardTitle>
+        </CardHeader>
+        <CardContent className="flex items-center justify-center py-8">
+          <Loader2 className="h-6 w-6 animate-spin" />
+          <span className="ml-2 text-gray-600">Loading cash flow data...</span>
+        </CardContent>
+      </Card>
+    );
+  }
+
+  // Show error state
+  if (isError || !cashFlowData) {
+    return (
+      <Card className="bg-white shadow-sm border border-gray-200" data-testid="cash-in-widget">
+        <CardHeader className="pb-4">
+          <CardTitle className="text-xl font-bold text-gray-900">Cash In</CardTitle>
+        </CardHeader>
+        <CardContent className="flex items-center justify-center py-8">
+          <span className="text-gray-600">Unable to load cash flow data</span>
+        </CardContent>
+      </Card>
+    );
+  }
+
   return (
     <Card className="bg-white shadow-sm border border-gray-200" data-testid="cash-in-widget">
       <CardHeader className="pb-4">
@@ -108,7 +125,7 @@ export default function CashInWidget({ selectedLocationId, selectedPeriod }: Cas
           Cash In
           {/* Total Cash In with Overall Trend */}
           <div className="flex items-center gap-2">
-            <span className="text-2xl font-bold text-green-600">{formatCurrency(netCashIn)}</span>
+            <span className="text-2xl font-bold text-green-600">{formatCurrency(totalCashIn)}</span>
             <Badge 
               variant="secondary" 
               className={`${getTrendColor(weightedChange > 0 ? "up" : weightedChange < 0 ? "down" : "neutral")} border-0`}
@@ -128,16 +145,16 @@ export default function CashInWidget({ selectedLocationId, selectedPeriod }: Cas
           className="space-y-3 max-h-80 overflow-y-auto scrollbar-thin scrollbar-thumb-green-200 scrollbar-track-gray-100"
           data-testid="cash-in-categories-list"
         >
-          {cashInCategories.map((category) => (
+          {cashInCategories.map((category, index) => (
             <div
-              key={category.id}
+              key={`cash-in-${index}`}
               className="flex items-center justify-between p-3 rounded-lg border border-gray-100 hover:border-green-200 hover:bg-green-50/30 transition-all duration-200"
-              data-testid={`cash-in-category-${category.id}`}
+              data-testid={`cash-in-category-${category.name.toLowerCase().replace(/\s+/g, '-')}`}
             >
               <div className="flex-1">
                 <h4 className="font-medium text-gray-900 text-sm">{category.name}</h4>
-                <p className={`font-semibold text-lg ${category.amount >= 0 ? 'text-green-600' : 'text-red-600'}`}>
-                  {category.amount >= 0 ? '' : '-'}{formatCurrency(category.amount)}
+                <p className="font-semibold text-lg text-green-600">
+                  {formatCurrency(category.amount)}
                 </p>
               </div>
               
@@ -145,7 +162,7 @@ export default function CashInWidget({ selectedLocationId, selectedPeriod }: Cas
                 <Badge 
                   variant="secondary"
                   className={`${getTrendColor(category.trend)} border-0 text-xs`}
-                  data-testid={`cash-in-trend-${category.id}`}
+                  data-testid={`cash-in-trend-${category.name.toLowerCase().replace(/\s+/g, '-')}`}
                 >
                   {getTrendIcon(category.trend, category.change)}
                   {Math.abs(category.change).toFixed(1)}%
@@ -158,7 +175,7 @@ export default function CashInWidget({ selectedLocationId, selectedPeriod }: Cas
         {/* Period Label */}
         <div className="mt-4 pt-4 border-t border-gray-100">
           <p className="text-xs text-gray-500 text-center" data-testid="cash-in-period-label">
-            Showing cash inflows for {timePeriods.find(p => p.id === selectedPeriod)?.label.toLowerCase()}
+            Showing cash inflows for {selectedPeriod === '1M' ? '1 month' : selectedPeriod === '3M' ? '3 months' : selectedPeriod === '6M' ? '6 months' : '1 year'}
           </p>
         </div>
       </CardContent>

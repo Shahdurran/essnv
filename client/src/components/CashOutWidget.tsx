@@ -1,73 +1,39 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { TrendingDown, TrendingUp, Minus } from "lucide-react";
+import { TrendingDown, TrendingUp, Minus, Loader2 } from "lucide-react";
 import { useState } from "react";
+import { useQuery } from "@tanstack/react-query";
 
 interface CashOutWidgetProps {
   selectedLocationId: string;
   selectedPeriod: string;
 }
 
-// Cash outflow categories specific to ophthalmology practice
-const cashOutCategories = [
-  {
-    id: "staff-salaries",
-    name: "Staff Salaries & Payroll",
-    amount: 125000,
-    change: 6.2,
-    trend: "up"
-  },
-  {
-    id: "equipment-purchases",
-    name: "Medical Equipment Purchases",
-    amount: 45000,
-    change: -12.8,
-    trend: "down"
-  },
-  {
-    id: "rent-utilities",
-    name: "Rent & Utilities",
-    amount: 42000,
-    change: 3.1,
-    trend: "up"
-  },
-  {
-    id: "supplier-payments",
-    name: "Supplier Payments",
-    amount: 38700,
-    change: -2.4,
-    trend: "down"
-  },
-  {
-    id: "insurance-premiums",
-    name: "Insurance Premiums",
-    amount: 22100,
-    change: 8.9,
-    trend: "up"
-  },
-  {
-    id: "loan-payments",
-    name: "Loan & Interest Payments",
-    amount: 15800,
-    change: 0.0,
-    trend: "neutral"
-  },
-  {
-    id: "marketing-advertising",
-    name: "Marketing & Advertising",
-    amount: 12500,
-    change: 15.2,
-    trend: "up"
-  },
-  {
-    id: "professional-services",
-    name: "Professional Services",
-    amount: 18900,
-    change: -1.6,
-    trend: "down"
-  }
-];
+// Define the cash flow API response interface
+interface CashFlowItem {
+  name: string;
+  amount: number;
+  change: number;
+  trend: string;
+}
+
+interface CashFlowApiResponse {
+  operating: CashFlowItem[];
+  investing: CashFlowItem[];
+  financing: CashFlowItem[];
+  operatingCashFlow: number;
+  investingCashFlow: number;
+  financingCashFlow: number;
+  netCashFlow: number;
+  period: string;
+  totals: {
+    operating: number;
+    investing: number;
+    financing: number;
+    netCashFlow: number;
+  };
+}
 
 const timePeriods = [
   { id: "1M", label: "1 Month", active: false },
@@ -78,14 +44,33 @@ const timePeriods = [
 ];
 
 export default function CashOutWidget({ selectedLocationId, selectedPeriod }: CashOutWidgetProps) {
+  // Fetch real cash flow data from API
+  const { data: cashFlowData, isLoading, isError } = useQuery<CashFlowApiResponse>({
+    queryKey: ['/api/financial/cashflow', selectedLocationId, selectedPeriod],
+    queryFn: () => 
+      fetch(`/api/financial/cashflow/${selectedLocationId}/${selectedPeriod}`).then(res => {
+        if (!res.ok) throw new Error('Failed to fetch cash flow data');
+        return res.json();
+      })
+  });
 
+  // Filter operating activities for negative cash flows (Cash Out) and convert to positive amounts for display
+  const cashOutCategories = cashFlowData?.operating
+    .filter(item => item.amount < 0)
+    .map(item => ({
+      ...item,
+      amount: Math.abs(item.amount) // Convert to positive for display
+    })) || [];
+  
   // Calculate total cash out
   const totalCashOut = cashOutCategories.reduce((sum, category) => sum + category.amount, 0);
   
   // Calculate weighted average change
-  const weightedChange = cashOutCategories.reduce((sum, category) => {
-    return sum + (category.change * category.amount);
-  }, 0) / totalCashOut;
+  const weightedChange = totalCashOut > 0 
+    ? cashOutCategories.reduce((sum, category) => {
+        return sum + (category.change * category.amount);
+      }, 0) / totalCashOut
+    : 0;
 
   const getTrendIcon = (trend: string, change: number) => {
     if (trend === "up") return <TrendingUp className="h-3 w-3" />;
@@ -108,6 +93,35 @@ export default function CashOutWidget({ selectedLocationId, selectedPeriod }: Ca
       maximumFractionDigits: 0,
     }).format(amount);
   };
+
+  // Show loading state
+  if (isLoading) {
+    return (
+      <Card className="bg-white shadow-sm border border-gray-200" data-testid="cash-out-widget">
+        <CardHeader className="pb-4">
+          <CardTitle className="text-xl font-bold text-gray-900">Cash Out</CardTitle>
+        </CardHeader>
+        <CardContent className="flex items-center justify-center py-8">
+          <Loader2 className="h-6 w-6 animate-spin" />
+          <span className="ml-2 text-gray-600">Loading cash flow data...</span>
+        </CardContent>
+      </Card>
+    );
+  }
+
+  // Show error state
+  if (isError || !cashFlowData) {
+    return (
+      <Card className="bg-white shadow-sm border border-gray-200" data-testid="cash-out-widget">
+        <CardHeader className="pb-4">
+          <CardTitle className="text-xl font-bold text-gray-900">Cash Out</CardTitle>
+        </CardHeader>
+        <CardContent className="flex items-center justify-center py-8">
+          <span className="text-gray-600">Unable to load cash flow data</span>
+        </CardContent>
+      </Card>
+    );
+  }
 
   return (
     <Card className="bg-white shadow-sm border border-gray-200" data-testid="cash-out-widget">
@@ -136,11 +150,11 @@ export default function CashOutWidget({ selectedLocationId, selectedPeriod }: Ca
           className="space-y-3 max-h-80 overflow-y-auto scrollbar-thin scrollbar-thumb-red-200 scrollbar-track-gray-100"
           data-testid="cash-out-categories-list"
         >
-          {cashOutCategories.map((category) => (
+          {cashOutCategories.map((category, index) => (
             <div
-              key={category.id}
+              key={`cash-out-${index}`}
               className="flex items-center justify-between p-3 rounded-lg border border-gray-100 hover:border-red-200 hover:bg-red-50/30 transition-all duration-200"
-              data-testid={`cash-out-category-${category.id}`}
+              data-testid={`cash-out-category-${category.name.toLowerCase().replace(/\s+/g, '-')}`}
             >
               <div className="flex-1">
                 <h4 className="font-medium text-gray-900 text-sm">{category.name}</h4>
@@ -151,7 +165,7 @@ export default function CashOutWidget({ selectedLocationId, selectedPeriod }: Ca
                 <Badge 
                   variant="secondary"
                   className={`${getTrendColor(category.trend)} border-0 text-xs`}
-                  data-testid={`cash-out-trend-${category.id}`}
+                  data-testid={`cash-out-trend-${category.name.toLowerCase().replace(/\s+/g, '-')}`}
                 >
                   {getTrendIcon(category.trend, category.change)}
                   {Math.abs(category.change).toFixed(1)}%
@@ -164,7 +178,7 @@ export default function CashOutWidget({ selectedLocationId, selectedPeriod }: Ca
         {/* Period Label */}
         <div className="mt-4 pt-4 border-t border-gray-100">
           <p className="text-xs text-gray-500 text-center" data-testid="cash-out-period-label">
-            Showing cash outflows for {timePeriods.find(p => p.id === selectedPeriod)?.label.toLowerCase()}
+            Showing cash outflows for {selectedPeriod === '1M' ? '1 month' : selectedPeriod === '3M' ? '3 months' : selectedPeriod === '6M' ? '6 months' : '1 year'}
           </p>
         </div>
       </CardContent>
