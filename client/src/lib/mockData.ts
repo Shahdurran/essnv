@@ -597,7 +597,7 @@ export const popularQuestions = [
   },
   {
     id: "refractive-vs-medical",
-    question: "Refractive vs Medical revenue",
+    question: "Bad debt analysis",
     icon: "balance-scale",
     category: "revenue",
     usage: 122
