@@ -109,7 +109,7 @@ export default function TopRevenueProcedures({
     totalRevenue: number;
     period: string;
   }>({
-    queryKey: ['/api/financial/revenue', { locationId: selectedLocationId, period: selectedPeriod }],
+    queryKey: [`/api/financial/revenue/${selectedLocationId}/${selectedPeriod}`],
     staleTime: 2 * 60 * 1000, // Cache for 2 minutes
   });
 
