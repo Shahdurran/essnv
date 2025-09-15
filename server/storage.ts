@@ -1068,10 +1068,13 @@ export class MemStorage implements IStorage {
     totalRevenue: number;
     period: string;
   }> {
+    // Load CSV data first
+    await this.loadPlCsvData();
+    
     const finalPeriod = period || "6M";
     const monthsToInclude = this.getMonthsForPeriod(period);
     
-    // If no P&L data imported yet, return realistic fallback mock data
+    // If no P&L data loaded, return realistic fallback mock data
     if (this.plMonthlyData.length === 0) {
       const isAllLocations = !locationId;
       const locationWeight = isAllLocations ? 1.0 : this.masterData.locationWeights[locationId as keyof typeof this.masterData.locationWeights] || 0.5;
@@ -1147,10 +1150,13 @@ export class MemStorage implements IStorage {
     totalExpenses: number;
     period: string;
   }> {
+    // Load CSV data first
+    await this.loadPlCsvData();
+    
     const finalPeriod = period || "6M";
     const monthsToInclude = this.getMonthsForPeriod(period);
     
-    // If no P&L data imported yet, return realistic fallback mock data
+    // If no P&L data loaded, return realistic fallback mock data
     if (this.plMonthlyData.length === 0) {
       const isAllLocations = !locationId;
       const locationWeight = isAllLocations ? 1.0 : this.masterData.locationWeights[locationId as keyof typeof this.masterData.locationWeights] || 0.5;
@@ -1230,6 +1236,9 @@ export class MemStorage implements IStorage {
     totalExpenses: number;
     netProfit: number;
   }> {
+    // Load CSV data first
+    await this.loadPlCsvData();
+    
     const revenueData = await this.getFinancialRevenueData(locationId, period);
     const expensesData = await this.getFinancialExpensesData(locationId, period);
     const finalPeriod = period || "6M";
@@ -1459,6 +1468,107 @@ export class MemStorage implements IStorage {
     monthYear: string;
     amount: number;
   }> = [];
+
+  // Load P&L data from CSV at startup
+  private async loadPlCsvData() {
+    if (this.plMonthlyData.length > 0) return; // Already loaded
+    
+    try {
+      const fs = await import('fs');
+      const path = await import('path');
+      const csvPath = path.join(process.cwd(), 'attached_assets', 'PL_1757878346682.csv');
+      
+      if (!fs.existsSync(csvPath)) {
+        console.log('P&L CSV file not found, using fallback data');
+        return;
+      }
+
+      const csvContent = fs.readFileSync(csvPath, 'utf-8');
+      const lines = csvContent.split('\n').filter(line => line.trim());
+
+      // Category mapping
+      const CATEGORY_MAPPING = {
+        'Office Visits': 'revenue',
+        'Diagnostics & Minor Procedures': 'revenue',
+        'Cataract Surgeries': 'revenue', 
+        'Intravitreal Injections': 'revenue',
+        'Refractive Cash': 'revenue',
+        'Corneal Procedures': 'revenue',
+        'Oculoplastics': 'revenue',
+        'Optical / Contact Lens Sales': 'revenue',
+        'Drug Acquisition (injections)': 'direct_costs',
+        'Surgical Supplies & IOLs': 'direct_costs',
+        'Optical Cost of Goods': 'direct_costs',
+        'Bad Debt Expense ': 'operating_expenses',
+        'Staff Wages & Benefits': 'operating_expenses',
+        'Billing & Coding Vendors': 'operating_expenses',
+        'Rent & Utilities': 'operating_expenses',
+        'Technology': 'operating_expenses',
+        'Insurance': 'operating_expenses',
+        'Equipment Service & Leases': 'operating_expenses',
+        'Marketing & Outreach': 'operating_expenses',
+        'Office & Miscellaneous': 'operating_expenses',
+        'Total Revenue': 'calculated_totals',
+        'Total Direct Costs': 'calculated_totals',
+        'Gross Profit': 'calculated_totals',
+        'Total Operating Expenses': 'calculated_totals',
+        'EBITDA': 'calculated_totals'
+      } as const;
+
+      // Month headers
+      const MONTH_HEADERS = [
+        'Sep-2024', 'Oct-2024', 'Nov-2024', 'Dec-2024',
+        'Jan-2025', 'Feb-2025', 'Mar-2025', 'Apr-2025',
+        'May-2025', 'Jun-2025', 'Jul-2025', 'Aug-2025'
+      ];
+
+      // Process each line (skip header)
+      for (let i = 1; i < lines.length; i++) {
+        const line = lines[i];
+        if (!line.trim()) continue;
+
+        const values = line.split(',');
+        const lineItem = values[0].trim();
+
+        // Skip unknown line items
+        if (!(lineItem in CATEGORY_MAPPING)) continue;
+
+        const categoryType = CATEGORY_MAPPING[lineItem as keyof typeof CATEGORY_MAPPING];
+
+        // Process each month
+        for (let monthIndex = 0; monthIndex < MONTH_HEADERS.length; monthIndex++) {
+          const monthYear = MONTH_HEADERS[monthIndex];
+          const amountStr = values[monthIndex + 1];
+
+          if (!amountStr || amountStr.trim() === '') continue;
+
+          const amount = parseFloat(amountStr.replace(/,/g, ''));
+          if (isNaN(amount)) continue;
+
+          // Convert month format
+          const [month, year] = monthYear.split('-');
+          const monthMap: Record<string, string> = {
+            'Sep': '09', 'Oct': '10', 'Nov': '11', 'Dec': '12',
+            'Jan': '01', 'Feb': '02', 'Mar': '03', 'Apr': '04',
+            'May': '05', 'Jun': '06', 'Jul': '07', 'Aug': '08'
+          };
+          const formattedMonth = `${year}-${monthMap[month]}`;
+
+          this.plMonthlyData.push({
+            locationId: 'fairfax',
+            lineItem,
+            categoryType,
+            monthYear: formattedMonth,
+            amount
+          });
+        }
+      }
+
+      console.log(`Loaded ${this.plMonthlyData.length} P&L records from CSV`);
+    } catch (error) {
+      console.error('Failed to load P&L CSV data:', error);
+    }
+  }
 
   /*
    * CASH FLOW DATA STORAGE
