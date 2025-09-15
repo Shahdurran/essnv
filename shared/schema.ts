@@ -582,32 +582,11 @@ export interface CashOutCategory {
 }
 
 export interface CashFlowData {
-  operating: Array<{
-    name: string;
-    amount: number;
-    change: number;
-    trend: "up" | "down" | "neutral";
-  }>;
-  investing: Array<{
-    name: string;
-    amount: number;
-    change: number;
-    trend: "up" | "down" | "neutral";
-  }>;
-  financing: Array<{
-    name: string;
-    amount: number;
-    change: number;
-    trend: "up" | "down" | "neutral";
-  }>;
+  operating: Record<string, number>;
+  investing: Record<string, number>;
+  financing: Record<string, number>;
   period: string;
   locationId?: string;
-  totals?: {
-    operating: number;
-    investing: number;
-    financing: number;
-    netCashFlow: number;
-  };
 }
 
 /*
