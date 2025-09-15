@@ -336,8 +336,8 @@ export default function TopRevenueProcedures({
   }
 
   return (
-    <Card className="bg-white rounded-xl shadow-sm border border-gray-200 h-full">
-      <CardContent className="p-6 flex flex-col h-full">
+    <Card className="bg-white rounded-xl shadow-sm border border-gray-200">
+      <CardContent className="p-6">
         
         {/* Header */}
         <div className="mb-4">
@@ -370,8 +370,8 @@ export default function TopRevenueProcedures({
         </div>
 
 
-        {/* Procedures List - Scrollable Container (taller to fill widget space) */}
-        <div className="flex-1 overflow-y-auto scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-gray-100 min-h-[500px]">
+        {/* Procedures List - Scrollable Container */}
+        <div className="max-h-[400px] overflow-y-auto scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-gray-100">
           <div className="space-y-4 pr-2">
             {procedures.length === 0 ? (
               <div className="text-center py-8">
