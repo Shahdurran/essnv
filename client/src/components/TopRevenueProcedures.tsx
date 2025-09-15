@@ -41,7 +41,7 @@ import { useQuery } from "@tanstack/react-query";
 // Shadcn UI components for consistent design
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Button } from "@/components/ui/button";
 // Lucide React icons representing medical procedures and analytics
 import { 
   DollarSign,   // Revenue indicators
@@ -346,23 +346,28 @@ export default function TopRevenueProcedures({
               <DollarSign className="h-5 w-5 mr-2 text-primary flex-shrink-0" />
               <span className="truncate">Top Revenue Procedures</span>
             </h3>
-            <p className="text-sm text-gray-600 mt-1">Eye care services by revenue from P&L data</p>
           </div>
           
-          {/* Date Filter */}
-          <div className="flex items-center space-x-2">
-            <Calendar className="h-4 w-4 text-slate-500" />
-            <Select value={selectedPeriod} onValueChange={setSelectedPeriod}>
-              <SelectTrigger className="w-[120px] text-sm">
-                <SelectValue placeholder="Period" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="1M">1 Month</SelectItem>
-                <SelectItem value="3M">3 Months</SelectItem>
-                <SelectItem value="6M">6 Months</SelectItem>
-                <SelectItem value="1Y">1 Year</SelectItem>
-              </SelectContent>
-            </Select>
+          {/* Time Range Filter - Button Style */}
+          <div className="flex flex-col space-y-2 sm:flex-row sm:items-center sm:space-y-0 sm:gap-2">
+            <span className="text-sm font-medium text-gray-700 flex-shrink-0">Time Range:</span>
+            <div className="grid grid-cols-2 gap-2 sm:flex sm:gap-2">
+              {['1M', '3M', '6M', '1Y'].map((period) => (
+                <Button
+                  key={period}
+                  variant="ghost"
+                  size="sm"
+                  className={`px-2 py-1 text-xs sm:px-3 sm:text-sm rounded transition-colors ${
+                    selectedPeriod === period
+                      ? 'bg-blue-600 text-white'
+                      : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                  }`}
+                  onClick={() => setSelectedPeriod(period)}
+                >
+                  {period === '1M' ? '1 Month' : period === '3M' ? '3 Months' : period === '6M' ? '6 Months' : '1 Year'}
+                </Button>
+              ))}
+            </div>
           </div>
         </div>
 
