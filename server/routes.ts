@@ -721,6 +721,66 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       const result = await importCashFlowDataFromCsv(csvPath, locationId);
       
+      // Transfer imported data to storage layer for time-based filtering
+      const { getCashFlowData } = await import('./csvImport');
+      const importedData = getCashFlowData();
+      
+      // Helper function to normalize month format to YYYY-MM
+      const normalizeMonthFormat = (monthYear: string | undefined): string => {
+        // Handle null/undefined values
+        if (!monthYear || typeof monthYear !== 'string') {
+          return ''; // Return empty string for invalid inputs
+        }
+        
+        // Handle formats like "September 2024" or "Sep-2024"
+        const monthMap: Record<string, string> = {
+          'january': '01', 'jan': '01',
+          'february': '02', 'feb': '02', 
+          'march': '03', 'mar': '03',
+          'april': '04', 'apr': '04',
+          'may': '05',
+          'june': '06', 'jun': '06',
+          'july': '07', 'jul': '07',
+          'august': '08', 'aug': '08',
+          'september': '09', 'sep': '09',
+          'october': '10', 'oct': '10',
+          'november': '11', 'nov': '11',
+          'december': '12', 'dec': '12'
+        };
+        
+        // Handle "September 2024" format
+        if (monthYear.includes(' ')) {
+          const [month, year] = monthYear.split(' ');
+          const monthNum = monthMap[month.toLowerCase()];
+          return monthNum ? `${year}-${monthNum}` : monthYear;
+        }
+        
+        // Handle "Sep-2024" format
+        if (monthYear.includes('-')) {
+          const [month, year] = monthYear.split('-');
+          const monthNum = monthMap[month.toLowerCase()];
+          return monthNum ? `${year}-${monthNum}` : monthYear;
+        }
+        
+        return monthYear; // Return as-is if format is unrecognized
+      };
+      
+      // Convert to storage format with normalized month format
+      const storageData = importedData
+        .filter(item => item && (item.month || item.monthYear)) // Filter out items with invalid month data
+        .map(item => ({
+          locationId: item.locationId,
+          lineItem: item.lineItem,
+          category: item.category,
+          monthYear: normalizeMonthFormat(item.month || item.monthYear || ''), // Use correct field name
+          amount: item.amount
+        }))
+        .filter(item => item.monthYear !== ''); // Filter out items that couldn't be normalized
+      
+      console.log(`Importing ${storageData.length} cash flow records to storage with normalized months`);
+      
+      await storage.importCashFlowDataToStorage(storageData);
+      
       res.json(result);
       
     } catch (error) {
@@ -730,61 +790,20 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   /**
-   * GET /api/financial/cashflow/:locationId/:period - Get cash flow data
+   * GET /api/financial/cashflow/:locationId/:period - Get cash flow data with proper time filtering
    */
   app.get("/api/financial/cashflow/:locationId/:period", async (req, res) => {
     try {
       const { locationId, period } = req.params;
       
-      // Get raw cash flow data
-      const rawData = getCashFlowData(locationId, period);
+      const validation = validateFinancialParams(locationId, period);
+      if (!validation.valid) {
+        return res.status(400).json({ message: validation.error });
+      }
       
-      // Process and structure the data for the frontend
-      const operatingItems = rawData.filter(item => item.category === 'operating');
-      const investingItems = rawData.filter(item => item.category === 'investing');
-      const financingItems = rawData.filter(item => item.category === 'financing');
-      
-      // Aggregate by line item
-      const aggregateByLineItem = (items: any[]) => {
-        const grouped = items.reduce((acc: Record<string, number>, item: any) => {
-          if (!acc[item.lineItem]) {
-            acc[item.lineItem] = 0;
-          }
-          acc[item.lineItem] += Number(item.amount);
-          return acc;
-        }, {} as Record<string, number>);
-        
-        return Object.entries(grouped).map(([name, amount]: [string, number]) => ({
-          name,
-          amount,
-          change: Math.random() * 10 - 5, // Mock change percentage
-          trend: amount > 0 ? 'up' : 'down'
-        }));
-      };
-      
-      const operating = aggregateByLineItem(operatingItems);
-      const investing = aggregateByLineItem(investingItems);
-      const financing = aggregateByLineItem(financingItems);
-      
-      // Calculate totals
-      const totalOperating = operating.reduce((sum: number, item: any) => sum + Number(item.amount), 0);
-      const totalInvesting = investing.reduce((sum: number, item: any) => sum + Number(item.amount), 0);
-      const totalFinancing = financing.reduce((sum: number, item: any) => sum + Number(item.amount), 0);
-      const netCashFlow = totalOperating + totalInvesting + totalFinancing;
-      
-      res.json({
-        operating,
-        investing,
-        financing,
-        totals: {
-          operating: totalOperating,
-          investing: totalInvesting,
-          financing: totalFinancing,
-          netCashFlow
-        },
-        period: period
-      });
-      
+      const finalLocationId = locationId === 'all' ? undefined : locationId.toLowerCase();
+      const cashFlowData = await storage.getCashFlowData(finalLocationId, period.toUpperCase());
+      res.json(cashFlowData);
     } catch (error) {
       console.error("Error fetching cash flow data:", error);
       res.status(500).json({ message: "Failed to fetch cash flow data" });

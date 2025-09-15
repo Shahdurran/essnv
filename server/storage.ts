@@ -1113,58 +1113,90 @@ export class MemStorage implements IStorage {
     financingCashFlow: number;
     netCashFlow: number;
   }> {
-    const isAllLocations = !locationId;
-    const locationWeight = isAllLocations ? 1.0 : this.masterData.locationWeights[locationId as keyof typeof this.masterData.locationWeights] || 0.5;
-    const periodMultiplier = this.getPeriodMultiplier(period);
     const finalPeriod = period || "6M";
+    const monthsToInclude = this.getMonthsForPeriod(period);
     
-    const operating = {
-      patientCollections: 285000,
-      insuranceReimbursements: 175000,
-      supplierPayments: -89500,
-      staffPayroll: -125000,
-      rentUtilities: -42000,
-      otherOperating: -15200
-    };
-
-    const investing = {
-      equipmentPurchases: -45000,
-      technologyInvestments: -18900,
-      facilityImprovements: -12000,
-      assetSales: 8500
-    };
-
-    const financing = {
-      loanPayments: -15800,
-      ownerDraws: -25000,
-      lineOfCredit: 12000,
-      equipmentFinancing: -8200
-    };
-
-    const scaledOperating = Object.fromEntries(
-      Object.entries(operating).map(([key, value]) => [key, Math.round(value * locationWeight * periodMultiplier)])
+    // If no cash flow data imported yet, return empty structure
+    if (this.cashFlowMonthlyData.length === 0) {
+      return {
+        operating: [],
+        investing: [],
+        financing: [],
+        operatingCashFlow: 0,
+        investingCashFlow: 0,
+        financingCashFlow: 0,
+        netCashFlow: 0,
+        period: finalPeriod,
+        totals: {
+          operating: 0,
+          investing: 0,
+          financing: 0,
+          netCashFlow: 0
+        }
+      };
+    }
+    
+    // Filter cash flow data within the specified time period
+    let filteredData = this.cashFlowMonthlyData.filter(item => 
+      monthsToInclude.includes(item.monthYear)
     );
-    const scaledInvesting = Object.fromEntries(
-      Object.entries(investing).map(([key, value]) => [key, Math.round(value * locationWeight * periodMultiplier)])
-    );
-    const scaledFinancing = Object.fromEntries(
-      Object.entries(financing).map(([key, value]) => [key, Math.round(value * locationWeight * periodMultiplier)])
-    );
-
-    const operatingCashFlow = Object.values(scaledOperating).reduce((sum, val) => sum + val, 0);
-    const investingCashFlow = Object.values(scaledInvesting).reduce((sum, val) => sum + val, 0);
-    const financingCashFlow = Object.values(scaledFinancing).reduce((sum, val) => sum + val, 0);
+    
+    // Filter by location if specified
+    if (locationId && locationId !== 'all') {
+      filteredData = filteredData.filter(item => item.locationId === locationId);
+    }
+    
+    // Aggregate by category and line item across all months in the period
+    const operatingItems: Record<string, number> = {};
+    const investingItems: Record<string, number> = {};
+    const financingItems: Record<string, number> = {};
+    
+    filteredData.forEach(item => {
+      const targetObject = 
+        item.category === 'operating' ? operatingItems :
+        item.category === 'investing' ? investingItems : financingItems;
+      
+      if (!targetObject[item.lineItem]) {
+        targetObject[item.lineItem] = 0;
+      }
+      targetObject[item.lineItem] += item.amount;
+    });
+    
+    // Convert to required format with proper trend calculation
+    const convertToApiFormat = (items: Record<string, number>) => {
+      return Object.entries(items).map(([name, amount]) => ({
+        name,
+        amount: Math.round(amount),
+        change: Math.random() * 10 - 5, // Mock change percentage
+        trend: amount > 0 ? 'up' : 'down'
+      }));
+    };
+    
+    const operating = convertToApiFormat(operatingItems);
+    const investing = convertToApiFormat(investingItems);
+    const financing = convertToApiFormat(financingItems);
+    
+    // Calculate totals
+    const operatingCashFlow = operating.reduce((sum, item) => sum + item.amount, 0);
+    const investingCashFlow = investing.reduce((sum, item) => sum + item.amount, 0);
+    const financingCashFlow = financing.reduce((sum, item) => sum + item.amount, 0);
+    const netCashFlow = operatingCashFlow + investingCashFlow + financingCashFlow;
 
     return {
-      operating: scaledOperating,
-      investing: scaledInvesting,
-      financing: scaledFinancing,
+      operating,
+      investing,
+      financing,
       operatingCashFlow,
       investingCashFlow,
       financingCashFlow,
-      netCashFlow: operatingCashFlow + investingCashFlow + financingCashFlow,
+      netCashFlow,
       period: finalPeriod,
-      locationId
+      totals: {
+        operating: operatingCashFlow,
+        investing: investingCashFlow,
+        financing: financingCashFlow,
+        netCashFlow
+      }
     };
   }
 
@@ -1177,6 +1209,19 @@ export class MemStorage implements IStorage {
     locationId: string;
     lineItem: string;
     categoryType: string;
+    monthYear: string;
+    amount: number;
+  }> = [];
+
+  /*
+   * CASH FLOW DATA STORAGE
+   * ======================
+   * In-memory storage for cash flow monthly data imported from CSV
+   */
+  private cashFlowMonthlyData: Array<{
+    locationId: string;
+    lineItem: string;
+    category: string; // 'operating' | 'investing' | 'financing'
     monthYear: string;
     amount: number;
   }> = [];
@@ -1293,6 +1338,25 @@ export class MemStorage implements IStorage {
     }
     
     console.log(`Imported ${this.plMonthlyData.length} P&L records for location ${locationId}`);
+  }
+
+  // Import cash flow data from the csvImport module into storage
+  async importCashFlowDataToStorage(csvImportData: Array<{
+    locationId: string;
+    lineItem: string;
+    category: string;
+    monthYear: string;
+    amount: number;
+  }>): Promise<void> {
+    // Clear existing cash flow data
+    this.cashFlowMonthlyData = [];
+    
+    // Add all records from CSV import
+    csvImportData.forEach(record => {
+      this.cashFlowMonthlyData.push(record);
+    });
+    
+    console.log(`Imported ${this.cashFlowMonthlyData.length} cash flow records to storage`);
   }
 }
 
