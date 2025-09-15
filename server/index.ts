@@ -29,6 +29,8 @@ import express, { type Request, Response, NextFunction } from "express";
 import { registerRoutes } from "./routes";
 // Import Vite development server integration and static file serving
 import { setupVite, serveStatic, log } from "./vite";
+// Import storage for CSV data loading
+import { storage } from "./storage";
 
 // Create the main Express application instance
 const app = express();
@@ -231,32 +233,49 @@ app.use((req, res, next) => {
     // This callback runs when the server successfully starts
     log(`serving on port ${port}`);
     
-    // Auto-import CSV data on server startup (only in development)
-    if (app.get("env") === "development") {
-      // Wait a bit for server to be fully ready
-      setTimeout(async () => {
-        try {
-          log(`[startup] Auto-importing P&L CSV data...`);
-          const response = await fetch(`http://localhost:${port}/api/pl/import-csv`, {
-            method: 'POST'
-          });
-          const result = await response.json();
-          log(`[startup] Auto-imported ${result.recordsImported} P&L records`);
-        } catch (error) {
-          log(`[startup] Warning: Failed to auto-import P&L data: ${error}`);
+    // Auto-import CSV data on server startup - direct import for production safety
+    setTimeout(async () => {
+      try {
+        log(`[startup] Auto-importing P&L CSV data...`);
+        
+        // Import CSV data directly without HTTP calls
+        const path = await import('path');
+        const fs = await import('fs');
+        
+        // Get P&L CSV file
+        const plCsvPath = path.join(process.cwd(), 'attached_assets', 'PL_1757878346682.csv');
+        if (fs.existsSync(plCsvPath)) {
+          const csvContent = fs.readFileSync(plCsvPath, 'utf-8');
+          const locations = await storage.getAllPracticeLocations();
+          const locationId = locations[0]?.id;
+          
+          if (locationId) {
+            await storage.importPlDataFromCsv(csvContent, locationId);
+            const recordCount = (await storage.getPlMonthlyData(locationId)).length;
+            log(`[startup] Auto-imported ${recordCount} P&L records`);
+          }
+        } else {
+          log(`[startup] P&L CSV file not found, using fallback data`);
         }
-
-        try {
-          log(`[startup] Auto-importing Cash Flow CSV data...`);
-          const cfResponse = await fetch(`http://localhost:${port}/api/cashflow/import-csv`, {
-            method: 'POST'
-          });
-          const cfResult = await cfResponse.json();
-          log(`[startup] Auto-imported ${cfResult.recordsImported} Cash Flow records`);
-        } catch (error) {
-          log(`[startup] Warning: Failed to auto-import Cash Flow data: ${error}`);
+        
+        // Get Cash Flow CSV file
+        const cfCsvPath = path.join(process.cwd(), 'Cashflow-Eye-Specialists.csv');
+        if (fs.existsSync(cfCsvPath)) {
+          const locations = await storage.getAllPracticeLocations();
+          const locationId = locations[0]?.id;
+          
+          if (locationId) {
+            const { importCashFlowDataFromCsv } = await import('./csvImport');
+            const result = await importCashFlowDataFromCsv(cfCsvPath, locationId);
+            log(`[startup] Auto-imported ${result.recordsImported} Cash Flow records`);
+          }
+        } else {
+          log(`[startup] Cash Flow CSV file not found, using fallback data`);
         }
-      }, 1000); // Wait 1 second for server to be ready
-    }
+        
+      } catch (error) {
+        log(`[startup] Warning: Failed to auto-import CSV data: ${error}`);
+      }
+    }, 1000); // Wait 1 second for server to be ready
   });
 })();

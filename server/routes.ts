@@ -38,6 +38,8 @@ import OpenAI from "openai";
 import { insertAiQuerySchema } from "@shared/schema";
 // Cash flow CSV import functions
 import { importCashFlowDataFromCsv, getCashFlowData } from "./csvImport";
+// Logging utility
+import { log } from "./vite";
 
 /*
  * OPENAI CLIENT INITIALIZATION
@@ -675,7 +677,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       if (!fs.existsSync(csvPath)) {
         log(`[csv-import] CSV file not found at ${csvPath}, skipping import`);
-        return res.status(404).json({ message: "CSV file not found - this is normal in production" });
+        return res.status(404).json({ message: "CSV file not found" });
       }
       
       const csvContent = fs.readFileSync(csvPath, 'utf-8');
