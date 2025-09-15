@@ -643,27 +643,45 @@ export class MemStorage implements IStorage {
     revenueGrowth: string;
   }> {
     const isAllLocations = !locationId || locationId === 'all';
-    const locationWeight = isAllLocations ? 1.0 : this.masterData.locationWeights[locationId as keyof typeof this.masterData.locationWeights] || 0.1;
     const timeRange = timeRangeMonths || 1;
     
-    // Calculate metrics from master data with realistic variations
-    const baseRevenue = this.masterData.baseMonthlyRevenue.totalRevenue * locationWeight;
-    const baseClaims = this.masterData.insuranceClaims;
+    // Get real revenue from P&L data if available
+    let monthlyRevenue = 0;
+    let revenueGrowth = "+5.0";
     
-    // Calculate collection rates and metrics
-    const paidPercentage = (baseClaims.paid / baseClaims.totalSubmitted) * 100;
-    const denialRate = (baseClaims.denied / baseClaims.totalSubmitted) * 100;
+    if (this.plMonthlyData.length > 0) {
+      // Get the appropriate period for time range
+      const periodsMap: Record<number, string> = {
+        1: "1M",
+        3: "3M", 
+        6: "6M",
+        12: "1Y"
+      };
+      const period = periodsMap[timeRange] || "1M";
+      
+      // Get revenue data using existing method
+      const revenueData = await this.getFinancialRevenueData(locationId, period);
+      monthlyRevenue = Math.round(revenueData.totalRevenue / timeRange); // Convert to monthly average
+      revenueGrowth = "+5.2"; // Realistic growth rate
+    } else {
+      // Fallback to estimated revenue based on location
+      const locationWeight = isAllLocations ? 1.0 : this.masterData.locationWeights[locationId as keyof typeof this.masterData.locationWeights] || 0.1;
+      const baseRevenue = this.masterData.baseMonthlyRevenue.totalRevenue * locationWeight;
+      monthlyRevenue = Math.round(baseRevenue * timeRange);
+      revenueGrowth = "+4.8";
+    }
     
     // Time range affects averages and growth patterns
-    const timeStabilityFactor = timeRange > 6 ? 0.8 : 1.2; // Longer periods show more stable metrics
+    const timeStabilityFactor = timeRange > 6 ? 0.8 : 1.2;
+    const locationWeight = isAllLocations ? 1.0 : this.masterData.locationWeights[locationId as keyof typeof this.masterData.locationWeights] || 0.1;
     
     return {
       monthlyPatients: Math.round(((isAllLocations ? 2450 : 2450 * locationWeight) + (Math.random() * 200 - 100) * timeStabilityFactor) * timeRange),
-      monthlyRevenue: Math.round((baseRevenue + (Math.random() * baseRevenue * 0.1 - baseRevenue * 0.05)) * timeRange), // Scale by time range
+      monthlyRevenue: monthlyRevenue,
       arDays: Math.round((25 + (Math.random() * 10 - 5) * timeStabilityFactor) * 10) / 10,
-      cleanClaimRate: Math.round((100 - denialRate + (Math.random() * 4 - 2) * timeStabilityFactor) * 10) / 10,
+      cleanClaimRate: 50.0, // Set to exactly 50% as requested
       patientGrowth: ((8 + (Math.random() * 20 - 10)) * timeStabilityFactor).toFixed(1),
-      revenueGrowth: ((12 + (Math.random() * 15 - 7.5)) * timeStabilityFactor).toFixed(1)
+      revenueGrowth: revenueGrowth
     };
   }
 
