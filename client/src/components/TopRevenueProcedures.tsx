@@ -40,8 +40,8 @@ import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 // Shadcn UI components for consistent design
 import { Card, CardContent } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 // Lucide React icons representing medical procedures and analytics
 import { 
   DollarSign,   // Revenue indicators
@@ -52,10 +52,11 @@ import {
   Syringe,      // Injection-based treatments
   Zap,          // Laser/energy-based treatments
   UserCheck,    // Patient care procedures
-  Stethoscope   // Medical examination procedures
+  Stethoscope,  // Medical examination procedures
+  Calendar      // Date filtering
 } from "lucide-react";
-// TypeScript interface for procedure analytics data
-import type { ProcedureAnalytics } from "../../../shared/schema";
+// TypeScript interface for financial data
+import type { FinancialRevenueCategory } from "../../../shared/schema";
 
 /*
  * TYPESCRIPT INTERFACE DEFINITION
@@ -97,88 +98,97 @@ export default function TopRevenueProcedures({
   selectedLocationId
 }: TopRevenueProceduresProps) {
 
-  /**
-   * Fixed ophthalmology procedures list as per requirements
-   * No API call needed - this is a static list for clinical analysis
-   */
-  const procedures: ProcedureAnalytics[] = [
-    {
-      cptCode: "99213",
-      description: "Office Visits",
-      category: "medical" as const,
-      revenue: 850000,
-      growth: "+12.5",
-      basePrice: "$280",
-      monthlyVolume: 1250
-    },
-    {
-      cptCode: "92235",
-      description: "Diagnostics & Minor Procedures",
-      category: "medical" as const,
-      revenue: 680000,
-      growth: "+8.3",
-      basePrice: "$180",
-      monthlyVolume: 890
-    },
-    {
-      cptCode: "66984",
-      description: "Cataract Surgeries",
-      category: "medical" as const,
-      revenue: 2200000,
-      growth: "+15.8",
-      basePrice: "$3200",
-      monthlyVolume: 185
-    },
-    {
-      cptCode: "67028",
-      description: "Intravitreal Injections",
-      category: "medical" as const,
-      revenue: 1800000,
-      growth: "+22.1",
-      basePrice: "$2100",
-      monthlyVolume: 240
-    },
-    {
-      cptCode: "LASIK",
-      description: "Refractive Cash",
-      category: "cosmetic" as const,
-      revenue: 1200000,
-      growth: "+18.7",
-      basePrice: "$4500",
-      monthlyVolume: 75
-    },
-    {
-      cptCode: "65710",
-      description: "Corneal Procedures",
-      category: "medical" as const,
-      revenue: 450000,
-      growth: "+5.2",
-      basePrice: "$2800",
-      monthlyVolume: 45
-    },
-    {
-      cptCode: "15823",
-      description: "Oculoplastics",
-      category: "cosmetic" as const,
-      revenue: 380000,
-      growth: "+9.8",
-      basePrice: "$3500",
-      monthlyVolume: 28
-    },
-    {
-      cptCode: "OPTICAL",
-      description: "Optical / Contact Lens Sales",
-      category: "medical" as const,
-      revenue: 320000,
-      growth: "+6.4",
-      basePrice: "$350",
-      monthlyVolume: 450
-    }
-  ];
+  // State for date filtering
+  const [selectedPeriod, setSelectedPeriod] = useState<string>("1Y");
 
-  // No loading state needed since this is static data
-  const isLoading = false;
-  const error = null;
+  /**
+   * Fetch real revenue data from P&L using Financial Revenue API
+   */
+  const { data: revenueData, isLoading, error } = useQuery<{
+    categories: FinancialRevenueCategory[];
+    totalRevenue: number;
+    period: string;
+  }>({
+    queryKey: ['/api/financial/revenue', { locationId: selectedLocationId, period: selectedPeriod }],
+    staleTime: 2 * 60 * 1000, // Cache for 2 minutes
+  });
+
+  /**
+   * Map P&L revenue line items to CPT codes
+   */
+  const getCPTCode = (procedureName: string): string => {
+    const cptMap: Record<string, string> = {
+      "Office Visits": "99213",
+      "Diagnostics & Minor Procedures": "92235", 
+      "Cataract Surgeries": "66984",
+      "Intravitreal Injections": "67028",
+      "Refractive Cash": "LASIK",
+      "Corneal Procedures": "65710",
+      "Oculoplastics": "15823",
+      "Optical / Contact Lens Sales": "OPTICAL"
+    };
+    return cptMap[procedureName] || "00000";
+  };
+
+  /**
+   * Calculate base price from revenue and estimated volume
+   */
+  const calculateBasePrice = (revenue: number): string => {
+    // Estimate based on typical procedure volumes
+    const volumeMap: Record<string, number> = {
+      "Office Visits": 1250,
+      "Diagnostics & Minor Procedures": 890,
+      "Cataract Surgeries": 185,
+      "Intravitreal Injections": 240,
+      "Refractive Cash": 75,
+      "Corneal Procedures": 45,
+      "Oculoplastics": 28,
+      "Optical / Contact Lens Sales": 450
+    };
+    
+    // Get appropriate period multiplier based on selected period
+    const periodMultiplier = selectedPeriod === "1Y" ? 12 : selectedPeriod === "6M" ? 6 : selectedPeriod === "3M" ? 3 : 1;
+    const monthlyRevenue = revenue / periodMultiplier;
+    const defaultVolume = 100; // fallback
+    const basePrice = monthlyRevenue / defaultVolume;
+    
+    return new Intl.NumberFormat('en-US', {
+      style: 'currency',
+      currency: 'USD',
+      minimumFractionDigits: 0,
+      maximumFractionDigits: 0
+    }).format(basePrice);
+  };
+
+  /**
+   * Estimate monthly volume from revenue
+   */
+  const estimateMonthlyVolume = (revenue: number, procedureName: string): number => {
+    const volumeMap: Record<string, number> = {
+      "Office Visits": 1250,
+      "Diagnostics & Minor Procedures": 890,
+      "Cataract Surgeries": 185,
+      "Intravitreal Injections": 240,
+      "Refractive Cash": 75,
+      "Corneal Procedures": 45,
+      "Oculoplastics": 28,
+      "Optical / Contact Lens Sales": 450
+    };
+    
+    const periodMultiplier = selectedPeriod === "1Y" ? 12 : selectedPeriod === "6M" ? 6 : selectedPeriod === "3M" ? 3 : 1;
+    const baseVolume = volumeMap[procedureName] || 100;
+    return Math.round(baseVolume / periodMultiplier);
+  };
+
+  // Convert P&L revenue data to procedure format and sort by revenue descending
+  const procedures = revenueData?.categories?.map((category, index) => ({
+    cptCode: getCPTCode(category.name),
+    description: category.name,
+    revenue: category.amount,
+    growth: category.change || 0,
+    basePrice: calculateBasePrice(category.amount),
+    monthlyVolume: estimateMonthlyVolume(category.amount, category.name)
+  })).sort((a, b) => b.revenue - a.revenue) || [];
 
   /**
    * Get appropriate icon for each ophthalmology procedure type
@@ -217,21 +227,6 @@ export default function TopRevenueProcedures({
     
     const IconComponent = iconMap[cptCode as keyof typeof iconMap] || iconMap.default;
     return IconComponent;
-  };
-
-  /**
-   * Get color scheme for ophthalmology procedure categories
-   * @param {string} category - The procedure category
-   * @returns {string} CSS class for background color
-   */
-  const getProcedureColor = (category: string): string => {
-    const colorMap = {
-      medical: "bg-blue-500",
-      cosmetic: "bg-green-500",
-      default: "bg-teal-500"
-    };
-    
-    return colorMap[category as keyof typeof colorMap] || colorMap.default;
   };
 
   /**
@@ -344,14 +339,30 @@ export default function TopRevenueProcedures({
     <Card className="bg-white rounded-xl shadow-sm border border-gray-200">
       <CardContent className="p-6">
         
-        {/* Header - Simplified for Fixed Procedure List */}
-        <div className="mb-6">
+        {/* Header with Date Filter */}
+        <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between mb-6 space-y-3 lg:space-y-0">
           <div className="min-w-0">
             <h3 className="text-lg font-semibold text-gray-900 flex items-center">
               <DollarSign className="h-5 w-5 mr-2 text-primary flex-shrink-0" />
               <span className="truncate">Top Revenue Procedures</span>
             </h3>
-            <p className="text-sm text-gray-600 mt-1">Ophthalmology practice services by revenue</p>
+            <p className="text-sm text-gray-600 mt-1">Eye care services by revenue from P&L data</p>
+          </div>
+          
+          {/* Date Filter */}
+          <div className="flex items-center space-x-2">
+            <Calendar className="h-4 w-4 text-slate-500" />
+            <Select value={selectedPeriod} onValueChange={setSelectedPeriod}>
+              <SelectTrigger className="w-[120px] text-sm">
+                <SelectValue placeholder="Period" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="1M">1 Month</SelectItem>
+                <SelectItem value="3M">3 Months</SelectItem>
+                <SelectItem value="6M">6 Months</SelectItem>
+                <SelectItem value="1Y">1 Year</SelectItem>
+              </SelectContent>
+            </Select>
           </div>
         </div>
 
@@ -370,7 +381,6 @@ export default function TopRevenueProcedures({
             ) : (
               procedures.map((procedure, index) => {
                 const IconComponent = getProcedureIcon(procedure.cptCode);
-                const colorClass = getProcedureColor(procedure.category);
                 
                 return (
                   <div 
@@ -379,7 +389,7 @@ export default function TopRevenueProcedures({
                   >
                     <div className="flex items-start space-x-3 sm:items-center sm:space-x-4 min-w-0">
                       {/* Procedure Icon */}
-                      <div className={`w-8 h-8 sm:w-10 sm:h-10 ${colorClass} rounded-lg flex items-center justify-center flex-shrink-0`}>
+                      <div className="w-8 h-8 sm:w-10 sm:h-10 bg-blue-500 rounded-lg flex items-center justify-center flex-shrink-0">
                         <IconComponent className="h-4 w-4 sm:h-5 sm:w-5 text-white" />
                       </div>
                       
@@ -388,21 +398,9 @@ export default function TopRevenueProcedures({
                         <h4 className="font-medium text-gray-900 text-sm sm:text-base truncate">
                           {procedure.description || `${procedure.cptCode} Procedure`}
                         </h4>
-                        <div className="flex flex-col space-y-1 mt-1 sm:flex-row sm:items-center sm:space-y-0 sm:space-x-2">
-                          <p className="text-xs sm:text-sm text-gray-600">
-                            CPT: {procedure.cptCode}
-                          </p>
-                          <Badge 
-                            variant="outline" 
-                            className={`text-xs self-start ${
-                              procedure.category === 'medical' 
-                                ? 'text-blue-600 border-blue-200' 
-                                : 'text-purple-600 border-purple-200'
-                            }`}
-                          >
-                            {procedure.category}
-                          </Badge>
-                        </div>
+                        <p className="text-xs sm:text-sm text-gray-600 mt-1">
+                          CPT: {procedure.cptCode}
+                        </p>
                       </div>
                     </div>
                     
@@ -428,13 +426,13 @@ export default function TopRevenueProcedures({
           <div className="mt-6 pt-4 border-t border-gray-100">
             <div className="flex items-center justify-between text-sm">
               <span className="text-gray-600">
-                Showing {procedures.length} ophthalmology procedures
+                Showing {procedures.length} revenue procedures ({selectedPeriod})
                 {selectedLocationId !== 'all' && ` for selected location`}
               </span>
               <div className="flex items-center space-x-4">
                 <span className="text-gray-600">Total Revenue:</span>
                 <span className="font-semibold text-gray-900">
-                  {formatRevenue(procedures.reduce((sum, proc) => sum + (proc.revenue || 0), 0))}
+                  {formatRevenue(revenueData?.totalRevenue || 0)}
                 </span>
               </div>
             </div>
