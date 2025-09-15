@@ -54,9 +54,13 @@ export default function CashOutWidget({ selectedLocationId, selectedPeriod }: Ca
       })
   });
 
-  // Filter operating activities for negative cash flows (Cash Out) and convert to positive amounts for display
+  // Filter operating activities for negative cash flows (Cash Out), excluding summary items, and convert to positive amounts for display
   const cashOutCategories = cashFlowData?.operating
-    .filter(item => item.amount < 0)
+    .filter(item => 
+      item.amount < 0 && 
+      !item.name.includes('Net Cash') && 
+      !item.name.includes('Total')
+    )
     .map(item => ({
       ...item,
       amount: Math.abs(item.amount) // Convert to positive for display

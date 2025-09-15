@@ -54,8 +54,12 @@ export default function CashInWidget({ selectedLocationId, selectedPeriod }: Cas
       })
   });
 
-  // Filter operating activities for positive cash flows (Cash In)
-  const cashInCategories = cashFlowData?.operating.filter(item => item.amount > 0) || [];
+  // Filter operating activities for positive cash flows (Cash In), excluding summary items
+  const cashInCategories = cashFlowData?.operating.filter(item => 
+    item.amount > 0 && 
+    !item.name.includes('Net Cash') && 
+    !item.name.includes('Total')
+  ) || [];
   
   // Calculate total cash in
   const totalCashIn = cashInCategories.reduce((sum, category) => sum + category.amount, 0);
