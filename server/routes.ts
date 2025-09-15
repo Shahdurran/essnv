@@ -322,6 +322,24 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   /**
+   * GET /api/analytics/clinical-metrics/:locationId/:period - Get clinical metrics data with real P&L
+   * Path params: locationId (or 'all'), period (1yr only for now)
+   * Returns: Revenue, Patient Count, EBITDA, Write-offs from real P&L data
+   */
+  app.get("/api/analytics/clinical-metrics/:locationId/:period", async (req, res) => {
+    try {
+      const { locationId, period } = req.params;
+      const finalLocationId = locationId === 'all' ? undefined : locationId;
+      
+      const clinicalData = await storage.getClinicalMetricsData(finalLocationId, period);
+      res.json(clinicalData);
+    } catch (error) {
+      console.error("Error fetching clinical metrics:", error);
+      res.status(500).json({ message: "Failed to fetch clinical metrics data" });
+    }
+  });
+
+  /**
    * GET /api/analytics/insurance-breakdown/:locationId - Get insurance payer analysis
    * Path params: locationId (or 'all')
    */

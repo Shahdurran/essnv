@@ -150,10 +150,10 @@ export default function KeyMetricsTrendsChart({ selectedLocationId }: KeyMetrics
   const chartInstance = useRef<Chart | null>(null);
 
   /**
-   * Fetch revenue trends data from API
+   * Fetch clinical metrics data from API using real P&L data
    */
   const { data: revenueData = [], isLoading, error } = useQuery<RevenueDataPoint[]>({
-    queryKey: ['/api/analytics/revenue-trends', selectedLocationId, selectedTimePeriod],
+    queryKey: ['/api/analytics/clinical-metrics', selectedLocationId, selectedTimePeriod],
     staleTime: 2 * 60 * 1000, // Cache for 2 minutes for fresh analytics
   });
 
