@@ -161,10 +161,6 @@ export default function LocationSelector({ selectedLocationId, onLocationChange 
           <h2 className="text-base sm:text-lg font-semibold text-gray-900">Practice Locations</h2>
         </div>
         
-        {/* Section Description */}
-        <p className="text-sm sm:text-base text-gray-600 mb-4 sm:mb-6">
-          Select locations to analyze - view individual sites or all locations together
-        </p>
         
         {/* Location Selection Buttons - Mobile Responsive */}
         <div className="grid grid-cols-2 sm:flex sm:flex-wrap gap-2 sm:gap-3">
@@ -236,25 +232,6 @@ export default function LocationSelector({ selectedLocationId, onLocationChange 
           </div>
         )}
 
-        {/* All Locations Summary */}
-        {selectedLocationId === "all" && (
-          <div className="mt-4 p-4 bg-blue-50 rounded-lg">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-blue-900">
-                  Viewing aggregated analytics across all practice locations
-                </p>
-                <p className="text-xs text-blue-700">
-                  Data includes all {locations.length} demo practice locations
-                </p>
-              </div>
-              <div className="text-right">
-                <p className="text-sm text-blue-700">Total Locations:</p>
-                <p className="text-lg font-bold text-blue-900">{locations.length}</p>
-              </div>
-            </div>
-          </div>
-        )}
       </CardContent>
     </Card>
   );
