@@ -674,7 +674,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const csvPath = path.join(process.cwd(), 'attached_assets', 'PL_1757878346682.csv');
       
       if (!fs.existsSync(csvPath)) {
-        return res.status(404).json({ message: "CSV file not found" });
+        log(`[csv-import] CSV file not found at ${csvPath}, skipping import`);
+        return res.status(404).json({ message: "CSV file not found - this is normal in production" });
       }
       
       const csvContent = fs.readFileSync(csvPath, 'utf-8');
