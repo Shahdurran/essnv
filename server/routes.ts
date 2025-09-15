@@ -656,45 +656,33 @@ export async function registerRoutes(app: Express): Promise<Server> {
   
   /**
    * POST /api/pl/import-csv - Import P&L data from CSV file
-   * This endpoint imports the uploaded P&L CSV data into the system
+   * This endpoint imports the uploaded P&L CSV data into the system with improved error handling
    */
   app.post("/api/pl/import-csv", async (req, res) => {
     try {
-      // Get the first practice location
-      const locations = await storage.getAllPracticeLocations();
-      const locationId = locations[0]?.id;
+      // Import using the improved csvImport function
+      const { importCsvData } = await import('./csvImport');
+      const result = await importCsvData();
       
-      if (!locationId) {
-        return res.status(400).json({ message: "No practice location found" });
+      if (!result.success) {
+        // Handle specific error cases
+        if (result.error?.includes('CSV file not found')) {
+          return res.status(404).json({ message: "P&L CSV file not found" });
+        }
+        if (result.error?.includes('Database')) {
+          return res.status(503).json({ message: "Database connection failed" });
+        }
+        return res.status(500).json({ message: result.error || "Failed to import P&L data" });
       }
-      
-      // Read the CSV file content
-      const fs = await import('fs');
-      const path = await import('path');
-      const csvPath = path.join(process.cwd(), 'attached_assets', 'PL_1757878346682.csv');
-      
-      if (!fs.existsSync(csvPath)) {
-        return res.status(404).json({ message: "CSV file not found" });
-      }
-      
-      const csvContent = fs.readFileSync(csvPath, 'utf-8');
-      
-      // Import the data using our storage method
-      await storage.importPlDataFromCsv(csvContent, locationId);
-      
-      // Get sample imported data to verify
-      const sampleData = await storage.getPlMonthlyData(locationId);
-      const recordCount = sampleData.length;
       
       res.json({ 
         message: "P&L data imported successfully",
-        recordsImported: recordCount,
-        locationId: locationId
+        recordsImported: result.recordsImported || 0
       });
       
     } catch (error) {
       console.error("Error importing P&L CSV data:", error);
-      res.status(500).json({ message: "Failed to import P&L data" });
+      res.status(500).json({ message: "Failed to import P&L data - server error" });
     }
   });
 
@@ -721,22 +709,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // ============================================================================
   
   /**
-   * POST /api/cashflow/import-csv - Import cash flow data from CSV file
+   * POST /api/cashflow/import-csv - Import cash flow data from CSV file with improved error handling
    */
   app.post("/api/cashflow/import-csv", async (req, res) => {
     try {
       // Use Fairfax location as default
       const locationId = "fairfax";
       
-      // Import cash flow data from CSV
+      // Import cash flow data from CSV with improved error handling
       const fs = await import('fs');
       const path = await import('path');
       const csvPath = path.join(process.cwd(), 'Cashflow-Eye-Specialists.csv');
       
-      if (!fs.existsSync(csvPath)) {
-        return res.status(404).json({ message: "Cash flow CSV file not found" });
-      }
-      
+      // The importCashFlowDataFromCsv function now includes file existence checking
       const result = await importCashFlowDataFromCsv(csvPath, locationId);
       
       // Transfer imported data to storage layer for time-based filtering

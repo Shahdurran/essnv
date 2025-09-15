@@ -5,13 +5,44 @@ import type { InsertPlMonthlyData } from '@shared/schema';
 import * as fs from 'fs';
 import * as path from 'path';
 
-// Database connection setup
+// Database connection setup with error handling
 if (!process.env.DATABASE_URL) {
-  throw new Error("DATABASE_URL environment variable is required");
+  console.warn("DATABASE_URL environment variable not found - database operations will fail");
 }
 
-const sql = neon(process.env.DATABASE_URL);
-const db = drizzle(sql);
+let sql: any = null;
+let db: any = null;
+
+// Initialize database connection with error handling
+function initializeDatabase() {
+  try {
+    if (!process.env.DATABASE_URL) {
+      throw new Error("DATABASE_URL environment variable is required");
+    }
+    sql = neon(process.env.DATABASE_URL);
+    db = drizzle(sql);
+    return true;
+  } catch (error) {
+    console.error("Failed to initialize database connection:", error);
+    return false;
+  }
+}
+
+// Test database connection
+async function testDatabaseConnection(): Promise<boolean> {
+  try {
+    if (!db) {
+      console.error("Database not initialized");
+      return false;
+    }
+    // Simple query to test connection
+    await db.select().from(practiceLocations).limit(1);
+    return true;
+  } catch (error) {
+    console.error("Database connection test failed:", error);
+    return false;
+  }
+}
 
 /**
  * CSV Import Script for P&L Monthly Data
@@ -104,11 +135,29 @@ function parseCsvLine(line: string): string[] {
   return result;
 }
 
-// Main import function
-async function importCsvData(): Promise<void> {
+// Main import function with comprehensive error handling
+async function importCsvData(): Promise<{ success: boolean, recordsImported?: number, error?: string }> {
   console.log('Starting CSV import...');
   
-  // First, get the first practice location to associate data with
+  try {
+    // Initialize and test database connection
+    if (!initializeDatabase()) {
+      throw new Error("Failed to initialize database connection");
+    }
+    
+    const dbConnected = await testDatabaseConnection();
+    if (!dbConnected) {
+      throw new Error("Database connection test failed");
+    }
+    
+    // Check if CSV file exists before attempting to read
+    const csvPath = path.join(process.cwd(), 'attached_assets', 'PL_1757878346682.csv');
+    if (!fs.existsSync(csvPath)) {
+      console.warn(`CSV file not found at ${csvPath} - skipping import`);
+      return { success: false, error: "CSV file not found" };
+    }
+  
+    // First, get the first practice location to associate data with
   const locations = await db.select().from(practiceLocations).limit(1);
   let locationId: string;
   
@@ -128,9 +177,13 @@ async function importCsvData(): Promise<void> {
     locationId = locations[0].id;
   }
   
-  // Read the CSV file
-  const csvPath = path.join(process.cwd(), 'attached_assets', 'PL_1757878346682.csv');
-  const csvContent = fs.readFileSync(csvPath, 'utf-8');
+  // Read the CSV file safely
+  let csvContent: string;
+  try {
+    csvContent = fs.readFileSync(csvPath, 'utf-8');
+  } catch (error) {
+    throw new Error(`Failed to read CSV file: ${error}`);
+  }
   const lines = csvContent.split('\n').filter(line => line.trim());
   
   // Parse header line (skip the BOM and get month columns)
@@ -202,6 +255,13 @@ async function importCsvData(): Promise<void> {
   // Verify the import by showing some sample data
   const sampleData = await db.select().from(plMonthlyData).limit(5);
   console.log('Sample imported data:', sampleData);
+  
+  return { success: true, recordsImported: insertData.length };
+  
+  } catch (error) {
+    console.error('CSV import failed:', error);
+    return { success: false, error: error instanceof Error ? error.message : 'Unknown error' };
+  }
 }
 
 // Run the import if this file is executed directly
@@ -227,11 +287,21 @@ if (import.meta.url === `file://${process.argv[1]}`) {
 let cashFlowDataStore: any[] = [];
 
 /**
- * Import cash flow data from CSV file and store in memory
+ * Import cash flow data from CSV file with improved error handling and file validation
  */
 async function importCashFlowDataFromCsv(csvPath: string, locationId: string) {
   try {
-    const csvContent = fs.readFileSync(csvPath, 'utf-8');
+    // Check if file exists before attempting to read
+    if (!fs.existsSync(csvPath)) {
+      throw new Error(`CSV file not found at path: ${csvPath}`);
+    }
+    
+    let csvContent: string;
+    try {
+      csvContent = fs.readFileSync(csvPath, 'utf-8');
+    } catch (error) {
+      throw new Error(`Failed to read CSV file: ${error}`);
+    }
     const lines = csvContent.split('\n').filter(line => line.trim());
     
     console.log(`Processing ${lines.length} cash flow CSV lines...`);
