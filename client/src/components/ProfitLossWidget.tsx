@@ -1,7 +1,7 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { BarChart3, List, TrendingUp, TrendingDown } from "lucide-react";
+import { BarChart3, List, TrendingUp, TrendingDown, ChevronDown, ChevronUp } from "lucide-react";
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Line } from "react-chartjs-2";
@@ -103,6 +103,8 @@ const chartOptions = {
 
 export default function ProfitLossWidget({ selectedLocationId, selectedPeriod }: ProfitLossWidgetProps) {
   const [viewMode, setViewMode] = useState<"list" | "graph">("list");
+  const [revenueCollapsed, setRevenueCollapsed] = useState(false);
+  const [expensesCollapsed, setExpensesCollapsed] = useState(false);
 
   // Fetch real P&L data from API
   const { data: profitLossApiData, isLoading, error } = useQuery<ProfitLossApiResponse>({
@@ -178,8 +180,23 @@ export default function ProfitLossWidget({ selectedLocationId, selectedPeriod }:
           <div className="space-y-6" data-testid="pl-list-view">
             {/* Revenue Section */}
             <div>
-              <h4 className="font-semibold text-green-700 mb-3 text-sm uppercase tracking-wide">Revenue</h4>
-              <div className="space-y-2">
+              <div 
+                className="flex items-center justify-between cursor-pointer hover:bg-gray-50 p-2 rounded-lg transition-colors"
+                onClick={() => setRevenueCollapsed(!revenueCollapsed)}
+              >
+                <h4 className="font-semibold text-green-700 text-sm uppercase tracking-wide flex items-center">
+                  Revenue
+                  <span className="ml-2 text-lg font-bold text-green-600">{formatCurrency(totalRevenue)}</span>
+                </h4>
+                {revenueCollapsed ? (
+                  <ChevronDown className="h-4 w-4 text-gray-500" />
+                ) : (
+                  <ChevronUp className="h-4 w-4 text-gray-500" />
+                )}
+              </div>
+              
+              {!revenueCollapsed && (
+                <div className="space-y-2 mt-3 ml-4">
                 {isLoading ? (
                   <div className="space-y-2">
                     <div className="h-4 bg-gray-200 rounded animate-pulse"></div>
@@ -200,19 +217,29 @@ export default function ProfitLossWidget({ selectedLocationId, selectedPeriod }:
                     </div>
                   ))
                 )}
-                <div className="border-t pt-2 mt-2" data-testid="pl-total-revenue">
-                  <div className="flex justify-between items-center">
-                    <span className="font-semibold text-gray-900">Total Revenue</span>
-                    <span className="font-bold text-green-600 text-lg">{formatCurrency(totalRevenue)}</span>
-                  </div>
                 </div>
-              </div>
+              )}
             </div>
 
             {/* Expenses Section */}
             <div>
-              <h4 className="font-semibold text-red-700 mb-3 text-sm uppercase tracking-wide">Expenses</h4>
-              <div className="space-y-2">
+              <div 
+                className="flex items-center justify-between cursor-pointer hover:bg-gray-50 p-2 rounded-lg transition-colors"
+                onClick={() => setExpensesCollapsed(!expensesCollapsed)}
+              >
+                <h4 className="font-semibold text-red-700 text-sm uppercase tracking-wide flex items-center">
+                  Expenses
+                  <span className="ml-2 text-lg font-bold text-red-600">({formatCurrency(totalExpenses)})</span>
+                </h4>
+                {expensesCollapsed ? (
+                  <ChevronDown className="h-4 w-4 text-gray-500" />
+                ) : (
+                  <ChevronUp className="h-4 w-4 text-gray-500" />
+                )}
+              </div>
+              
+              {!expensesCollapsed && (
+                <div className="space-y-2 mt-3 ml-4">
                 {isLoading ? (
                   <div className="space-y-2">
                     <div className="h-4 bg-gray-200 rounded animate-pulse"></div>
@@ -233,13 +260,8 @@ export default function ProfitLossWidget({ selectedLocationId, selectedPeriod }:
                     </div>
                   ))
                 )}
-                <div className="border-t pt-2 mt-2" data-testid="pl-total-expenses">
-                  <div className="flex justify-between items-center">
-                    <span className="font-semibold text-gray-900">Total Expenses</span>
-                    <span className="font-bold text-red-600 text-lg">({formatCurrency(totalExpenses)})</span>
-                  </div>
                 </div>
-              </div>
+              )}
             </div>
 
             {/* Net Profit Section */}
