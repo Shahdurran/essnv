@@ -1071,11 +1071,35 @@ export class MemStorage implements IStorage {
     const finalPeriod = period || "6M";
     const monthsToInclude = this.getMonthsForPeriod(period);
     
-    // If no P&L data imported yet, return empty structure
+    // If no P&L data imported yet, return realistic fallback mock data
     if (this.plMonthlyData.length === 0) {
+      const isAllLocations = !locationId;
+      const locationWeight = isAllLocations ? 1.0 : this.masterData.locationWeights[locationId as keyof typeof this.masterData.locationWeights] || 0.5;
+      const periodMultiplier = this.getPeriodMultiplier(period);
+      
+      const mockRevenueCategories = [
+        { id: "office-visits", name: "Office Visits", baseAmount: 180000, change: 8.2, trend: "up" as const },
+        { id: "diagnostics", name: "Diagnostics & Minor Procedures", baseAmount: 95000, change: 5.7, trend: "up" as const },
+        { id: "cataract-surgeries", name: "Cataract Surgeries", baseAmount: 165000, change: 12.1, trend: "up" as const },
+        { id: "injections", name: "Intravitreal Injections", baseAmount: 85000, change: 15.3, trend: "up" as const },
+        { id: "refractive", name: "Refractive Cash", baseAmount: 145000, change: 22.4, trend: "up" as const },
+        { id: "oculoplastics", name: "Oculoplastics", baseAmount: 125000, change: 9.8, trend: "up" as const },
+        { id: "optical-sales", name: "Optical / Contact Lens Sales", baseAmount: 28000, change: -2.1, trend: "down" as const }
+      ];
+      
+      const categories = mockRevenueCategories.map(cat => ({
+        id: cat.id,
+        name: cat.name,
+        amount: Math.round(cat.baseAmount * locationWeight * periodMultiplier),
+        change: cat.change,
+        trend: cat.trend
+      }));
+      
+      const totalRevenue = categories.reduce((sum, cat) => sum + cat.amount, 0);
+      
       return {
-        categories: [],
-        totalRevenue: 0,
+        categories,
+        totalRevenue,
         period: finalPeriod
       };
     }
@@ -1126,11 +1150,38 @@ export class MemStorage implements IStorage {
     const finalPeriod = period || "6M";
     const monthsToInclude = this.getMonthsForPeriod(period);
     
-    // If no P&L data imported yet, return empty structure
+    // If no P&L data imported yet, return realistic fallback mock data
     if (this.plMonthlyData.length === 0) {
+      const isAllLocations = !locationId;
+      const locationWeight = isAllLocations ? 1.0 : this.masterData.locationWeights[locationId as keyof typeof this.masterData.locationWeights] || 0.5;
+      const periodMultiplier = this.getPeriodMultiplier(period);
+      
+      const mockExpenseCategories = [
+        { id: "staff-wages", name: "Staff Wages & Benefits", baseAmount: 285000, change: 3.2, trend: "up" as const },
+        { id: "drug-acquisition", name: "Drug Acquisition (injections)", baseAmount: 125000, change: 8.7, trend: "up" as const },
+        { id: "rent-utilities", name: "Rent & Utilities", baseAmount: 85000, change: 2.1, trend: "up" as const },
+        { id: "surgical-supplies", name: "Surgical Supplies & IOLs", baseAmount: 95000, change: 5.4, trend: "up" as const },
+        { id: "technology", name: "Technology", baseAmount: 45000, change: 12.3, trend: "up" as const },
+        { id: "billing-coding", name: "Billing & Coding Vendors", baseAmount: 35000, change: -1.8, trend: "down" as const },
+        { id: "insurance", name: "Insurance", baseAmount: 25000, change: 4.5, trend: "up" as const },
+        { id: "marketing", name: "Marketing & Outreach", baseAmount: 18000, change: 15.2, trend: "up" as const },
+        { id: "equipment-service", name: "Equipment Service & Leases", baseAmount: 22000, change: 1.9, trend: "up" as const },
+        { id: "office-misc", name: "Office & Miscellaneous", baseAmount: 15000, change: -3.4, trend: "down" as const }
+      ];
+      
+      const categories = mockExpenseCategories.map(cat => ({
+        id: cat.id,
+        name: cat.name,
+        amount: Math.round(cat.baseAmount * locationWeight * periodMultiplier),
+        change: cat.change,
+        trend: cat.trend
+      }));
+      
+      const totalExpenses = categories.reduce((sum, cat) => sum + cat.amount, 0);
+      
       return {
-        categories: [],
-        totalExpenses: 0,
+        categories,
+        totalExpenses,
         period: finalPeriod
       };
     }
