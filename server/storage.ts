@@ -1259,7 +1259,7 @@ export class MemStorage implements IStorage {
       'Optical Cost of Goods': 'direct_costs',
       
       // Operating expenses  
-      'Bad Debt Expense ': 'operating_expenses', // Note trailing space
+      'Bad Debt Expense': 'operating_expenses', // Fixed: removed trailing space
       'Staff Wages & Benefits': 'operating_expenses',
       'Billing & Coding Vendors': 'operating_expenses',
       'Rent & Utilities': 'operating_expenses',
@@ -1310,12 +1310,20 @@ export class MemStorage implements IStorage {
       const values = line.split(',').map(v => v.trim());
       const lineItem = values[0];
       
+      
+      // Create normalized lookup to handle whitespace issues
+      const normalizedMapping = Object.fromEntries(
+        Object.entries(CATEGORY_MAPPING).map(([k, v]) => [k.trim().normalize(), v])
+      );
+      const normalizedLineItem = lineItem.trim().normalize();
+      
       // Skip if unknown line item
-      if (!(lineItem in CATEGORY_MAPPING)) {
+      if (!(normalizedLineItem in normalizedMapping)) {
+        console.log(`Skipping unknown line item: "${lineItem}"`);
         continue;
       }
       
-      const categoryType = CATEGORY_MAPPING[lineItem as keyof typeof CATEGORY_MAPPING];
+      const categoryType = normalizedMapping[normalizedLineItem];
       
       // Process each month's data
       for (let monthIndex = 0; monthIndex < MONTH_HEADERS.length; monthIndex++) {
