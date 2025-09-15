@@ -1,7 +1,7 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { BarChart3, List, TrendingUp, TrendingDown } from "lucide-react";
+import { BarChart3, List, TrendingUp, TrendingDown, ChevronDown, ChevronUp } from "lucide-react";
 import { useState } from "react";
 import { Line } from "react-chartjs-2";
 import { useQuery } from "@tanstack/react-query";
@@ -115,6 +115,9 @@ const chartOptions = {
 
 export default function CashFlowWidget({ selectedLocationId, selectedPeriod }: CashFlowWidgetProps) {
   const [viewMode, setViewMode] = useState<"list" | "graph">("list");
+  const [operatingCollapsed, setOperatingCollapsed] = useState(true);
+  const [investingCollapsed, setInvestingCollapsed] = useState(true);
+  const [financingCollapsed, setFinancingCollapsed] = useState(true);
 
   // Fetch real cash flow data from CSV-based API
   const { data: cashFlowApiData, isLoading, error } = useQuery<CashFlowApiResponse>({
@@ -187,8 +190,25 @@ export default function CashFlowWidget({ selectedLocationId, selectedPeriod }: C
           <div className="space-y-6" data-testid="cf-list-view">
             {/* Operating Activities Section */}
             <div>
-              <h4 className="font-semibold text-green-700 mb-3 text-sm uppercase tracking-wide">Cash Flow from Operating Activities</h4>
-              <div className="space-y-2">
+              <div 
+                className="flex items-center justify-between cursor-pointer hover:bg-gray-50 p-2 rounded-lg transition-colors"
+                onClick={() => setOperatingCollapsed(!operatingCollapsed)}
+              >
+                <h4 className="font-semibold text-green-700 text-sm uppercase tracking-wide flex items-center">
+                  Cash Flow from Operating Activities
+                  <span className={`ml-2 text-lg font-bold ${operatingCashFlow >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+                    {operatingCashFlow >= 0 ? '' : '('}{formatCurrency(Math.abs(operatingCashFlow))}{operatingCashFlow < 0 ? ')' : ''}
+                  </span>
+                </h4>
+                {operatingCollapsed ? (
+                  <ChevronDown className="h-4 w-4 text-gray-500" />
+                ) : (
+                  <ChevronUp className="h-4 w-4 text-gray-500" />
+                )}
+              </div>
+              
+              {!operatingCollapsed && (
+                <div className="space-y-2 mt-3 ml-4">
                 {isLoading ? (
                   <div className="space-y-2">
                     <div className="h-4 bg-gray-200 rounded animate-pulse"></div>
@@ -201,21 +221,31 @@ export default function CashFlowWidget({ selectedLocationId, selectedPeriod }: C
                     formatCashFlowItem(item.name, item.amount)
                   )
                 )}
-                <div className="border-t pt-2 mt-2" data-testid="cf-operating-total">
-                  <div className="flex justify-between items-center">
-                    <span className="font-semibold text-gray-900">Net Operating Cash Flow</span>
-                    <span className={`font-bold text-lg ${operatingCashFlow >= 0 ? 'text-green-600' : 'text-red-600'}`}>
-                      {operatingCashFlow >= 0 ? '' : '('}{formatCurrency(Math.abs(operatingCashFlow))}{operatingCashFlow < 0 ? ')' : ''}
-                    </span>
-                  </div>
                 </div>
-              </div>
+              )}
             </div>
 
             {/* Investing Activities Section */}
             <div>
-              <h4 className="font-semibold text-red-700 mb-3 text-sm uppercase tracking-wide">Cash Flow from Investing Activities</h4>
-              <div className="space-y-2">
+              <div 
+                className="flex items-center justify-between cursor-pointer hover:bg-gray-50 p-2 rounded-lg transition-colors"
+                onClick={() => setInvestingCollapsed(!investingCollapsed)}
+              >
+                <h4 className="font-semibold text-red-700 text-sm uppercase tracking-wide flex items-center">
+                  Cash Flow from Investing Activities
+                  <span className={`ml-2 text-lg font-bold ${investingCashFlow >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+                    {investingCashFlow >= 0 ? '' : '('}{formatCurrency(Math.abs(investingCashFlow))}{investingCashFlow < 0 ? ')' : ''}
+                  </span>
+                </h4>
+                {investingCollapsed ? (
+                  <ChevronDown className="h-4 w-4 text-gray-500" />
+                ) : (
+                  <ChevronUp className="h-4 w-4 text-gray-500" />
+                )}
+              </div>
+              
+              {!investingCollapsed && (
+                <div className="space-y-2 mt-3 ml-4">
                 {isLoading ? (
                   <div className="space-y-2">
                     <div className="h-4 bg-gray-200 rounded animate-pulse"></div>
@@ -229,21 +259,31 @@ export default function CashFlowWidget({ selectedLocationId, selectedPeriod }: C
                     formatCashFlowItem(item.name, item.amount)
                   )
                 )}
-                <div className="border-t pt-2 mt-2" data-testid="cf-investing-total">
-                  <div className="flex justify-between items-center">
-                    <span className="font-semibold text-gray-900">Net Investing Cash Flow</span>
-                    <span className={`font-bold text-lg ${investingCashFlow >= 0 ? 'text-green-600' : 'text-red-600'}`}>
-                      {investingCashFlow >= 0 ? '' : '('}{formatCurrency(Math.abs(investingCashFlow))}{investingCashFlow < 0 ? ')' : ''}
-                    </span>
-                  </div>
                 </div>
-              </div>
+              )}
             </div>
 
             {/* Financing Activities Section */}
             <div>
-              <h4 className="font-semibold text-purple-700 mb-3 text-sm uppercase tracking-wide">Cash Flow from Financing Activities</h4>
-              <div className="space-y-2">
+              <div 
+                className="flex items-center justify-between cursor-pointer hover:bg-gray-50 p-2 rounded-lg transition-colors"
+                onClick={() => setFinancingCollapsed(!financingCollapsed)}
+              >
+                <h4 className="font-semibold text-purple-700 text-sm uppercase tracking-wide flex items-center">
+                  Cash Flow from Financing Activities
+                  <span className={`ml-2 text-lg font-bold ${financingCashFlow >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+                    {financingCashFlow >= 0 ? '' : '('}{formatCurrency(Math.abs(financingCashFlow))}{financingCashFlow < 0 ? ')' : ''}
+                  </span>
+                </h4>
+                {financingCollapsed ? (
+                  <ChevronDown className="h-4 w-4 text-gray-500" />
+                ) : (
+                  <ChevronUp className="h-4 w-4 text-gray-500" />
+                )}
+              </div>
+              
+              {!financingCollapsed && (
+                <div className="space-y-2 mt-3 ml-4">
                 {isLoading ? (
                   <div className="space-y-2">
                     <div className="h-4 bg-gray-200 rounded animate-pulse"></div>
@@ -257,15 +297,8 @@ export default function CashFlowWidget({ selectedLocationId, selectedPeriod }: C
                     formatCashFlowItem(item.name, item.amount)
                   )
                 )}
-                <div className="border-t pt-2 mt-2" data-testid="cf-financing-total">
-                  <div className="flex justify-between items-center">
-                    <span className="font-semibold text-gray-900">Net Financing Cash Flow</span>
-                    <span className={`font-bold text-lg ${financingCashFlow >= 0 ? 'text-green-600' : 'text-red-600'}`}>
-                      {financingCashFlow >= 0 ? '' : '('}{formatCurrency(Math.abs(financingCashFlow))}{financingCashFlow < 0 ? ')' : ''}
-                    </span>
-                  </div>
                 </div>
-              </div>
+              )}
             </div>
 
             {/* Net Cash Flow Section */}
