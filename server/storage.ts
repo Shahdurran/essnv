@@ -712,23 +712,21 @@ export class MemStorage implements IStorage {
     let revenueGrowth = "+5.0";
     
     if (this.embeddedFinancialData && this.embeddedFinancialData.monthly) {
-      // Calculate monthly average from actual P&L data for the time range
+      // Calculate total revenue for the time range from actual P&L data
       const months = Object.keys(this.embeddedFinancialData.monthly);
       const recentMonths = months.slice(-timeRange); // Get last N months
       
       let totalRevenue = 0;
-      let monthCount = 0;
       
       for (const monthKey of recentMonths) {
         const monthData = this.embeddedFinancialData.monthly[monthKey];
         if (monthData && monthData.revenue) {
           totalRevenue += monthData.revenue;
-          monthCount++;
         }
       }
       
-      // Calculate actual monthly average from P&L data
-      monthlyRevenue = monthCount > 0 ? Math.round(totalRevenue / monthCount) : 0;
+      // Use total revenue for the time period
+      monthlyRevenue = totalRevenue;
       revenueGrowth = "+5.2"; // Realistic growth rate
     } else {
       // Fallback to estimated revenue based on location
