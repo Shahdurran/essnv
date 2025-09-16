@@ -707,29 +707,34 @@ export class MemStorage implements IStorage {
     const isAllLocations = !locationId || locationId === 'all';
     const timeRange = timeRangeMonths || 1;
     
-    // Get real revenue from P&L data if available
+    // Get real revenue from P&L data using embedded financial data
     let monthlyRevenue = 0;
     let revenueGrowth = "+5.0";
     
-    if (this.plMonthlyData.length > 0) {
-      // Get the appropriate period for time range
-      const periodsMap: Record<number, string> = {
-        1: "1M",
-        3: "3M", 
-        6: "6M",
-        12: "1Y"
-      };
-      const period = periodsMap[timeRange] || "1M";
+    if (this.embeddedFinancialData && this.embeddedFinancialData.monthly) {
+      // Calculate monthly average from actual P&L data for the time range
+      const months = Object.keys(this.embeddedFinancialData.monthly);
+      const recentMonths = months.slice(-timeRange); // Get last N months
       
-      // Get revenue data using existing method
-      const revenueData = await this.getFinancialRevenueData(locationId, period);
-      monthlyRevenue = revenueData.totalRevenue; // Use total revenue for the period, not monthly average
+      let totalRevenue = 0;
+      let monthCount = 0;
+      
+      for (const monthKey of recentMonths) {
+        const monthData = this.embeddedFinancialData.monthly[monthKey];
+        if (monthData && monthData.revenue) {
+          totalRevenue += monthData.revenue;
+          monthCount++;
+        }
+      }
+      
+      // Calculate actual monthly average from P&L data
+      monthlyRevenue = monthCount > 0 ? Math.round(totalRevenue / monthCount) : 0;
       revenueGrowth = "+5.2"; // Realistic growth rate
     } else {
       // Fallback to estimated revenue based on location
       const locationWeight = isAllLocations ? 1.0 : this.masterData.locationWeights[locationId as keyof typeof this.masterData.locationWeights] || 0.1;
       const baseRevenue = this.masterData.baseMonthlyRevenue.totalRevenue * locationWeight;
-      monthlyRevenue = Math.round(baseRevenue * timeRange);
+      monthlyRevenue = Math.round(baseRevenue);
       revenueGrowth = "+4.8";
     }
     
