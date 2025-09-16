@@ -231,28 +231,7 @@ app.use((req, res, next) => {
     // This callback runs when the server successfully starts
     log(`serving on port ${port}`);
     
-    // Auto-import CSV data on server startup to prevent data loss
-    try {
-      log(`[startup] Auto-importing P&L CSV data...`);
-      const response = await fetch(`http://localhost:${port}/api/pl/import-csv`, {
-        method: 'POST'
-      });
-      const result = await response.json();
-      log(`[startup] Auto-imported ${result.recordsImported} P&L records`);
-    } catch (error) {
-      log(`[startup] Warning: Failed to auto-import P&L data: ${error}`);
-    }
-
-    // Auto-import cash flow CSV data on server startup
-    try {
-      log(`[startup] Auto-importing Cash Flow CSV data...`);
-      const cfResponse = await fetch(`http://localhost:${port}/api/cashflow/import-csv`, {
-        method: 'POST'
-      });
-      const cfResult = await cfResponse.json();
-      log(`[startup] Auto-imported ${cfResult.recordsImported} Cash Flow records`);
-    } catch (error) {
-      log(`[startup] Warning: Failed to auto-import Cash Flow data: ${error}`);
-    }
+    // Data is now permanently embedded in the application
+    log(`[startup] Using embedded financial data for Eye Specialists & Surgeons`);
   });
 })();
