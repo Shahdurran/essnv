@@ -22,6 +22,17 @@ import {
   type CashOutCategory,
   type CashFlowData
 } from "@shared/schema";
+
+// Define RevenueDataPoint interface for server use
+interface RevenueDataPoint {
+  month: string;
+  revenue: number;
+  expenses: number;
+  ebitda: number;
+  writeOffs: number;
+  patientCount: number;
+  isProjected?: boolean;
+}
 import { randomUUID } from "crypto";
 
 /**
@@ -274,7 +285,11 @@ export class MemStorage implements IStorage {
 
   async createUser(insertUser: InsertUser): Promise<User> {
     const id = randomUUID();
-    const user: User = { ...insertUser, id };
+    const user: User = { 
+      ...insertUser, 
+      id,
+      practiceId: insertUser.practiceId || null
+    };
     this.users.set(id, user);
     return user;
   }
@@ -290,13 +305,23 @@ export class MemStorage implements IStorage {
 
   async createPracticeLocation(insertLocation: InsertPracticeLocation): Promise<PracticeLocation> {
     const id = randomUUID();
-    const location: PracticeLocation = { ...insertLocation, id };
+    const location: PracticeLocation = { 
+      ...insertLocation, 
+      id,
+      phone: insertLocation.phone || null,
+      isActive: insertLocation.isActive ?? null
+    };
     this.practiceLocations.set(id, location);
     return location;
   }
 
   async createPracticeLocationWithId(insertLocation: InsertPracticeLocation, customId: string): Promise<PracticeLocation> {
-    const location: PracticeLocation = { ...insertLocation, id: customId };
+    const location: PracticeLocation = { 
+      ...insertLocation, 
+      id: customId,
+      phone: insertLocation.phone || null,
+      isActive: insertLocation.isActive ?? null
+    };
     this.practiceLocations.set(customId, location);
     return location;
   }
@@ -313,7 +338,10 @@ export class MemStorage implements IStorage {
     const patient: Patient = { 
       ...insertPatient, 
       id,
-      createdAt: new Date()
+      createdAt: new Date(),
+      locationId: insertPatient.locationId || null,
+      dateOfBirth: insertPatient.dateOfBirth || null,
+      insuranceProvider: insertPatient.insuranceProvider || null
     };
     this.patients.set(id, patient);
     return patient;
@@ -332,7 +360,12 @@ export class MemStorage implements IStorage {
 
   async createProcedure(insertProcedure: InsertProcedure): Promise<Procedure> {
     const id = randomUUID();
-    const procedure: Procedure = { ...insertProcedure, id };
+    const procedure: Procedure = { 
+      ...insertProcedure, 
+      id,
+      basePrice: insertProcedure.basePrice || null,
+      rvuValue: insertProcedure.rvuValue || null
+    };
     this.procedures.set(id, procedure);
     return procedure;
   }
@@ -357,7 +390,17 @@ export class MemStorage implements IStorage {
 
   async createPatientVisit(insertVisit: InsertPatientVisit): Promise<PatientVisit> {
     const id = randomUUID();
-    const visit: PatientVisit = { ...insertVisit, id };
+    const visit: PatientVisit = { 
+      ...insertVisit, 
+      id,
+      locationId: insertVisit.locationId || null,
+      patientId: insertVisit.patientId || null,
+      visitType: insertVisit.visitType || null,
+      totalRevenue: insertVisit.totalRevenue || null,
+      insurancePaid: insertVisit.insurancePaid || null,
+      patientPaid: insertVisit.patientPaid || null,
+      status: insertVisit.status || null
+    };
     this.patientVisits.set(id, visit);
     return visit;
   }
@@ -371,7 +414,17 @@ export class MemStorage implements IStorage {
 
   async createVisitProcedure(insertVisitProcedure: InsertVisitProcedure): Promise<VisitProcedure> {
     const id = randomUUID();
-    const visitProcedure: VisitProcedure = { ...insertVisitProcedure, id };
+    const visitProcedure: VisitProcedure = { 
+      ...insertVisitProcedure, 
+      id,
+      visitId: insertVisitProcedure.visitId || null,
+      procedureId: insertVisitProcedure.procedureId || null,
+      quantity: insertVisitProcedure.quantity ?? null,
+      chargedAmount: insertVisitProcedure.chargedAmount || null,
+      paidAmount: insertVisitProcedure.paidAmount || null,
+      insuranceClaimDate: insertVisitProcedure.insuranceClaimDate || null,
+      insurancePaidDate: insertVisitProcedure.insurancePaidDate || null
+    };
     this.visitProcedures.set(id, visitProcedure);
     return visitProcedure;
   }
@@ -388,7 +441,10 @@ export class MemStorage implements IStorage {
     const query: AiQuery = { 
       ...insertQuery, 
       id,
-      createdAt: new Date()
+      createdAt: new Date(),
+      userId: insertQuery.userId || null,
+      response: insertQuery.response || null,
+      queryType: insertQuery.queryType || null
     };
     this.aiQueries.set(id, query);
     return query;
@@ -413,7 +469,13 @@ export class MemStorage implements IStorage {
 
   async createPerformanceMetric(insertMetric: InsertPerformanceMetric): Promise<PerformanceMetric> {
     const id = randomUUID();
-    const metric: PerformanceMetric = { ...insertMetric, id };
+    const metric: PerformanceMetric = { 
+      ...insertMetric, 
+      id,
+      locationId: insertMetric.locationId || null,
+      value: insertMetric.value || null,
+      additionalData: insertMetric.additionalData || null
+    };
     this.performanceMetrics.set(id, metric);
     return metric;
   }
@@ -949,7 +1011,8 @@ export class MemStorage implements IStorage {
     }
 
     // Get all unique months from P&L data, sorted chronologically
-    const allMonths = [...new Set(this.plMonthlyData.map(item => item.monthYear))].sort();
+    const monthsSet = new Set(this.plMonthlyData.map(item => item.monthYear));
+    const allMonths = Array.from(monthsSet).sort();
     
     // Filter months based on period (same logic as revenue-trends)
     let monthsToInclude = allMonths;
@@ -993,6 +1056,7 @@ export class MemStorage implements IStorage {
       clinicalData.push({
         month: monthYear,
         revenue: Math.round(totalRevenue),
+        expenses: Math.round(totalExpenses),
         patientCount: patientCount,
         ebitda: Math.round(ebitda),
         writeOffs: Math.round(writeOffs),
@@ -1222,9 +1286,9 @@ export class MemStorage implements IStorage {
       }));
     };
     
-    const operating = convertToApiFormat(cashFlowData.operating);
-    const investing = convertToApiFormat(cashFlowData.investing);
-    const financing = convertToApiFormat(cashFlowData.financing);
+    const operating = convertToApiFormat(cashFlowData.operating) as any;
+    const investing = convertToApiFormat(cashFlowData.investing) as any;
+    const financing = convertToApiFormat(cashFlowData.financing) as any;
     
     // Calculate totals using embedded data
     const operatingCashFlow = Math.round(cashFlowData.totals.operating * timeMultiplier);
@@ -1240,13 +1304,7 @@ export class MemStorage implements IStorage {
       investingCashFlow,
       financingCashFlow,
       netCashFlow,
-      period: finalPeriod,
-      totals: {
-        operating: operatingCashFlow,
-        investing: investingCashFlow,
-        financing: financingCashFlow,
-        netCashFlow
-      }
+      period: finalPeriod
     };
   }
 
