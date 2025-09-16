@@ -1001,53 +1001,40 @@ export class MemStorage implements IStorage {
     return monthMap[monthYear] || 2000; // Default fallback
   }
 
-  // Clinical metrics data using real P&L data for Key Metrics Trends Chart
+  // Clinical metrics data using embedded financial data for Key Metrics Trends Chart
   async getClinicalMetricsData(locationId?: string, period?: string): Promise<RevenueDataPoint[]> {
     const finalPeriod = period || "1yr";
     
-    // If no P&L data imported yet, return empty array
-    if (this.plMonthlyData.length === 0) {
-      return [];
+    // Load embedded data if not already loaded
+    if (!this.embeddedFinancialData) {
+      await this.loadEmbeddedData();
     }
 
-    // Get all unique months from P&L data, sorted chronologically
-    const monthsSet = new Set(this.plMonthlyData.map(item => item.monthYear));
-    const allMonths = Array.from(monthsSet).sort();
+    // Generate months for the specified period
+    const monthsToInclude = this.getMonthsForPeriod(finalPeriod);
     
-    // Filter months based on period (same logic as revenue-trends)
-    let monthsToInclude = allMonths;
+    // Add projection months for 1yr period
     if (finalPeriod === '1yr') {
-      // Show last 12 months + 2 projection months
-      monthsToInclude = allMonths.slice(-12).concat(['2025-09', '2025-10']); // Add projections
+      monthsToInclude.push('2025-09', '2025-10'); // Add future projections
     }
 
     const clinicalData: RevenueDataPoint[] = [];
+    
+    // Calculate time multiplier for proper monthly scaling
+    const monthlyMultiplier = 1 / 12; // Convert annual data to monthly
 
     for (const monthYear of monthsToInclude) {
-      // Filter P&L data for this month and location
-      let monthData = this.plMonthlyData.filter(item => 
-        item.monthYear === monthYear &&
-        (locationId === 'all' || !locationId || item.locationId === locationId)
-      );
-
-      // Calculate Revenue (sum of all revenue line items)
-      const revenueItems = monthData.filter(item => item.categoryType === 'revenue');
-      const totalRevenue = revenueItems.reduce((sum, item) => sum + item.amount, 0);
-
-      // Calculate Expenses (sum of direct costs + operating expenses)
-      const expenseItems = monthData.filter(item => 
-        item.categoryType === 'direct_costs' || item.categoryType === 'operating_expenses'
-      );
-      const totalExpenses = expenseItems.reduce((sum, item) => sum + Math.abs(item.amount), 0);
-
+      // Use embedded P&L data with monthly scaling
+      const totalRevenue = Math.round(this.embeddedFinancialData.profitLoss.totalRevenue * monthlyMultiplier);
+      const totalExpenses = Math.round(this.embeddedFinancialData.profitLoss.totalExpenses * monthlyMultiplier);
+      
       // Calculate EBITDA (Net Profit = Revenue - Expenses)
       const ebitda = totalRevenue - totalExpenses;
 
-      // Get Write-offs (Bad Debt Expense)
-      const writeOffsItem = monthData.find(item => item.lineItem === 'Bad Debt Expense');
-      const writeOffs = writeOffsItem ? Math.abs(writeOffsItem.amount) : 0;
+      // Get Write-offs from Bad Debt Expense in embedded data
+      const writeOffs = Math.round((this.embeddedFinancialData.profitLoss.expenses["Bad Debt Expense"] || 0) * monthlyMultiplier);
 
-      // Get Patient Count
+      // Get Patient Count for this month
       const patientCount = this.generatePatientCount(monthYear);
 
       // Determine if this is projected data (future months beyond Aug 2025)
@@ -1055,11 +1042,11 @@ export class MemStorage implements IStorage {
 
       clinicalData.push({
         month: monthYear,
-        revenue: Math.round(totalRevenue),
-        expenses: Math.round(totalExpenses),
+        revenue: totalRevenue,
+        expenses: totalExpenses,
         patientCount: patientCount,
-        ebitda: Math.round(ebitda),
-        writeOffs: Math.round(writeOffs),
+        ebitda: ebitda,
+        writeOffs: writeOffs,
         isProjected: isProjected
       });
     }
