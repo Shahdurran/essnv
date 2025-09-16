@@ -126,10 +126,10 @@ export default function CashFlowWidget({ selectedLocationId, selectedPeriod }: C
   });
 
   // Calculate totals from API data
-  const operatingCashFlow = cashFlowApiData?.totals?.operating || 0;
-  const investingCashFlow = cashFlowApiData?.totals?.investing || 0;
-  const financingCashFlow = cashFlowApiData?.totals?.financing || 0;
-  const netCashFlow = cashFlowApiData?.totals?.netCashFlow || 0;
+  const operatingCashFlow = cashFlowApiData?.operatingCashFlow || 0;
+  const investingCashFlow = cashFlowApiData?.investingCashFlow || 0;
+  const financingCashFlow = cashFlowApiData?.financingCashFlow || 0;
+  const netCashFlow = cashFlowApiData?.netCashFlow || 0;
 
   const formatCurrency = (amount: number) => {
     return new Intl.NumberFormat("en-US", {
