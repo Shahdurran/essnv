@@ -1001,7 +1001,7 @@ export class MemStorage implements IStorage {
     return monthMap[monthYear] || 2000; // Default fallback
   }
 
-  // Clinical metrics data using embedded financial data for Key Metrics Trends Chart
+  // Clinical metrics data using real monthly P&L data for Key Metrics Trends Chart
   async getClinicalMetricsData(locationId?: string, period?: string): Promise<RevenueDataPoint[]> {
     const finalPeriod = period || "1yr";
     
@@ -1020,25 +1020,53 @@ export class MemStorage implements IStorage {
 
     const clinicalData: RevenueDataPoint[] = [];
     
-    // Calculate time multiplier for proper monthly scaling
-    const monthlyMultiplier = 1 / 12; // Convert annual data to monthly
+    // Calculate monthly write-offs as percentage of total annual Bad Debt
+    const annualWriteOffs = this.embeddedFinancialData.profitLoss.expenses["Bad Debt Expense"] || 0;
 
     for (const monthYear of monthsToInclude) {
-      // Use embedded P&L data with monthly scaling
-      const totalRevenue = Math.round(this.embeddedFinancialData.profitLoss.totalRevenue * monthlyMultiplier);
-      const totalExpenses = Math.round(this.embeddedFinancialData.profitLoss.totalExpenses * monthlyMultiplier);
-      
-      // Calculate EBITDA (Net Profit = Revenue - Expenses)
-      const ebitda = totalRevenue - totalExpenses;
+      let totalRevenue: number;
+      let totalExpenses: number;
+      let ebitda: number;
+      let writeOffs: number;
 
-      // Get Write-offs from Bad Debt Expense in embedded data
-      const writeOffs = Math.round((this.embeddedFinancialData.profitLoss.expenses["Bad Debt Expense"] || 0) * monthlyMultiplier);
+      // Check if this is a future projection month
+      const isProjected = monthYear > '2025-08';
+
+      if (isProjected) {
+        // For projections, use average of last 3 months
+        const lastThreeMonths = ['2025-06', '2025-07', '2025-08'];
+        const avgRevenue = lastThreeMonths.reduce((sum, month) => 
+          sum + (this.embeddedFinancialData.monthly[month]?.revenue || 0), 0) / 3;
+        const avgExpenses = lastThreeMonths.reduce((sum, month) => 
+          sum + (this.embeddedFinancialData.monthly[month]?.expenses || 0), 0) / 3;
+        
+        totalRevenue = Math.round(avgRevenue);
+        totalExpenses = Math.round(avgExpenses);
+        ebitda = Math.round(avgRevenue - avgExpenses);
+        writeOffs = Math.round(annualWriteOffs / 12); // Average monthly write-offs
+      } else {
+        // Use actual monthly data from embedded financial data
+        const monthlyData = this.embeddedFinancialData.monthly[monthYear];
+        
+        if (monthlyData) {
+          totalRevenue = monthlyData.revenue;
+          totalExpenses = monthlyData.expenses;
+          ebitda = monthlyData.netProfit;
+          
+          // Calculate write-offs as proportional to monthly revenue
+          const monthlyRevenueRatio = monthlyData.revenue / this.embeddedFinancialData.profitLoss.totalRevenue;
+          writeOffs = Math.round(annualWriteOffs * monthlyRevenueRatio);
+        } else {
+          // Fallback for missing months
+          totalRevenue = 0;
+          totalExpenses = 0;
+          ebitda = 0;
+          writeOffs = 0;
+        }
+      }
 
       // Get Patient Count for this month
       const patientCount = this.generatePatientCount(monthYear);
-
-      // Determine if this is projected data (future months beyond Aug 2025)
-      const isProjected = monthYear > '2025-08';
 
       clinicalData.push({
         month: monthYear,
