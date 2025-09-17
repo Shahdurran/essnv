@@ -386,7 +386,7 @@ export default function Dashboard() {
                 </div>
                 
                 {/* Revenue and Expenses Widgets Row */}
-                <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
+                <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
                   {/* Financial Revenue Widget */}
                   <div data-testid="widget-financial-revenue">
                     <FinancialRevenueWidget 
@@ -415,7 +415,7 @@ export default function Dashboard() {
                   </div>
                   
                   {/* Cash In vs Cash Out Widgets Row */}
-                  <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
+                  <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
                     {/* Cash In Widget */}
                     <div data-testid="widget-cash-in">
                       <CashInWidget 
@@ -469,7 +469,7 @@ export default function Dashboard() {
                   Clinical Analysis Grid Layout - Mobile Responsive
                   Two-column responsive grid for procedure analytics and practice insights
                 */}
-                <div className="grid grid-cols-1 gap-4 sm:gap-6 lg:grid-cols-2 lg:gap-8">
+                <div className="grid grid-cols-1 gap-4 sm:gap-6 md:grid-cols-2 md:gap-8">
 
                   {/* 
                     Top Revenue Procedures Component
@@ -493,7 +493,7 @@ export default function Dashboard() {
                   Bottom Row - Billing and AR Analytics (50/50 Layout)
                   Two-column responsive grid for billing analytics and AR aging
                 */}
-                <div className="grid grid-cols-1 gap-4 sm:gap-6 lg:grid-cols-2 lg:gap-8">
+                <div className="grid grid-cols-1 gap-4 sm:gap-6 md:grid-cols-2 md:gap-8">
                   
                   {/* 
                     Patient Billing Analytics Component
