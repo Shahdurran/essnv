@@ -72,6 +72,23 @@ app.use((req, res, next) => {
   const start = Date.now();
   const path = req.path;
   
+  // EXTENSIVE DEBUGGING LOGS FOR DEPLOYMENT ISSUES
+  console.log(`🚀 [REQUEST START] ${new Date().toISOString()}`);
+  console.log(`📊 [REQUEST] ${req.method} ${path}`);
+  console.log(`🌐 [HEADERS] User-Agent: ${req.get('User-Agent') || 'None'}`);
+  console.log(`🌐 [HEADERS] Accept: ${req.get('Accept') || 'None'}`);
+  console.log(`🌐 [HEADERS] Cache-Control: ${req.get('Cache-Control') || 'None'}`);
+  console.log(`🌐 [HEADERS] If-None-Match: ${req.get('If-None-Match') || 'None'}`);
+  console.log(`🌐 [HEADERS] Connection: ${req.get('Connection') || 'None'}`);
+  console.log(`🍪 [COOKIES] ${JSON.stringify(req.cookies || {})}`);
+  console.log(`📍 [CLIENT] IP: ${req.ip}, IPs: ${JSON.stringify(req.ips)}`);
+  console.log(`🔄 [SESSION] ${req.session ? 'Active' : 'None'} - ID: ${req.sessionID || 'N/A'}`);
+  console.log(`🏗️  [ENV] NODE_ENV: ${process.env.NODE_ENV}, Mode: ${app.get('env')}`);
+  
+  // Memory usage tracking
+  const memUsage = process.memoryUsage();
+  console.log(`💾 [MEMORY] RSS: ${(memUsage.rss / 1024 / 1024).toFixed(1)}MB, Heap: ${(memUsage.heapUsed / 1024 / 1024).toFixed(1)}MB/${(memUsage.heapTotal / 1024 / 1024).toFixed(1)}MB`);
+  
   // Variable to store the response data for logging
   let capturedJsonResponse: Record<string, any> | undefined = undefined;
 
@@ -88,10 +105,16 @@ app.use((req, res, next) => {
   res.json = function (bodyJson, ...args) {
     // Store the response data for logging
     capturedJsonResponse = bodyJson;
+    console.log(`📤 [RESPONSE PREP] Status: ${res.statusCode}, Headers set: ${JSON.stringify(res.getHeaders())}`);
     // Call the original method with all the same arguments
     // .apply() calls the function with a specific 'this' context and arguments array
     return originalResJson.apply(res, [bodyJson, ...args]);
   };
+
+  // Track response errors
+  res.on('error', (err) => {
+    console.error(`❌ [RESPONSE ERROR] ${req.method} ${path}:`, err);
+  });
 
   /*
    * EVENT-DRIVEN LOGGING:
@@ -102,6 +125,9 @@ app.use((req, res, next) => {
     // Calculate how long the request took
     const duration = Date.now() - start;
     
+    console.log(`✅ [REQUEST END] ${req.method} ${path} - Status: ${res.statusCode} - Duration: ${duration}ms`);
+    console.log(`📤 [RESPONSE] Headers: ${JSON.stringify(res.getHeaders())}`);
+    
     // Only log API requests (not static files like CSS, images, etc.)
     if (path.startsWith("/api")) {
       // Build a descriptive log line
@@ -109,17 +135,19 @@ app.use((req, res, next) => {
       
       // Include response data if it exists
       if (capturedJsonResponse) {
-        logLine += ` :: ${JSON.stringify(capturedJsonResponse)}`;
-      }
-
-      // Truncate very long log lines to keep output readable
-      if (logLine.length > 80) {
-        logLine = logLine.slice(0, 79) + "…";
+        const responseStr = JSON.stringify(capturedJsonResponse);
+        if (responseStr.length > 200) {
+          logLine += ` :: ${responseStr.substring(0, 200)}...`;
+        } else {
+          logLine += ` :: ${responseStr}`;
+        }
       }
 
       // Use our custom logging function
       log(logLine);
     }
+    
+    console.log(`🔚 [REQUEST COMPLETE] ===========================================`);
   });
 
   // Call next() to continue to the next middleware or route handler
