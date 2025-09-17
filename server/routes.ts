@@ -76,6 +76,64 @@ import { extractQueryContext } from "./utils/queryParser";
  * This includes routes for analytics data, AI assistant, and practice management
  */
 export async function registerRoutes(app: Express): Promise<Server> {
+  // PRODUCTION DEBUGGING: Track server startup and resource state
+  console.log(`🚀 [PRODUCTION] Server registration starting at ${new Date().toISOString()}`);
+  console.log(`🔧 [PRODUCTION] OpenAI API Key configured: ${!!openai.apiKey && openai.apiKey !== 'default_key'}`);
+  console.log(`💾 [PRODUCTION] Initial memory: ${JSON.stringify(process.memoryUsage())}`);
+  
+  // Track API request counts for rate limiting analysis
+  const requestCounts = new Map<string, number>();
+  const errorCounts = new Map<string, number>();
+  let serverStartTime = Date.now();
+  let lastHealthReport = Date.now();
+  
+  // PRODUCTION HEALTH MONITORING - Report server health every 2 minutes
+  const healthMonitor = setInterval(() => {
+    const uptime = Date.now() - serverStartTime;
+    const memUsage = process.memoryUsage();
+    const totalRequests = Array.from(requestCounts.values()).reduce((a, b) => a + b, 0);
+    const totalErrors = Array.from(errorCounts.values()).reduce((a, b) => a + b, 0);
+    
+    console.log(`🏥 [PRODUCTION HEALTH] ============================================`);
+    console.log(`🏥 [PRODUCTION HEALTH] Server uptime: ${(uptime / 1000 / 60).toFixed(1)} minutes`);
+    console.log(`🏥 [PRODUCTION HEALTH] Total requests: ${totalRequests}, Total errors: ${totalErrors}`);
+    console.log(`🏥 [PRODUCTION HEALTH] Error rate: ${totalRequests > 0 ? (totalErrors / totalRequests * 100).toFixed(2) : 0}%`);
+    console.log(`🏥 [PRODUCTION HEALTH] Memory usage: RSS ${(memUsage.rss / 1024 / 1024).toFixed(1)}MB, Heap ${(memUsage.heapUsed / 1024 / 1024).toFixed(1)}/${(memUsage.heapTotal / 1024 / 1024).toFixed(1)}MB`);
+    console.log(`🏥 [PRODUCTION HEALTH] Active endpoints: ${requestCounts.size}`);
+    
+    // Log top failing endpoints
+    const sortedErrors = Array.from(errorCounts.entries()).sort((a, b) => b[1] - a[1]).slice(0, 5);
+    if (sortedErrors.length > 0) {
+      console.log(`🏥 [PRODUCTION HEALTH] Top failing endpoints:`);
+      sortedErrors.forEach(([endpoint, count]) => {
+        console.log(`🏥 [PRODUCTION HEALTH]   ${endpoint}: ${count} errors`);
+      });
+    }
+    
+    console.log(`🏥 [PRODUCTION HEALTH] ============================================`);
+    lastHealthReport = Date.now();
+  }, 120000); // Every 2 minutes
+  
+  // Clean up interval on server shutdown
+  process.on('SIGTERM', () => {
+    clearInterval(healthMonitor);
+  });
+  
+  // Middleware to track API usage patterns
+  app.use('/api/*', (req, res, next) => {
+    const endpoint = req.path;
+    requestCounts.set(endpoint, (requestCounts.get(endpoint) || 0) + 1);
+    
+    console.log(`📊 [PRODUCTION API] ${endpoint} - Count: ${requestCounts.get(endpoint)} - Time: ${new Date().toISOString()}`);
+    
+    // Log every 10th request for pattern analysis
+    if (requestCounts.get(endpoint)! % 10 === 0) {
+      console.log(`🔄 [PRODUCTION PATTERN] ${endpoint} hit ${requestCounts.get(endpoint)} times`);
+      console.log(`📈 [PRODUCTION STATS] Total endpoints: ${requestCounts.size}, Total errors: ${Array.from(errorCounts.values()).reduce((a, b) => a + b, 0)}`);
+    }
+    
+    next();
+  });
   // ============================================================================
   // HEALTH CHECK ROUTES (MUST BE FIRST)
   // ============================================================================
@@ -146,10 +204,27 @@ export async function registerRoutes(app: Express): Promise<Server> {
    * Returns the 5 Rao Dermatology locations for the location selector
    */
   app.get("/api/locations", async (req, res) => {
+    const startTime = Date.now();
+    console.log(`🏢 [PRODUCTION] Locations request started at ${new Date().toISOString()}`);
+    
     try {
+      console.log(`🏢 [PRODUCTION] Calling storage.getAllPracticeLocations()`);
       const locations = await storage.getAllPracticeLocations();
+      const duration = Date.now() - startTime;
+      
+      console.log(`✅ [PRODUCTION] Locations fetched successfully in ${duration}ms - Count: ${locations.length}`);
+      console.log(`📊 [PRODUCTION] Locations data: ${JSON.stringify(locations).substring(0, 200)}...`);
+      
       res.json(locations);
-    } catch (error) {
+    } catch (error: any) {
+      const duration = Date.now() - startTime;
+      errorCounts.set('/api/locations', (errorCounts.get('/api/locations') || 0) + 1);
+      
+      console.error(`❌ [PRODUCTION] Locations error after ${duration}ms:`, error);
+      console.error(`❌ [PRODUCTION] Locations error type: ${error.constructor.name}`);
+      console.error(`❌ [PRODUCTION] Locations error message: ${error.message}`);
+      console.error(`❌ [PRODUCTION] Storage object status: ${storage ? 'Exists' : 'Missing'}`);
+      
       console.error("Error fetching practice locations:", error);
       res.status(500).json({ message: "Failed to fetch practice locations" });
     }
@@ -219,22 +294,42 @@ export async function registerRoutes(app: Express): Promise<Server> {
    * Path params: locationId (or 'all'), period (1M|3M|6M|1Y|custom)
    */
   app.get("/api/financial/revenue/:locationId/:period", async (req, res) => {
+    const startTime = Date.now();
+    const endpoint = `/api/financial/revenue/${req.params.locationId}/${req.params.period}`;
+    console.log(`💰 [PRODUCTION] Revenue request: ${endpoint} at ${new Date().toISOString()}`);
+    
     try {
       const { locationId, period } = req.params;
+      console.log(`💰 [PRODUCTION] Revenue params - Location: ${locationId}, Period: ${period}`);
 
       const validation = validateFinancialParams(locationId, period);
       if (!validation.valid) {
+        console.log(`❌ [PRODUCTION] Revenue validation failed: ${validation.error}`);
+        errorCounts.set(endpoint, (errorCounts.get(endpoint) || 0) + 1);
         return res.status(400).json({ message: validation.error });
       }
 
       const finalLocationId =
         locationId === "all" ? undefined : locationId.toLowerCase();
+      console.log(`💰 [PRODUCTION] Revenue calling storage with: ${finalLocationId}, ${period.toUpperCase()}`);
+      
       const revenueData = await storage.getFinancialRevenueData(
         finalLocationId,
         period.toUpperCase(),
       );
+      
+      const duration = Date.now() - startTime;
+      console.log(`✅ [PRODUCTION] Revenue successful in ${duration}ms - Categories: ${revenueData?.categories?.length || 0}`);
+      
       res.json(revenueData);
-    } catch (error) {
+    } catch (error: any) {
+      const duration = Date.now() - startTime;
+      errorCounts.set(endpoint, (errorCounts.get(endpoint) || 0) + 1);
+      
+      console.error(`❌ [PRODUCTION] Revenue error after ${duration}ms:`, error);
+      console.error(`❌ [PRODUCTION] Revenue error type: ${error.constructor.name}`);
+      console.error(`❌ [PRODUCTION] Revenue storage status: ${storage ? 'OK' : 'Missing'}`);
+      
       console.error("Error fetching financial revenue data:", error);
       res
         .status(500)
@@ -609,19 +704,31 @@ export async function registerRoutes(app: Express): Promise<Server> {
    * Body: { query: string, userId?: string, locationId?: string, timeRange?: string }
    */
   app.post("/api/ai/query", async (req, res) => {
+    const startTime = Date.now();
+    console.log(`🤖 [PRODUCTION AI] Query started at ${new Date().toISOString()}`);
+    console.log(`🤖 [PRODUCTION AI] Request body: ${JSON.stringify(req.body)}`);
+    console.log(`🤖 [PRODUCTION AI] OpenAI client status: ${openai ? 'Initialized' : 'Missing'}`);
+    
     try {
       const { query, userId, locationId = "all", timeRange = "1" } = req.body;
 
       if (!query || typeof query !== "string") {
+        console.log(`❌ [PRODUCTION AI] Invalid query: ${JSON.stringify({ query, type: typeof query })}`);
+        errorCounts.set('/api/ai/query', (errorCounts.get('/api/ai/query') || 0) + 1);
         return res
           .status(400)
           .json({ message: "Query is required and must be a string" });
       }
 
       // Get available locations for AI context
+      console.log(`🏢 [PRODUCTION AI] Fetching locations for context`);
       const availableLocations = await storage.getAllPracticeLocations();
+      console.log(`🏢 [PRODUCTION AI] Got ${availableLocations.length} locations`);
 
       // Process query using new AI assistant utility
+      console.log(`🔄 [PRODUCTION AI] Processing query: "${query.substring(0, 100)}..."`);
+      console.log(`🔄 [PRODUCTION AI] Location: ${locationId}, TimeRange: ${timeRange}`);
+      
       const aiResponse = await processAIQuery(
         query,
         availableLocations,
@@ -629,9 +736,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
         locationId,
         timeRange,
       );
+      
+      console.log(`✅ [PRODUCTION AI] Query processed successfully in ${Date.now() - startTime}ms`);
+      console.log(`📊 [PRODUCTION AI] Response type: ${aiResponse.queryType}, Length: ${aiResponse.response.length}`);
 
       // Store the query and response for analytics
       if (userId) {
+        console.log(`💾 [PRODUCTION AI] Storing query for user: ${userId}`);
         await storage.createAiQuery({
           userId,
           query,
@@ -641,7 +752,29 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       res.json(aiResponse);
-    } catch (error) {
+    } catch (error: any) {
+      const duration = Date.now() - startTime;
+      errorCounts.set('/api/ai/query', (errorCounts.get('/api/ai/query') || 0) + 1);
+      
+      console.error(`❌ [PRODUCTION AI ERROR] After ${duration}ms:`, error);
+      console.error(`❌ [PRODUCTION AI ERROR] Error type: ${error.constructor.name}`);
+      console.error(`❌ [PRODUCTION AI ERROR] Error message: ${error.message}`);
+      console.error(`❌ [PRODUCTION AI ERROR] Error code: ${error.code || 'N/A'}`);
+      console.error(`❌ [PRODUCTION AI ERROR] Error status: ${error.status || 'N/A'}`);
+      
+      // Check for specific OpenAI rate limiting errors
+      if (error.message?.includes('rate limit') || error.message?.includes('quota') || error.status === 429) {
+        console.error(`🚫 [PRODUCTION AI RATE LIMIT] OpenAI rate limit exceeded!`);
+        console.error(`🚫 [PRODUCTION AI RATE LIMIT] Error details: ${JSON.stringify(error)}`);
+      }
+      
+      // Check for OpenAI API key issues
+      if (error.message?.includes('api key') || error.status === 401) {
+        console.error(`🔑 [PRODUCTION AI AUTH] OpenAI authentication error!`);
+        console.error(`🔑 [PRODUCTION AI AUTH] API Key exists: ${!!openai.apiKey}`);
+        console.error(`🔑 [PRODUCTION AI AUTH] API Key length: ${openai.apiKey?.length || 0}`);
+      }
+      
       console.error("Error processing AI query:", error);
       const {
         locationId: fallbackLocationId = "all",

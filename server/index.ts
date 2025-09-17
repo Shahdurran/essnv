@@ -82,7 +82,7 @@ app.use((req, res, next) => {
   console.log(`🌐 [HEADERS] Connection: ${req.get('Connection') || 'None'}`);
   console.log(`🍪 [COOKIES] ${JSON.stringify(req.cookies || {})}`);
   console.log(`📍 [CLIENT] IP: ${req.ip}, IPs: ${JSON.stringify(req.ips)}`);
-  console.log(`🔄 [SESSION] ${req.session ? 'Active' : 'None'} - ID: ${req.sessionID || 'N/A'}`);
+  console.log(`🔄 [SESSION] ${(req as any).session ? 'Active' : 'None'} - ID: ${(req as any).sessionID || 'N/A'}`);
   console.log(`🏗️  [ENV] NODE_ENV: ${process.env.NODE_ENV}, Mode: ${app.get('env')}`);
   
   // Memory usage tracking
@@ -264,6 +264,25 @@ app.use((req, res, next) => {
   }, async () => {
     // This callback runs when the server successfully starts
     log(`serving on port ${port}`);
+    
+    // PRODUCTION DEBUGGING: Log critical server startup info
+    console.log(`🚀 [PRODUCTION STARTUP] ===========================================`);
+    console.log(`🚀 [PRODUCTION STARTUP] Server started at ${new Date().toISOString()}`);
+    console.log(`🚀 [PRODUCTION STARTUP] Port: ${port}, Host: 0.0.0.0`);
+    console.log(`🚀 [PRODUCTION STARTUP] NODE_ENV: ${process.env.NODE_ENV || 'undefined'}`);
+    console.log(`🚀 [PRODUCTION STARTUP] App env mode: ${app.get('env')}`);
+    console.log(`🚀 [PRODUCTION STARTUP] Production detection: ${app.get("env") === "production" || process.argv.includes("dist/index.js")}`);
+    console.log(`🚀 [PRODUCTION STARTUP] Process args: ${process.argv.join(' ')}`);
+    console.log(`🚀 [PRODUCTION STARTUP] Working directory: ${process.cwd()}`);
+    
+    // Check for critical environment variables
+    const criticalEnvVars = ['DATABASE_URL', 'OPENAI_API_KEY', 'OPENAI_API_KEY_ENV_VAR'];
+    criticalEnvVars.forEach(envVar => {
+      const value = process.env[envVar];
+      console.log(`🚀 [PRODUCTION STARTUP] ${envVar}: ${value ? 'SET' : 'MISSING'} ${value ? `(length: ${value.length})` : ''}`);
+    });
+    
+    console.log(`🚀 [PRODUCTION STARTUP] ===========================================`);
     
     // Data is now permanently embedded in the application
     log(`[startup] Using embedded financial data for Eye Specialists & Surgeons`);
