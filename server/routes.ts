@@ -75,23 +75,6 @@ import { extractQueryContext } from './utils/queryParser';
 export async function registerRoutes(app: Express): Promise<Server> {
   
   // ============================================================================
-  // HEALTH CHECK ENDPOINT FOR DEPLOYMENT
-  // ============================================================================
-  
-  /**
-   * GET / - Root endpoint for deployment health checks
-   * This endpoint is required for deployment health verification
-   * Returns a simple success response to confirm the server is running
-   */
-  app.get("/", (req, res) => {
-    res.json({ 
-      status: "ok", 
-      message: "MDS AI Analytics API is running",
-      timestamp: new Date().toISOString()
-    });
-  });
-  
-  // ============================================================================
   // PRACTICE LOCATION ROUTES
   // ============================================================================
   

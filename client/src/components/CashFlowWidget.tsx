@@ -37,10 +37,12 @@ interface CashFlowApiResponse {
   operating: { name: string; amount: number; change: number; trend: string }[];
   investing: { name: string; amount: number; change: number; trend: string }[];
   financing: { name: string; amount: number; change: number; trend: string }[];
-  operatingCashFlow: number;
-  investingCashFlow: number;
-  financingCashFlow: number;
-  netCashFlow: number;
+  totals: {
+    operating: number;
+    investing: number;
+    financing: number;
+    netCashFlow: number;
+  };
   period: string;
 }
 
