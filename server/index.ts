@@ -72,22 +72,24 @@ app.use((req, res, next) => {
   const start = Date.now();
   const path = req.path;
   
-  // EXTENSIVE DEBUGGING LOGS FOR DEPLOYMENT ISSUES
-  console.log(`🚀 [REQUEST START] ${new Date().toISOString()}`);
-  console.log(`📊 [REQUEST] ${req.method} ${path}`);
-  console.log(`🌐 [HEADERS] User-Agent: ${req.get('User-Agent') || 'None'}`);
-  console.log(`🌐 [HEADERS] Accept: ${req.get('Accept') || 'None'}`);
-  console.log(`🌐 [HEADERS] Cache-Control: ${req.get('Cache-Control') || 'None'}`);
-  console.log(`🌐 [HEADERS] If-None-Match: ${req.get('If-None-Match') || 'None'}`);
-  console.log(`🌐 [HEADERS] Connection: ${req.get('Connection') || 'None'}`);
-  console.log(`🍪 [COOKIES] ${JSON.stringify(req.cookies || {})}`);
-  console.log(`📍 [CLIENT] IP: ${req.ip}, IPs: ${JSON.stringify(req.ips)}`);
-  console.log(`🔄 [SESSION] ${(req as any).session ? 'Active' : 'None'} - ID: ${(req as any).sessionID || 'N/A'}`);
-  console.log(`🏗️  [ENV] NODE_ENV: ${process.env.NODE_ENV}, Mode: ${app.get('env')}`);
-  
-  // Memory usage tracking
-  const memUsage = process.memoryUsage();
-  console.log(`💾 [MEMORY] RSS: ${(memUsage.rss / 1024 / 1024).toFixed(1)}MB, Heap: ${(memUsage.heapUsed / 1024 / 1024).toFixed(1)}MB/${(memUsage.heapTotal / 1024 / 1024).toFixed(1)}MB`);
+  // PRODUCTION DEBUGGING LOGS ONLY
+  if (process.env.NODE_ENV === 'production' || app.get('env') === 'production') {
+    console.log(`🚀 [PROD REQUEST START] ${new Date().toISOString()} - ${req.method} ${path}`);
+    console.log(`🚀 [PROD HEADERS] UA: ${req.get('User-Agent')?.substring(0, 50) || 'None'}`);
+    console.log(`🚀 [PROD HEADERS] Accept: ${req.get('Accept') || 'None'}`);
+    console.log(`🚀 [PROD HEADERS] Cache: ${req.get('Cache-Control') || 'None'}`);
+    console.log(`🚀 [PROD HEADERS] Auth: ${req.get('Authorization') ? 'Present' : 'None'}`);
+    console.log(`🚀 [PROD CLIENT] IP: ${req.ip}, Real-IP: ${req.get('X-Real-IP') || 'None'}`);
+    console.log(`🚀 [PROD SESSION] ${(req as any).session ? 'Active' : 'None'}`);
+    
+    // Memory usage tracking for production
+    const memUsage = process.memoryUsage();
+    console.log(`🚀 [PROD MEMORY] RSS: ${(memUsage.rss / 1024 / 1024).toFixed(1)}MB, Heap: ${(memUsage.heapUsed / 1024 / 1024).toFixed(1)}MB`);
+    
+    // Track uptime and load
+    const uptime = process.uptime();
+    console.log(`🚀 [PROD SERVER] Uptime: ${(uptime / 60).toFixed(1)}min, PID: ${process.pid}`);
+  }
   
   // Variable to store the response data for logging
   let capturedJsonResponse: Record<string, any> | undefined = undefined;
@@ -105,15 +107,20 @@ app.use((req, res, next) => {
   res.json = function (bodyJson, ...args) {
     // Store the response data for logging
     capturedJsonResponse = bodyJson;
-    console.log(`📤 [RESPONSE PREP] Status: ${res.statusCode}, Headers set: ${JSON.stringify(res.getHeaders())}`);
+    if (process.env.NODE_ENV === 'production' || app.get('env') === 'production') {
+      console.log(`🚀 [PROD RESPONSE PREP] ${res.statusCode} - Headers: ${Object.keys(res.getHeaders()).join(',')}`);
+    }
     // Call the original method with all the same arguments
     // .apply() calls the function with a specific 'this' context and arguments array
     return originalResJson.apply(res, [bodyJson, ...args]);
   };
 
-  // Track response errors
+  // Track response errors in production
   res.on('error', (err) => {
-    console.error(`❌ [RESPONSE ERROR] ${req.method} ${path}:`, err);
+    if (process.env.NODE_ENV === 'production' || app.get('env') === 'production') {
+      console.error(`🚀 [PROD RESPONSE ERROR] ${req.method} ${path}: ${err.message}`);
+      console.error(`🚀 [PROD ERROR STACK] ${err.stack?.substring(0, 500)}`);
+    }
   });
 
   /*
@@ -125,15 +132,37 @@ app.use((req, res, next) => {
     // Calculate how long the request took
     const duration = Date.now() - start;
     
-    console.log(`✅ [REQUEST END] ${req.method} ${path} - Status: ${res.statusCode} - Duration: ${duration}ms`);
-    console.log(`📤 [RESPONSE] Headers: ${JSON.stringify(res.getHeaders())}`);
-    
-    // Only log API requests (not static files like CSS, images, etc.)
-    if (path.startsWith("/api")) {
-      // Build a descriptive log line
-      let logLine = `${req.method} ${path} ${res.statusCode} in ${duration}ms`;
+    if (process.env.NODE_ENV === 'production' || app.get('env') === 'production') {
+      console.log(`🚀 [PROD REQUEST END] ${req.method} ${path} - Status: ${res.statusCode} - Duration: ${duration}ms`);
       
-      // Include response data if it exists
+      // Log slow requests
+      if (duration > 1000) {
+        console.log(`🚀 [PROD SLOW REQUEST] ${req.method} ${path} took ${duration}ms - INVESTIGATE!`);
+      }
+      
+      // Log errors
+      if (res.statusCode >= 400) {
+        console.log(`🚀 [PROD ERROR RESPONSE] ${req.method} ${path} - ${res.statusCode}`);
+        if (capturedJsonResponse) {
+          console.log(`🚀 [PROD ERROR DATA] ${JSON.stringify(capturedJsonResponse).substring(0, 300)}`);
+        }
+      }
+      
+      // Log API requests with data
+      if (path.startsWith("/api")) {
+        console.log(`🚀 [PROD API] ${req.method} ${path} ${res.statusCode} in ${duration}ms`);
+        if (capturedJsonResponse && res.statusCode < 300) {
+          const respStr = JSON.stringify(capturedJsonResponse);
+          console.log(`🚀 [PROD API DATA] ${respStr.length} chars: ${respStr.substring(0, 150)}...`);
+        }
+      }
+      
+      console.log(`🚀 [PROD REQUEST COMPLETE] =====================================`);
+    }
+    
+    // Keep original logging for development
+    if (path.startsWith("/api")) {
+      let logLine = `${req.method} ${path} ${res.statusCode} in ${duration}ms`;
       if (capturedJsonResponse) {
         const responseStr = JSON.stringify(capturedJsonResponse);
         if (responseStr.length > 200) {
@@ -142,12 +171,8 @@ app.use((req, res, next) => {
           logLine += ` :: ${responseStr}`;
         }
       }
-
-      // Use our custom logging function
       log(logLine);
     }
-    
-    console.log(`🔚 [REQUEST COMPLETE] ===========================================`);
   });
 
   // Call next() to continue to the next middleware or route handler
@@ -266,23 +291,32 @@ app.use((req, res, next) => {
     log(`serving on port ${port}`);
     
     // PRODUCTION DEBUGGING: Log critical server startup info
-    console.log(`🚀 [PRODUCTION STARTUP] ===========================================`);
-    console.log(`🚀 [PRODUCTION STARTUP] Server started at ${new Date().toISOString()}`);
-    console.log(`🚀 [PRODUCTION STARTUP] Port: ${port}, Host: 0.0.0.0`);
-    console.log(`🚀 [PRODUCTION STARTUP] NODE_ENV: ${process.env.NODE_ENV || 'undefined'}`);
-    console.log(`🚀 [PRODUCTION STARTUP] App env mode: ${app.get('env')}`);
-    console.log(`🚀 [PRODUCTION STARTUP] Production detection: ${app.get("env") === "production" || process.argv.includes("dist/index.js")}`);
-    console.log(`🚀 [PRODUCTION STARTUP] Process args: ${process.argv.join(' ')}`);
-    console.log(`🚀 [PRODUCTION STARTUP] Working directory: ${process.cwd()}`);
-    
-    // Check for critical environment variables
-    const criticalEnvVars = ['DATABASE_URL', 'OPENAI_API_KEY', 'OPENAI_API_KEY_ENV_VAR'];
-    criticalEnvVars.forEach(envVar => {
-      const value = process.env[envVar];
-      console.log(`🚀 [PRODUCTION STARTUP] ${envVar}: ${value ? 'SET' : 'MISSING'} ${value ? `(length: ${value.length})` : ''}`);
-    });
-    
-    console.log(`🚀 [PRODUCTION STARTUP] ===========================================`);
+    if (process.env.NODE_ENV === 'production') {
+      console.log(`🔥 [PROD STARTUP] ===========================================`);
+      console.log(`🔥 [PROD STARTUP] Server started at ${new Date().toISOString()}`);
+      console.log(`🔥 [PROD STARTUP] Port: ${port}, Host: 0.0.0.0`);
+      console.log(`🔥 [PROD STARTUP] NODE_ENV: ${process.env.NODE_ENV || 'undefined'}`);
+      console.log(`🔥 [PROD STARTUP] App env mode: ${app.get('env')}`);
+      console.log(`🔥 [PROD STARTUP] Production detection: ${app.get("env") === "production" || process.argv.includes("dist/index.js")}`);
+      console.log(`🔥 [PROD STARTUP] Process args: ${process.argv.join(' ')}`);
+      console.log(`🔥 [PROD STARTUP] Working directory: ${process.cwd()}`);
+      console.log(`🔥 [PROD STARTUP] Process PID: ${process.pid}`);
+      console.log(`🔥 [PROD STARTUP] Node version: ${process.version}`);
+      console.log(`🔥 [PROD STARTUP] Platform: ${process.platform} ${process.arch}`);
+      
+      // Check for critical environment variables
+      const criticalEnvVars = ['DATABASE_URL', 'OPENAI_API_KEY', 'OPENAI_API_KEY_ENV_VAR', 'PORT', 'REPLIT_DOMAINS'];
+      criticalEnvVars.forEach(envVar => {
+        const value = process.env[envVar];
+        console.log(`🔥 [PROD STARTUP] ${envVar}: ${value ? 'SET' : 'MISSING'} ${value ? `(length: ${value.length})` : ''}`);
+      });
+      
+      // Log memory at startup
+      const memUsage = process.memoryUsage();
+      console.log(`🔥 [PROD STARTUP] Initial Memory: RSS ${(memUsage.rss / 1024 / 1024).toFixed(1)}MB, Heap ${(memUsage.heapUsed / 1024 / 1024).toFixed(1)}MB`);
+      
+      console.log(`🔥 [PROD STARTUP] ===========================================`);
+    }
     
     // Data is now permanently embedded in the application
     log(`[startup] Using embedded financial data for Eye Specialists & Surgeons`);

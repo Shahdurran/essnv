@@ -76,10 +76,20 @@ import { extractQueryContext } from "./utils/queryParser";
  * This includes routes for analytics data, AI assistant, and practice management
  */
 export async function registerRoutes(app: Express): Promise<Server> {
-  // PRODUCTION DEBUGGING: Track server startup and resource state
-  console.log(`🚀 [PRODUCTION] Server registration starting at ${new Date().toISOString()}`);
-  console.log(`🔧 [PRODUCTION] OpenAI API Key configured: ${!!openai.apiKey && openai.apiKey !== 'default_key'}`);
-  console.log(`💾 [PRODUCTION] Initial memory: ${JSON.stringify(process.memoryUsage())}`);
+  // PRODUCTION DEBUGGING ONLY
+  if (process.env.NODE_ENV === 'production') {
+    console.log(`🔥 [PRODUCTION] =============================================`);
+    console.log(`🔥 [PRODUCTION] Server registration starting at ${new Date().toISOString()}`);
+    console.log(`🔥 [PRODUCTION] Node version: ${process.version}`);
+    console.log(`🔥 [PRODUCTION] Platform: ${process.platform} ${process.arch}`);
+    console.log(`🔥 [PRODUCTION] Working dir: ${process.cwd()}`);
+    console.log(`🔥 [PRODUCTION] Process args: ${process.argv.slice(2).join(' ')}`);
+    console.log(`🔥 [PRODUCTION] OpenAI Key: ${!!openai.apiKey && openai.apiKey !== 'default_key' ? 'CONFIGURED' : 'MISSING/DEFAULT'}`);
+    console.log(`🔥 [PRODUCTION] OpenAI Key Length: ${openai.apiKey?.length || 0}`);
+    console.log(`🔥 [PRODUCTION] Initial Memory: ${JSON.stringify(process.memoryUsage())}`);
+    console.log(`🔥 [PRODUCTION] Environment vars loaded: ${Object.keys(process.env).length}`);
+    console.log(`🔥 [PRODUCTION] =============================================`);
+  }
   
   // Track API request counts for rate limiting analysis
   const requestCounts = new Map<string, number>();
@@ -87,49 +97,70 @@ export async function registerRoutes(app: Express): Promise<Server> {
   let serverStartTime = Date.now();
   let lastHealthReport = Date.now();
   
-  // PRODUCTION HEALTH MONITORING - Report server health every 2 minutes
+  // PRODUCTION HEALTH MONITORING - Report server health every 1 minute
   const healthMonitor = setInterval(() => {
-    const uptime = Date.now() - serverStartTime;
-    const memUsage = process.memoryUsage();
-    const totalRequests = Array.from(requestCounts.values()).reduce((a, b) => a + b, 0);
-    const totalErrors = Array.from(errorCounts.values()).reduce((a, b) => a + b, 0);
-    
-    console.log(`🏥 [PRODUCTION HEALTH] ============================================`);
-    console.log(`🏥 [PRODUCTION HEALTH] Server uptime: ${(uptime / 1000 / 60).toFixed(1)} minutes`);
-    console.log(`🏥 [PRODUCTION HEALTH] Total requests: ${totalRequests}, Total errors: ${totalErrors}`);
-    console.log(`🏥 [PRODUCTION HEALTH] Error rate: ${totalRequests > 0 ? (totalErrors / totalRequests * 100).toFixed(2) : 0}%`);
-    console.log(`🏥 [PRODUCTION HEALTH] Memory usage: RSS ${(memUsage.rss / 1024 / 1024).toFixed(1)}MB, Heap ${(memUsage.heapUsed / 1024 / 1024).toFixed(1)}/${(memUsage.heapTotal / 1024 / 1024).toFixed(1)}MB`);
-    console.log(`🏥 [PRODUCTION HEALTH] Active endpoints: ${requestCounts.size}`);
-    
-    // Log top failing endpoints
-    const sortedErrors = Array.from(errorCounts.entries()).sort((a, b) => b[1] - a[1]).slice(0, 5);
-    if (sortedErrors.length > 0) {
-      console.log(`🏥 [PRODUCTION HEALTH] Top failing endpoints:`);
-      sortedErrors.forEach(([endpoint, count]) => {
-        console.log(`🏥 [PRODUCTION HEALTH]   ${endpoint}: ${count} errors`);
-      });
+    if (process.env.NODE_ENV === 'production') {
+      const uptime = Date.now() - serverStartTime;
+      const memUsage = process.memoryUsage();
+      const totalRequests = Array.from(requestCounts.values()).reduce((a, b) => a + b, 0);
+      const totalErrors = Array.from(errorCounts.values()).reduce((a, b) => a + b, 0);
+      
+      console.log(`🔥 [PROD HEALTH] ============================================`);
+      console.log(`🔥 [PROD HEALTH] Time: ${new Date().toISOString()}`);
+      console.log(`🔥 [PROD HEALTH] Uptime: ${(uptime / 1000 / 60).toFixed(1)} minutes`);
+      console.log(`🔥 [PROD HEALTH] Requests: ${totalRequests}, Errors: ${totalErrors}`);
+      console.log(`🔥 [PROD HEALTH] Error rate: ${totalRequests > 0 ? (totalErrors / totalRequests * 100).toFixed(2) : 0}%`);
+      console.log(`🔥 [PROD HEALTH] Memory: RSS ${(memUsage.rss / 1024 / 1024).toFixed(1)}MB, Heap ${(memUsage.heapUsed / 1024 / 1024).toFixed(1)}/${(memUsage.heapTotal / 1024 / 1024).toFixed(1)}MB`);
+      console.log(`🔥 [PROD HEALTH] External: ${(memUsage.external / 1024 / 1024).toFixed(1)}MB`);
+      console.log(`🔥 [PROD HEALTH] Active endpoints: ${requestCounts.size}`);
+      console.log(`🔥 [PROD HEALTH] Process PID: ${process.pid}, CPU usage: ${process.cpuUsage().user}`);
+      
+      // Log endpoint usage stats
+      const sortedRequests = Array.from(requestCounts.entries()).sort((a, b) => b[1] - a[1]).slice(0, 10);
+      if (sortedRequests.length > 0) {
+        console.log(`🔥 [PROD HEALTH] Top endpoints by usage:`);
+        sortedRequests.forEach(([endpoint, count]) => {
+          console.log(`🔥 [PROD HEALTH]   ${endpoint}: ${count} requests`);
+        });
+      }
+      
+      // Log top failing endpoints
+      const sortedErrors = Array.from(errorCounts.entries()).sort((a, b) => b[1] - a[1]).slice(0, 5);
+      if (sortedErrors.length > 0) {
+        console.log(`🔥 [PROD HEALTH] Top failing endpoints:`);
+        sortedErrors.forEach(([endpoint, count]) => {
+          console.log(`🔥 [PROD HEALTH]   ${endpoint}: ${count} errors`);
+        });
+      }
+      
+      console.log(`🔥 [PROD HEALTH] ============================================`);
+      lastHealthReport = Date.now();
     }
-    
-    console.log(`🏥 [PRODUCTION HEALTH] ============================================`);
-    lastHealthReport = Date.now();
-  }, 120000); // Every 2 minutes
+  }, 60000); // Every 1 minute in production
   
   // Clean up interval on server shutdown
   process.on('SIGTERM', () => {
     clearInterval(healthMonitor);
   });
   
-  // Middleware to track API usage patterns
+  // Middleware to track API usage patterns in production
   app.use('/api/*', (req, res, next) => {
     const endpoint = req.path;
     requestCounts.set(endpoint, (requestCounts.get(endpoint) || 0) + 1);
     
-    console.log(`📊 [PRODUCTION API] ${endpoint} - Count: ${requestCounts.get(endpoint)} - Time: ${new Date().toISOString()}`);
-    
-    // Log every 10th request for pattern analysis
-    if (requestCounts.get(endpoint)! % 10 === 0) {
-      console.log(`🔄 [PRODUCTION PATTERN] ${endpoint} hit ${requestCounts.get(endpoint)} times`);
-      console.log(`📈 [PRODUCTION STATS] Total endpoints: ${requestCounts.size}, Total errors: ${Array.from(errorCounts.values()).reduce((a, b) => a + b, 0)}`);
+    if (process.env.NODE_ENV === 'production') {
+      console.log(`🔥 [PROD API TRACK] ${endpoint} - Count: ${requestCounts.get(endpoint)} - Time: ${new Date().toISOString()}`);
+      
+      // Log every 5th request for pattern analysis in production
+      if (requestCounts.get(endpoint)! % 5 === 0) {
+        console.log(`🔥 [PROD PATTERN] ${endpoint} hit ${requestCounts.get(endpoint)} times`);
+        console.log(`🔥 [PROD STATS] Total endpoints: ${requestCounts.size}, Total errors: ${Array.from(errorCounts.values()).reduce((a, b) => a + b, 0)}`);
+      }
+      
+      // Log request body for POST/PUT/PATCH requests
+      if (['POST', 'PUT', 'PATCH'].includes(req.method)) {
+        console.log(`🔥 [PROD ${req.method}] ${endpoint} - Body: ${JSON.stringify(req.body).substring(0, 200)}`);
+      }
     }
     
     next();
@@ -205,25 +236,33 @@ export async function registerRoutes(app: Express): Promise<Server> {
    */
   app.get("/api/locations", async (req, res) => {
     const startTime = Date.now();
-    console.log(`🏢 [PRODUCTION] Locations request started at ${new Date().toISOString()}`);
+    
+    if (process.env.NODE_ENV === 'production') {
+      console.log(`🔥 [PROD LOCATIONS] Request started at ${new Date().toISOString()}`);
+      console.log(`🔥 [PROD LOCATIONS] Storage object exists: ${!!storage}`);
+      console.log(`🔥 [PROD LOCATIONS] Storage methods available: ${storage ? Object.getOwnPropertyNames(Object.getPrototypeOf(storage)).join(',') : 'N/A'}`);
+    }
     
     try {
-      console.log(`🏢 [PRODUCTION] Calling storage.getAllPracticeLocations()`);
       const locations = await storage.getAllPracticeLocations();
       const duration = Date.now() - startTime;
       
-      console.log(`✅ [PRODUCTION] Locations fetched successfully in ${duration}ms - Count: ${locations.length}`);
-      console.log(`📊 [PRODUCTION] Locations data: ${JSON.stringify(locations).substring(0, 200)}...`);
+      if (process.env.NODE_ENV === 'production') {
+        console.log(`🔥 [PROD LOCATIONS] Success in ${duration}ms - Count: ${locations.length}`);
+        console.log(`🔥 [PROD LOCATIONS] Data sample: ${JSON.stringify(locations[0] || {}).substring(0, 150)}`);
+      }
       
       res.json(locations);
     } catch (error: any) {
       const duration = Date.now() - startTime;
       errorCounts.set('/api/locations', (errorCounts.get('/api/locations') || 0) + 1);
       
-      console.error(`❌ [PRODUCTION] Locations error after ${duration}ms:`, error);
-      console.error(`❌ [PRODUCTION] Locations error type: ${error.constructor.name}`);
-      console.error(`❌ [PRODUCTION] Locations error message: ${error.message}`);
-      console.error(`❌ [PRODUCTION] Storage object status: ${storage ? 'Exists' : 'Missing'}`);
+      if (process.env.NODE_ENV === 'production') {
+        console.error(`🔥 [PROD LOCATIONS ERROR] After ${duration}ms: ${error.message}`);
+        console.error(`🔥 [PROD LOCATIONS ERROR] Type: ${error.constructor.name}`);
+        console.error(`🔥 [PROD LOCATIONS ERROR] Stack: ${error.stack?.substring(0, 300)}`);
+        console.error(`🔥 [PROD LOCATIONS ERROR] Storage status: ${storage ? 'EXISTS' : 'MISSING'}`);
+      }
       
       console.error("Error fetching practice locations:", error);
       res.status(500).json({ message: "Failed to fetch practice locations" });
@@ -296,44 +335,53 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get("/api/financial/revenue/:locationId/:period", async (req, res) => {
     const startTime = Date.now();
     const endpoint = `/api/financial/revenue/${req.params.locationId}/${req.params.period}`;
-    console.log(`💰 [PRODUCTION] Revenue request: ${endpoint} at ${new Date().toISOString()}`);
+    
+    if (process.env.NODE_ENV === 'production') {
+      console.log(`🔥 [PROD REVENUE] Request: ${endpoint} at ${new Date().toISOString()}`);
+      console.log(`🔥 [PROD REVENUE] Params - Location: ${req.params.locationId}, Period: ${req.params.period}`);
+    }
     
     try {
       const { locationId, period } = req.params;
-      console.log(`💰 [PRODUCTION] Revenue params - Location: ${locationId}, Period: ${period}`);
 
       const validation = validateFinancialParams(locationId, period);
       if (!validation.valid) {
-        console.log(`❌ [PRODUCTION] Revenue validation failed: ${validation.error}`);
+        if (process.env.NODE_ENV === 'production') {
+          console.log(`🔥 [PROD REVENUE ERROR] Validation failed: ${validation.error}`);
+        }
         errorCounts.set(endpoint, (errorCounts.get(endpoint) || 0) + 1);
         return res.status(400).json({ message: validation.error });
       }
 
-      const finalLocationId =
-        locationId === "all" ? undefined : locationId.toLowerCase();
-      console.log(`💰 [PRODUCTION] Revenue calling storage with: ${finalLocationId}, ${period.toUpperCase()}`);
+      const finalLocationId = locationId === "all" ? undefined : locationId.toLowerCase();
       
-      const revenueData = await storage.getFinancialRevenueData(
-        finalLocationId,
-        period.toUpperCase(),
-      );
+      if (process.env.NODE_ENV === 'production') {
+        console.log(`🔥 [PROD REVENUE] Calling storage.getFinancialRevenueData(${finalLocationId}, ${period.toUpperCase()})`);
+      }
       
+      const revenueData = await storage.getFinancialRevenueData(finalLocationId, period.toUpperCase());
       const duration = Date.now() - startTime;
-      console.log(`✅ [PRODUCTION] Revenue successful in ${duration}ms - Categories: ${revenueData?.categories?.length || 0}`);
+      
+      if (process.env.NODE_ENV === 'production') {
+        console.log(`🔥 [PROD REVENUE] SUCCESS in ${duration}ms - Categories: ${revenueData?.categories?.length || 0}`);
+        console.log(`🔥 [PROD REVENUE] Data keys: ${Object.keys(revenueData || {}).join(',')}`);
+        console.log(`🔥 [PROD REVENUE] Sample category: ${JSON.stringify(revenueData?.categories?.[0] || {}).substring(0, 100)}`);
+      }
       
       res.json(revenueData);
     } catch (error: any) {
       const duration = Date.now() - startTime;
       errorCounts.set(endpoint, (errorCounts.get(endpoint) || 0) + 1);
       
-      console.error(`❌ [PRODUCTION] Revenue error after ${duration}ms:`, error);
-      console.error(`❌ [PRODUCTION] Revenue error type: ${error.constructor.name}`);
-      console.error(`❌ [PRODUCTION] Revenue storage status: ${storage ? 'OK' : 'Missing'}`);
+      if (process.env.NODE_ENV === 'production') {
+        console.error(`🔥 [PROD REVENUE CRITICAL ERROR] After ${duration}ms: ${error.message}`);
+        console.error(`🔥 [PROD REVENUE CRITICAL ERROR] Type: ${error.constructor.name}`);
+        console.error(`🔥 [PROD REVENUE CRITICAL ERROR] Stack: ${error.stack?.substring(0, 300)}`);
+        console.error(`🔥 [PROD REVENUE CRITICAL ERROR] Storage exists: ${!!storage}`);
+      }
       
       console.error("Error fetching financial revenue data:", error);
-      res
-        .status(500)
-        .json({ message: "Failed to fetch financial revenue data" });
+      res.status(500).json({ message: "Failed to fetch financial revenue data" });
     }
   });
 
@@ -705,30 +753,42 @@ export async function registerRoutes(app: Express): Promise<Server> {
    */
   app.post("/api/ai/query", async (req, res) => {
     const startTime = Date.now();
-    console.log(`🤖 [PRODUCTION AI] Query started at ${new Date().toISOString()}`);
-    console.log(`🤖 [PRODUCTION AI] Request body: ${JSON.stringify(req.body)}`);
-    console.log(`🤖 [PRODUCTION AI] OpenAI client status: ${openai ? 'Initialized' : 'Missing'}`);
+    
+    if (process.env.NODE_ENV === 'production') {
+      console.log(`🔥 [PROD AI] ============================================`);
+      console.log(`🔥 [PROD AI] Query started at ${new Date().toISOString()}`);
+      console.log(`🔥 [PROD AI] Request IP: ${req.ip}, User-Agent: ${req.get('User-Agent')?.substring(0, 50)}`);
+      console.log(`🔥 [PROD AI] Request body keys: ${Object.keys(req.body).join(',')}`);
+      console.log(`🔥 [PROD AI] Query length: ${req.body.query?.length || 0}`);
+      console.log(`🔥 [PROD AI] OpenAI client: ${openai ? 'EXISTS' : 'MISSING'}`);
+      console.log(`🔥 [PROD AI] OpenAI key status: ${openai?.apiKey ? (openai.apiKey === 'default_key' ? 'DEFAULT' : 'CONFIGURED') : 'MISSING'}`);
+      console.log(`🔥 [PROD AI] Storage available: ${!!storage}`);
+    }
     
     try {
       const { query, userId, locationId = "all", timeRange = "1" } = req.body;
 
       if (!query || typeof query !== "string") {
-        console.log(`❌ [PRODUCTION AI] Invalid query: ${JSON.stringify({ query, type: typeof query })}`);
+        if (process.env.NODE_ENV === 'production') {
+          console.log(`🔥 [PROD AI ERROR] Invalid query - Type: ${typeof query}, Length: ${query?.length || 0}`);
+        }
         errorCounts.set('/api/ai/query', (errorCounts.get('/api/ai/query') || 0) + 1);
-        return res
-          .status(400)
-          .json({ message: "Query is required and must be a string" });
+        return res.status(400).json({ message: "Query is required and must be a string" });
+      }
+
+      if (process.env.NODE_ENV === 'production') {
+        console.log(`🔥 [PROD AI] Processing: "${query.substring(0, 100)}..."`);
+        console.log(`🔥 [PROD AI] Params - Location: ${locationId}, TimeRange: ${timeRange}, User: ${userId || 'anonymous'}`);
       }
 
       // Get available locations for AI context
-      console.log(`🏢 [PRODUCTION AI] Fetching locations for context`);
       const availableLocations = await storage.getAllPracticeLocations();
-      console.log(`🏢 [PRODUCTION AI] Got ${availableLocations.length} locations`);
+      
+      if (process.env.NODE_ENV === 'production') {
+        console.log(`🔥 [PROD AI] Locations fetched: ${availableLocations.length}`);
+      }
 
       // Process query using new AI assistant utility
-      console.log(`🔄 [PRODUCTION AI] Processing query: "${query.substring(0, 100)}..."`);
-      console.log(`🔄 [PRODUCTION AI] Location: ${locationId}, TimeRange: ${timeRange}`);
-      
       const aiResponse = await processAIQuery(
         query,
         availableLocations,
@@ -737,12 +797,20 @@ export async function registerRoutes(app: Express): Promise<Server> {
         timeRange,
       );
       
-      console.log(`✅ [PRODUCTION AI] Query processed successfully in ${Date.now() - startTime}ms`);
-      console.log(`📊 [PRODUCTION AI] Response type: ${aiResponse.queryType}, Length: ${aiResponse.response.length}`);
+      const duration = Date.now() - startTime;
+      
+      if (process.env.NODE_ENV === 'production') {
+        console.log(`🔥 [PROD AI] SUCCESS in ${duration}ms`);
+        console.log(`🔥 [PROD AI] Response type: ${aiResponse.queryType}`);
+        console.log(`🔥 [PROD AI] Response length: ${aiResponse.response.length} chars`);
+        console.log(`🔥 [PROD AI] Response preview: ${aiResponse.response.substring(0, 150)}...`);
+      }
 
       // Store the query and response for analytics
       if (userId) {
-        console.log(`💾 [PRODUCTION AI] Storing query for user: ${userId}`);
+        if (process.env.NODE_ENV === 'production') {
+          console.log(`🔥 [PROD AI] Storing query for user: ${userId}`);
+        }
         await storage.createAiQuery({
           userId,
           query,
@@ -752,27 +820,42 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       res.json(aiResponse);
+      
+      if (process.env.NODE_ENV === 'production') {
+        console.log(`🔥 [PROD AI] ============================================`);
+      }
     } catch (error: any) {
       const duration = Date.now() - startTime;
       errorCounts.set('/api/ai/query', (errorCounts.get('/api/ai/query') || 0) + 1);
       
-      console.error(`❌ [PRODUCTION AI ERROR] After ${duration}ms:`, error);
-      console.error(`❌ [PRODUCTION AI ERROR] Error type: ${error.constructor.name}`);
-      console.error(`❌ [PRODUCTION AI ERROR] Error message: ${error.message}`);
-      console.error(`❌ [PRODUCTION AI ERROR] Error code: ${error.code || 'N/A'}`);
-      console.error(`❌ [PRODUCTION AI ERROR] Error status: ${error.status || 'N/A'}`);
-      
-      // Check for specific OpenAI rate limiting errors
-      if (error.message?.includes('rate limit') || error.message?.includes('quota') || error.status === 429) {
-        console.error(`🚫 [PRODUCTION AI RATE LIMIT] OpenAI rate limit exceeded!`);
-        console.error(`🚫 [PRODUCTION AI RATE LIMIT] Error details: ${JSON.stringify(error)}`);
-      }
-      
-      // Check for OpenAI API key issues
-      if (error.message?.includes('api key') || error.status === 401) {
-        console.error(`🔑 [PRODUCTION AI AUTH] OpenAI authentication error!`);
-        console.error(`🔑 [PRODUCTION AI AUTH] API Key exists: ${!!openai.apiKey}`);
-        console.error(`🔑 [PRODUCTION AI AUTH] API Key length: ${openai.apiKey?.length || 0}`);
+      if (process.env.NODE_ENV === 'production') {
+        console.error(`🔥 [PROD AI CRITICAL ERROR] ========================`);
+        console.error(`🔥 [PROD AI CRITICAL ERROR] After ${duration}ms`);
+        console.error(`🔥 [PROD AI CRITICAL ERROR] Error name: ${error.name}`);
+        console.error(`🔥 [PROD AI CRITICAL ERROR] Error message: ${error.message}`);
+        console.error(`🔥 [PROD AI CRITICAL ERROR] Error code: ${error.code || 'N/A'}`);
+        console.error(`🔥 [PROD AI CRITICAL ERROR] HTTP status: ${error.status || 'N/A'}`);
+        console.error(`🔥 [PROD AI CRITICAL ERROR] Error type: ${error.constructor.name}`);
+        console.error(`🔥 [PROD AI CRITICAL ERROR] Full error: ${JSON.stringify(error, null, 2).substring(0, 500)}`);
+        
+        // Specific error pattern checks
+        if (error.message?.includes('rate limit') || error.message?.includes('quota') || error.status === 429) {
+          console.error(`🔥 [PROD AI RATE LIMIT] OPENAI RATE LIMIT HIT!`);
+          console.error(`🔥 [PROD AI RATE LIMIT] This is likely the "Rate Exceeded" error you're seeing`);
+        }
+        
+        if (error.message?.includes('api key') || error.status === 401) {
+          console.error(`🔥 [PROD AI AUTH] OPENAI API KEY PROBLEM!`);
+          console.error(`🔥 [PROD AI AUTH] Key exists: ${!!openai.apiKey}`);
+          console.error(`🔥 [PROD AI AUTH] Key is default: ${openai.apiKey === 'default_key'}`);
+        }
+        
+        if (error.message?.includes('network') || error.code === 'ECONNREFUSED') {
+          console.error(`🔥 [PROD AI NETWORK] NETWORK/CONNECTION ERROR!`);
+        }
+        
+        console.error(`🔥 [PROD AI CRITICAL ERROR] Stack trace: ${error.stack?.substring(0, 800)}`);
+        console.error(`🔥 [PROD AI CRITICAL ERROR] ========================`);
       }
       
       console.error("Error processing AI query:", error);
