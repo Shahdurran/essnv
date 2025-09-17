@@ -11,11 +11,13 @@ build = ["npm", "run", "build"]
 run = ["npm", "run", "start"]
 
 [[ports]]
-localPort = 5000
+localPort = 8080
 externalPort = 80
 
 [env]
-PORT = "5000"
+PORT = "8080"
+HOST = "0.0.0.0"
+NODE_ENV = "production"
 
 [workflows]
 runButton = "Project"
@@ -36,7 +38,4 @@ author = "agent"
 [[workflows.workflow.tasks]]
 task = "shell.exec"
 args = "npm run dev"
-waitForPort = 5000
-
-[agent]
-integrations = ["javascript_openai==1.0.0", "javascript_mem_db==1.0.0"]
+waitForPort = 8080
