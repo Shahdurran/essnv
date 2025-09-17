@@ -167,12 +167,16 @@ app.use((req, res, next) => {
     // Extract error message (default to generic message if not specified)
     const message = err.message || "Internal Server Error";
 
+    // Log error details for debugging
+    console.error(`[ERROR] ${status}: ${message}`, err.stack || err);
+
     // Send JSON error response to client
     res.status(status).json({ message });
     
-    // Re-throw the error so it appears in server logs
-    // This helps with debugging but doesn't affect the HTTP response
-    throw err;
+    // Don't re-throw in production to prevent crashes
+    if (app.get("env") !== "production") {
+      throw err;
+    }
   });
 
   /*
@@ -194,7 +198,9 @@ app.use((req, res, next) => {
   
   // Check if we're in development mode
   // app.get("env") reads the NODE_ENV environment variable
-  if (app.get("env") === "development") {
+  // Also check if we're running via npm start (production indicator)
+  const isProduction = app.get("env") === "production" || process.argv.includes("dist/index.js");
+  if (!isProduction) {
     // Set up Vite development server with hot module replacement
     await setupVite(app, server);
   } else {
