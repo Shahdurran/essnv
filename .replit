@@ -9,15 +9,25 @@ channel = "stable-24_05"
 deploymentTarget = "autoscale"
 build = ["npm", "run", "build"]
 run = ["npm", "run", "start"]
+# Add health check configuration
+healthCheckPath = "/health"
+healthCheckPort = 8080
+healthCheckTimeout = 30
 
 [[ports]]
 localPort = 8080
 externalPort = 80
+# Ensure proper port forwarding
+exposeLocalhost = true
 
 [env]
 PORT = "8080"
 HOST = "0.0.0.0"
 NODE_ENV = "production"
+# Add your OpenAI API key here - REPLACE WITH YOUR ACTUAL KEY
+OPENAI_API_KEY = "your-openai-api-key-here"
+# Alternative environment variable name if your app uses this
+OPENAI_API_KEY_ENV_VAR = "your-openai-api-key-here"
 
 [workflows]
 runButton = "Project"

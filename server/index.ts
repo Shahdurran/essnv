@@ -71,7 +71,7 @@ app.use((req, res, next) => {
   // Record the start time to calculate request duration
   const start = Date.now();
   const path = req.path;
-  
+
   // PRODUCTION DEBUGGING LOGS ONLY
   if (process.env.NODE_ENV === 'production' || app.get('env') === 'production') {
     console.log(`🚀 [PROD REQUEST START] ${new Date().toISOString()} - ${req.method} ${path}`);
@@ -81,16 +81,16 @@ app.use((req, res, next) => {
     console.log(`🚀 [PROD HEADERS] Auth: ${req.get('Authorization') ? 'Present' : 'None'}`);
     console.log(`🚀 [PROD CLIENT] IP: ${req.ip}, Real-IP: ${req.get('X-Real-IP') || 'None'}`);
     console.log(`🚀 [PROD SESSION] ${(req as any).session ? 'Active' : 'None'}`);
-    
+
     // Memory usage tracking for production
     const memUsage = process.memoryUsage();
     console.log(`🚀 [PROD MEMORY] RSS: ${(memUsage.rss / 1024 / 1024).toFixed(1)}MB, Heap: ${(memUsage.heapUsed / 1024 / 1024).toFixed(1)}MB`);
-    
+
     // Track uptime and load
     const uptime = process.uptime();
     console.log(`🚀 [PROD SERVER] Uptime: ${(uptime / 60).toFixed(1)}min, PID: ${process.pid}`);
   }
-  
+
   // Variable to store the response data for logging
   let capturedJsonResponse: Record<string, any> | undefined = undefined;
 
@@ -99,10 +99,10 @@ app.use((req, res, next) => {
    * We're "monkey patching" the res.json() method to capture response data.
    * This is an advanced technique where we replace a built-in method with our own version.
    */
-  
+
   // Save reference to the original res.json method
   const originalResJson = res.json;
-  
+
   // Replace res.json with our custom version that captures data
   res.json = function (bodyJson, ...args) {
     // Store the response data for logging
@@ -131,15 +131,15 @@ app.use((req, res, next) => {
   res.on("finish", () => {
     // Calculate how long the request took
     const duration = Date.now() - start;
-    
+
     if (process.env.NODE_ENV === 'production' || app.get('env') === 'production') {
       console.log(`🚀 [PROD REQUEST END] ${req.method} ${path} - Status: ${res.statusCode} - Duration: ${duration}ms`);
-      
+
       // Log slow requests
       if (duration > 1000) {
         console.log(`🚀 [PROD SLOW REQUEST] ${req.method} ${path} took ${duration}ms - INVESTIGATE!`);
       }
-      
+
       // Log errors
       if (res.statusCode >= 400) {
         console.log(`🚀 [PROD ERROR RESPONSE] ${req.method} ${path} - ${res.statusCode}`);
@@ -147,7 +147,7 @@ app.use((req, res, next) => {
           console.log(`🚀 [PROD ERROR DATA] ${JSON.stringify(capturedJsonResponse).substring(0, 300)}`);
         }
       }
-      
+
       // Log API requests with data
       if (path.startsWith("/api")) {
         console.log(`🚀 [PROD API] ${req.method} ${path} ${res.statusCode} in ${duration}ms`);
@@ -156,10 +156,10 @@ app.use((req, res, next) => {
           console.log(`🚀 [PROD API DATA] ${respStr.length} chars: ${respStr.substring(0, 150)}...`);
         }
       }
-      
+
       console.log(`🚀 [PROD REQUEST COMPLETE] =====================================`);
     }
-    
+
     // Keep original logging for development
     if (path.startsWith("/api")) {
       let logLine = `${req.method} ${path} ${res.statusCode} in ${duration}ms`;
@@ -225,7 +225,7 @@ app.use((req, res, next) => {
 
     // Send JSON error response to client
     res.status(status).json({ message });
-    
+
     // Don't re-throw in production to prevent crashes
     if (app.get("env") !== "production") {
       throw err;
@@ -248,7 +248,7 @@ app.use((req, res, next) => {
    * - Better performance, smaller file sizes
    * - No hot reloading (changes require rebuild/restart)
    */
-  
+
   // Check if we're in development mode
   // app.get("env") reads the NODE_ENV environment variable
   // Also check if we're running via npm start (production indicator)
@@ -289,7 +289,7 @@ app.use((req, res, next) => {
   }, async () => {
     // This callback runs when the server successfully starts
     log(`serving on port ${port}`);
-    
+
     // PRODUCTION DEBUGGING: Log critical server startup info
     if (process.env.NODE_ENV === 'production') {
       console.log(`🔥 [PROD STARTUP] ===========================================`);
@@ -303,21 +303,21 @@ app.use((req, res, next) => {
       console.log(`🔥 [PROD STARTUP] Process PID: ${process.pid}`);
       console.log(`🔥 [PROD STARTUP] Node version: ${process.version}`);
       console.log(`🔥 [PROD STARTUP] Platform: ${process.platform} ${process.arch}`);
-      
+
       // Check for critical environment variables
       const criticalEnvVars = ['DATABASE_URL', 'OPENAI_API_KEY', 'OPENAI_API_KEY_ENV_VAR', 'PORT', 'REPLIT_DOMAINS'];
       criticalEnvVars.forEach(envVar => {
         const value = process.env[envVar];
         console.log(`🔥 [PROD STARTUP] ${envVar}: ${value ? 'SET' : 'MISSING'} ${value ? `(length: ${value.length})` : ''}`);
       });
-      
+
       // Log memory at startup
       const memUsage = process.memoryUsage();
       console.log(`🔥 [PROD STARTUP] Initial Memory: RSS ${(memUsage.rss / 1024 / 1024).toFixed(1)}MB, Heap ${(memUsage.heapUsed / 1024 / 1024).toFixed(1)}MB`);
-      
+
       console.log(`🔥 [PROD STARTUP] ===========================================`);
     }
-    
+
     // Data is now permanently embedded in the application
     log(`[startup] Using embedded financial data for Eye Specialists & Surgeons`);
   });
