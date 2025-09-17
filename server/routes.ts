@@ -86,19 +86,25 @@ export async function registerRoutes(app: Express): Promise<Server> {
    * health checks get a quick response without loading the React app
    */
   app.get("/", (req, res, next) => {
-    // Only return health check for deployment health checkers
-    // Check if this is likely a health check request
     const acceptHeader = req.get("Accept") || "";
     const userAgent = req.get("User-Agent") || "";
-    console.log("hello you made it here");
-
-    // Health check patterns: specific user agents or no HTML accept header
+    
+    // Simplified health check detection - respond to health checks immediately
+    // Check for common health check patterns or non-browser requests
     const isHealthCheck =
       userAgent.includes("GoogleHC") ||
       userAgent.includes("Cloud-Run") ||
       userAgent.includes("kube-probe") ||
       userAgent.includes("health-check") ||
-      (!acceptHeader.includes("text/html") && !acceptHeader.includes("*/*"));
+      userAgent.includes("curl") ||
+      userAgent.includes("wget") ||
+      userAgent.includes("HTTPClient") ||
+      userAgent.includes("Go-http-client") ||
+      // If no HTML is accepted or only JSON/plain text, likely a health check
+      (!acceptHeader.includes("text/html") && 
+       (acceptHeader.includes("application/json") || 
+        acceptHeader.includes("text/plain") ||
+        acceptHeader === ""));
 
     if (isHealthCheck) {
       return res.status(200).json({
@@ -108,7 +114,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       });
     }
 
-    // For all other requests (browsers), continue to next middleware (Vite or static files)
+    // For browser requests, continue to next middleware (Vite or static files)
     next();
   });
 
@@ -121,6 +127,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
       timestamp: new Date().toISOString(),
       service: "MDS AI Analytics",
     });
+  });
+
+  /**
+   * GET /healthz - Simple unconditional health check (Kubernetes style)
+   * This provides a guaranteed 200 OK response for any deployment platform
+   */
+  app.get("/healthz", (req, res) => {
+    res.status(200).send("OK");
   });
 
   // ============================================================================
