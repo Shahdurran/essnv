@@ -75,6 +75,51 @@ import { extractQueryContext } from './utils/queryParser';
 export async function registerRoutes(app: Express): Promise<Server> {
   
   // ============================================================================
+  // HEALTH CHECK ROUTES (MUST BE FIRST)
+  // ============================================================================
+  
+  /**
+   * GET / - Root health check endpoint for deployment platforms
+   * This route must be defined BEFORE the Vite catch-all route to ensure
+   * health checks get a quick response without loading the React app
+   */
+  app.get("/", (req, res, next) => {
+    // Only return health check for deployment health checkers
+    // Check if this is likely a health check request
+    const acceptHeader = req.get('Accept') || '';
+    const userAgent = req.get('User-Agent') || '';
+    
+    // Health check patterns: specific user agents or no HTML accept header
+    const isHealthCheck = userAgent.includes('GoogleHC') || 
+                         userAgent.includes('Cloud-Run') ||
+                         userAgent.includes('kube-probe') ||
+                         userAgent.includes('health-check') ||
+                         (!acceptHeader.includes('text/html') && !acceptHeader.includes('*/*'));
+    
+    if (isHealthCheck) {
+      return res.status(200).json({ 
+        status: "healthy", 
+        timestamp: new Date().toISOString(),
+        service: "MDS AI Analytics"
+      });
+    }
+    
+    // For all other requests (browsers), continue to next middleware (Vite or static files)
+    next();
+  });
+
+  /**
+   * GET /health - Additional health check endpoint
+   */
+  app.get("/health", (req, res) => {
+    res.status(200).json({ 
+      status: "healthy", 
+      timestamp: new Date().toISOString(),
+      service: "MDS AI Analytics"
+    });
+  });
+  
+  // ============================================================================
   // PRACTICE LOCATION ROUTES
   // ============================================================================
   
