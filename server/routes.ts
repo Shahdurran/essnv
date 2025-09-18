@@ -91,10 +91,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
     console.log(`🔥 [PRODUCTION] =============================================`);
   }
   
+  // Server readiness and health tracking for Cloud Run
+  let isServerReady = true;
+  let serverStartTime = Date.now();
+  
+  // Simple function to mark server as unhealthy (for future use)
+  const markUnhealthy = (reason: string) => {
+    isServerReady = false;
+    console.error(`🔥 [HEALTH] Server marked unhealthy: ${reason}`);
+  };
+  
   // Track API request counts for rate limiting analysis
   const requestCounts = new Map<string, number>();
   const errorCounts = new Map<string, number>();
-  let serverStartTime = Date.now();
   let lastHealthReport = Date.now();
   
   // PRODUCTION HEALTH MONITORING - Report server health every 1 minute
@@ -196,10 +205,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
         acceptHeader === ""));
 
     if (isHealthCheck) {
-      return res.status(200).json({
-        status: "healthy",
+      // Ultra-fast health check response with readiness flag
+      const status = isServerReady ? 200 : 503;
+      return res.status(status).json({
+        status: isServerReady ? "healthy" : "unhealthy",
         timestamp: new Date().toISOString(),
         service: "MDS AI Analytics",
+        uptime: Math.floor((Date.now() - serverStartTime) / 1000)
       });
     }
 
@@ -208,22 +220,33 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   /**
-   * GET /health - Additional health check endpoint
+   * GET /health - Fast health check endpoint for Cloud Run
    */
   app.get("/health", (req, res) => {
-    res.status(200).json({
-      status: "healthy",
+    const status = isServerReady ? 200 : 503;
+    res.status(status).json({
+      status: isServerReady ? "healthy" : "unhealthy",
       timestamp: new Date().toISOString(),
       service: "MDS AI Analytics",
+      uptime: Math.floor((Date.now() - serverStartTime) / 1000)
     });
   });
 
   /**
    * GET /healthz - Simple unconditional health check (Kubernetes style)
-   * This provides a guaranteed 200 OK response for any deployment platform
+   * Always returns 200 OK for simple liveness checks
    */
   app.get("/healthz", (req, res) => {
     res.status(200).send("OK");
+  });
+
+  /**
+   * GET /readiness - Cloud Run readiness probe
+   * Returns 200 when server is ready, 503 when not ready
+   */
+  app.get("/readiness", (req, res) => {
+    const status = isServerReady ? 200 : 503;
+    res.status(status).send(isServerReady ? "READY" : "NOT READY");
   });
 
   // ============================================================================
@@ -1002,13 +1025,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // ============================================================================
 
   /**
-   * GET /api/health - Health check endpoint
+   * GET /api/health - Fast API health check endpoint for Cloud Run
    */
   app.get("/api/health", (req, res) => {
-    res.json({
-      status: "healthy",
+    const status = isServerReady ? 200 : 503;
+    res.status(status).json({
+      status: isServerReady ? "healthy" : "unhealthy",
       timestamp: new Date().toISOString(),
       service: "MDS AI Analytics API",
+      uptime: Math.floor((Date.now() - serverStartTime) / 1000),
+      ready: isServerReady
     });
   });
 
