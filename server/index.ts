@@ -43,32 +43,41 @@ const log = (message: string) => {
 // Create the main Express application instance
 const app = express();
 
-// PRODUCTION ERROR HANDLING - Catch any startup failures
+// PRODUCTION ERROR HANDLING - Catch any startup failures without premature exits
 if (process.env.NODE_ENV === 'production') {
   console.log(`🔥 [PROD STARTUP] Setting up error handlers...`);
   
   process.on('uncaughtException', (error) => {
     console.error(`🔥 [PROD FATAL] Uncaught Exception: ${error.message}`);
     console.error(`🔥 [PROD FATAL] Stack: ${error.stack}`);
-    console.error(`🔥 [PROD FATAL] This may be causing "service unavailable"`);
-    process.exit(1);
+    console.error(`🔥 [PROD FATAL] Continuing execution to maintain server availability`);
+    // Don't exit - let Cloud Run handle container health
   });
 
   process.on('unhandledRejection', (reason, promise) => {
     console.error(`🔥 [PROD FATAL] Unhandled Rejection: ${reason}`);
     console.error(`🔥 [PROD FATAL] Promise: ${promise}`);
-    console.error(`🔥 [PROD FATAL] This may be causing "service unavailable"`);
-    process.exit(1);
+    console.error(`🔥 [PROD FATAL] Continuing execution to maintain server availability`);
+    // Don't exit - let Cloud Run handle container health
   });
 
+  // Keep SIGTERM and SIGINT handlers for graceful shutdown, but add delay
+  let isShuttingDown = false;
+  
   process.on('SIGTERM', () => {
-    console.log(`🔥 [PROD SHUTDOWN] SIGTERM received, shutting down gracefully`);
-    process.exit(0);
+    if (!isShuttingDown) {
+      isShuttingDown = true;
+      console.log(`🔥 [PROD SHUTDOWN] SIGTERM received, shutting down gracefully in 5s`);
+      setTimeout(() => process.exit(0), 5000);
+    }
   });
 
   process.on('SIGINT', () => {
-    console.log(`🔥 [PROD SHUTDOWN] SIGINT received, shutting down gracefully`);
-    process.exit(0);
+    if (!isShuttingDown) {
+      isShuttingDown = true;
+      console.log(`🔥 [PROD SHUTDOWN] SIGINT received, shutting down gracefully in 5s`);
+      setTimeout(() => process.exit(0), 5000);
+    }
   });
 }
 
@@ -476,7 +485,8 @@ app.use((req, res, next) => {
       console.error(`🔥 [PROD STARTUP ERROR] Error port: ${error.port}`);
       console.error(`🔥 [PROD STARTUP ERROR] This is likely causing "service unavailable"`);
       console.error(`🔥 [PROD STARTUP ERROR] Full error: ${JSON.stringify(error, null, 2)}`);
-      process.exit(1);
+      console.error(`🔥 [PROD STARTUP ERROR] Continuing without exit to let Cloud Run manage container`);
+      // Don't exit immediately - Cloud Run will restart container if needed
     });
     
     serverInstance.on('listening', () => {
