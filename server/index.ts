@@ -43,6 +43,9 @@ const log = (message: string) => {
 // Create the main Express application instance
 const app = express();
 
+// Configure Express for Cloud Run deployment
+app.set('trust proxy', true); // Honor X-Forwarded-* headers for correct req.ip/secure detection
+
 // PRODUCTION ERROR HANDLING - Catch any startup failures without premature exits
 if (process.env.NODE_ENV === 'production') {
   console.log(`🔥 [PROD STARTUP] Setting up error handlers...`);
@@ -437,9 +440,10 @@ app.use((req, res, next) => {
    * - This allows external connections (important for cloud deployments)
    * - "localhost" or "127.0.0.1" would only allow local connections
    * 
-   * REUSE PORT:
-   * - Allows multiple processes to bind to the same port
-   * - Useful for zero-downtime deployments and load balancing
+   * CLOUD RUN OPTIMIZATIONS:
+   * - Trust proxy headers for correct IP detection behind load balancer
+   * - No reusePort needed (single listener per container)
+   * - Keep-alive timeouts configured for GCP load balancer compatibility
    */
   const port = parseInt(process.env.PORT || '5000', 10);
   
@@ -452,7 +456,7 @@ app.use((req, res, next) => {
   const serverInstance = server.listen({
     port,
     host: "0.0.0.0",      // Listen on all network interfaces
-    reusePort: true,       // Allow port reuse for deployments
+    // reusePort removed - not needed for Cloud Run (single listener per container)
   }, async () => {
     // This callback runs when the server successfully starts
     log(`serving on port ${port}`);
