@@ -18,6 +18,10 @@ healthCheckTimeout = 30
 localPort = 8080
 externalPort = 80
 
+[[ports]]
+localPort = 32855
+externalPort = 3000
+
 [env]
 PORT = "8080"
 HOST = "0.0.0.0"

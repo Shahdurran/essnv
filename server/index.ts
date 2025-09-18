@@ -476,6 +476,61 @@ app.use((req, res, next) => {
     // Data is now permanently embedded in the application
     log(`[startup] Using embedded financial data for Eye Specialists & Surgeons`);
   });
+
+  // ============================================================================
+  // CLOUD RUN KEEP-ALIVE CONFIGURATION
+  // ============================================================================
+
+  // Configure HTTP keep-alive settings for Cloud Run compatibility
+  serverInstance.keepAliveTimeout = 61000; // 61 seconds (just above Cloud Run's 60s default)
+  serverInstance.headersTimeout = 62000;   // 62 seconds (slightly longer than keepAliveTimeout)
+  
+  // Track active connections for Cloud Run monitoring
+  let activeConnections = 0;
+  let totalConnections = 0;
+  
+  serverInstance.on('connection', (socket) => {
+    activeConnections++;
+    totalConnections++;
+    
+    if (process.env.NODE_ENV === 'production') {
+      console.log(`🔥 [PROD CONNECTION] New connection established. Active: ${activeConnections}, Total: ${totalConnections}`);
+    }
+    
+    // Enable keep-alive on the socket without timeout to avoid killing long requests
+    socket.setKeepAlive(true, 60000); // 60 seconds
+    // Removed socket.setTimeout() to avoid prematurely killing long requests
+    
+    socket.on('close', () => {
+      activeConnections--;
+      if (process.env.NODE_ENV === 'production') {
+        console.log(`🔥 [PROD CONNECTION] Connection closed. Active: ${activeConnections}`);
+      }
+    });
+    
+    socket.on('error', (err) => {
+      if (process.env.NODE_ENV === 'production') {
+        console.error(`🔥 [PROD CONNECTION ERROR] Socket error: ${err.message}`);
+      }
+    });
+  });
+
+  // Add periodic heartbeat logging for Cloud Run monitoring
+  if (process.env.NODE_ENV === 'production') {
+    const heartbeatInterval = setInterval(() => {
+      const uptime = Math.floor(process.uptime());
+      const memUsage = process.memoryUsage();
+      console.log(`🔥 [PROD HEARTBEAT] Uptime: ${uptime}s, Active connections: ${activeConnections}, Memory: ${(memUsage.heapUsed / 1024 / 1024).toFixed(1)}MB`);
+    }, 300000); // Every 5 minutes
+
+    // Clean up heartbeat on shutdown
+    process.on('SIGTERM', () => {
+      clearInterval(heartbeatInterval);
+    });
+  }
+
+  // The HTTP server keeps the event loop alive automatically
+  // No artificial exit-prevention intervals needed
   
   // PRODUCTION: Add error handling for server startup failures
   if (process.env.NODE_ENV === 'production') {
