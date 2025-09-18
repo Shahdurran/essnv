@@ -322,7 +322,7 @@ app.use((req, res, next) => {
       }
     }
   } else {
-    // Production: serve static files with fallbacks
+    // Production: serve static files with optimized path detection
     const possibleStaticPaths = [
       path.join(__dirname, "../client/dist"),
       path.join(__dirname, "../dist"),
@@ -334,16 +334,28 @@ app.use((req, res, next) => {
     let staticPath = possibleStaticPaths[0]; // Default
     let staticPathExists = false;
     
-    // Find the first existing static path
-    for (const testPath of possibleStaticPaths) {
-      try {
-        const fs = await import("fs");
-        await fs.promises.access(testPath);
-        staticPath = testPath;
+    // Optimized: Check paths in parallel to reduce startup time
+    try {
+      const fs = await import("fs");
+      const pathChecks = possibleStaticPaths.map(async (testPath) => {
+        try {
+          await fs.promises.access(testPath);
+          return testPath;
+        } catch {
+          return null;
+        }
+      });
+      
+      const results = await Promise.all(pathChecks);
+      const firstExistingPath = results.find(path => path !== null);
+      
+      if (firstExistingPath) {
+        staticPath = firstExistingPath;
         staticPathExists = true;
-        break;
-      } catch {
-        // Path doesn't exist, try next
+      }
+    } catch (error) {
+      if (process.env.NODE_ENV === 'production') {
+        console.log(`🔥 [PROD STARTUP] Static path detection error: ${error}, using fallback`);
       }
     }
     
