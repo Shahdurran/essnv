@@ -33,6 +33,35 @@ import { setupVite, serveStatic, log } from "./vite";
 // Create the main Express application instance
 const app = express();
 
+// PRODUCTION ERROR HANDLING - Catch any startup failures
+if (process.env.NODE_ENV === 'production') {
+  console.log(`🔥 [PROD STARTUP] Setting up error handlers...`);
+  
+  process.on('uncaughtException', (error) => {
+    console.error(`🔥 [PROD FATAL] Uncaught Exception: ${error.message}`);
+    console.error(`🔥 [PROD FATAL] Stack: ${error.stack}`);
+    console.error(`🔥 [PROD FATAL] This may be causing "service unavailable"`);
+    process.exit(1);
+  });
+
+  process.on('unhandledRejection', (reason, promise) => {
+    console.error(`🔥 [PROD FATAL] Unhandled Rejection: ${reason}`);
+    console.error(`🔥 [PROD FATAL] Promise: ${promise}`);
+    console.error(`🔥 [PROD FATAL] This may be causing "service unavailable"`);
+    process.exit(1);
+  });
+
+  process.on('SIGTERM', () => {
+    console.log(`🔥 [PROD SHUTDOWN] SIGTERM received, shutting down gracefully`);
+    process.exit(0);
+  });
+
+  process.on('SIGINT', () => {
+    console.log(`🔥 [PROD SHUTDOWN] SIGINT received, shutting down gracefully`);
+    process.exit(0);
+  });
+}
+
 /*
  * MIDDLEWARE CONFIGURATION
  * ========================
@@ -282,7 +311,14 @@ app.use((req, res, next) => {
    * - Useful for zero-downtime deployments and load balancing
    */
   const port = parseInt(process.env.PORT || '5000', 10);
-  server.listen({
+  
+  // PRODUCTION: Log server startup attempt
+  if (process.env.NODE_ENV === 'production') {
+    console.log(`🔥 [PROD STARTUP] Attempting to start server on port ${port}...`);
+    console.log(`🔥 [PROD STARTUP] Available memory: ${JSON.stringify(process.memoryUsage())}`);
+  }
+  
+  const serverInstance = server.listen({
     port,
     host: "0.0.0.0",      // Listen on all network interfaces
     reusePort: true,       // Allow port reuse for deployments
@@ -321,4 +357,21 @@ app.use((req, res, next) => {
     // Data is now permanently embedded in the application
     log(`[startup] Using embedded financial data for Eye Specialists & Surgeons`);
   });
+  
+  // PRODUCTION: Add error handling for server startup failures
+  if (process.env.NODE_ENV === 'production') {
+    serverInstance.on('error', (error: any) => {
+      console.error(`🔥 [PROD STARTUP ERROR] Server failed to start: ${error.message}`);
+      console.error(`🔥 [PROD STARTUP ERROR] Error code: ${error.code}`);
+      console.error(`🔥 [PROD STARTUP ERROR] Error port: ${error.port}`);
+      console.error(`🔥 [PROD STARTUP ERROR] This is likely causing "service unavailable"`);
+      console.error(`🔥 [PROD STARTUP ERROR] Full error: ${JSON.stringify(error, null, 2)}`);
+      process.exit(1);
+    });
+    
+    serverInstance.on('listening', () => {
+      console.log(`🔥 [PROD SUCCESS] Server successfully listening on port ${port}`);
+      console.log(`🔥 [PROD SUCCESS] Server address: ${JSON.stringify(serverInstance.address())}`);
+    });
+  }
 })();
