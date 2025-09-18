@@ -25,10 +25,20 @@
 
 // Import Express framework for building the web server
 import express, { type Request, Response, NextFunction } from "express";
+import path from "path";
+import { fileURLToPath } from "url";
 // Import our custom API route definitions
 import { registerRoutes } from "./routes";
-// Import Vite development server integration and static file serving
-import { setupVite, serveStatic, log } from "./vite";
+
+// ESM equivalent of __dirname
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
+// Simple logging helper (replaces vite.ts import)
+const log = (message: string) => {
+  const timestamp = new Date().toLocaleTimeString();
+  console.log(`${timestamp} [express] ${message}`);
+};
 
 // Create the main Express application instance
 const app = express();
@@ -278,16 +288,112 @@ app.use((req, res, next) => {
    * - No hot reloading (changes require rebuild/restart)
    */
 
-  // Check if we're in development mode
-  // app.get("env") reads the NODE_ENV environment variable
-  // Also check if we're running via npm start (production indicator)
-  const isProduction = app.get("env") === "production" || process.argv.includes("dist/index.js");
+  // Improved production detection
+  const isProduction = process.env.NODE_ENV === "production" || 
+                      process.env.REPLIT_DEPLOYMENT === "true" || 
+                      !!process.env.REPL_SLUG;
+                      
+  if (process.env.NODE_ENV === 'production') {
+    console.log(`🔥 [PROD STARTUP] Production mode detected: NODE_ENV=${process.env.NODE_ENV}, REPLIT_DEPLOYMENT=${process.env.REPLIT_DEPLOYMENT}, REPL_SLUG=${!!process.env.REPL_SLUG}`);
+  }
+
   if (!isProduction) {
-    // Set up Vite development server with hot module replacement
-    await setupVite(app, server);
+    // Dynamically import Vite only in development
+    try {
+      const { setupVite } = await import("./vite");
+      await setupVite(app, server);
+      log("Development server with Vite hot reload enabled");
+    } catch (error) {
+      console.error("Failed to setup Vite development server:", error);
+      // Fallback to static serving even in development
+      app.use(express.static(path.join(__dirname, "../client/dist")));
+    }
   } else {
-    // Serve pre-built static files in production
-    serveStatic(app);
+    // Production: serve static files with fallbacks
+    const possibleStaticPaths = [
+      path.join(__dirname, "../client/dist"),
+      path.join(__dirname, "../dist"),
+      path.join(__dirname, "./dist"),
+      path.join(process.cwd(), "dist"),
+      path.join(process.cwd(), "client/dist")
+    ];
+    
+    let staticPath = possibleStaticPaths[0]; // Default
+    let staticPathExists = false;
+    
+    // Find the first existing static path
+    for (const testPath of possibleStaticPaths) {
+      try {
+        const fs = await import("fs");
+        await fs.promises.access(testPath);
+        staticPath = testPath;
+        staticPathExists = true;
+        break;
+      } catch {
+        // Path doesn't exist, try next
+      }
+    }
+    
+    if (process.env.NODE_ENV === 'production') {
+      console.log(`🔥 [PROD STARTUP] Static path search results:`);
+      console.log(`🔥 [PROD STARTUP] Found static files: ${staticPathExists}`);
+      console.log(`🔥 [PROD STARTUP] Using path: ${staticPath}`);
+    }
+    
+    if (staticPathExists) {
+      app.use(express.static(staticPath));
+      
+      // SPA fallback - serve index.html for all non-API routes
+      app.get("*", (req, res) => {
+        if (!req.path.startsWith("/api")) {
+          const indexPath = path.join(staticPath, "index.html");
+          res.sendFile(indexPath, (err) => {
+            if (err) {
+              if (process.env.NODE_ENV === 'production') {
+                console.error(`🔥 [PROD ERROR] Failed to serve index.html: ${err.message}`);
+              }
+              res.status(500).send("Application not available - static files missing");
+            }
+          });
+        } else {
+          res.status(404).json({ message: "API endpoint not found" });
+        }
+      });
+    } else {
+      // Fallback: serve a basic HTML page if no built files exist
+      app.get("*", (req, res) => {
+        if (!req.path.startsWith("/api")) {
+          res.send(`
+            <!DOCTYPE html>
+            <html>
+            <head>
+              <title>MDS AI Analytics</title>
+              <style>
+                body { font-family: Arial, sans-serif; padding: 40px; text-align: center; }
+                .container { max-width: 600px; margin: 0 auto; }
+                .error { color: #d32f2f; margin: 20px 0; }
+                .info { color: #1976d2; margin: 20px 0; }
+              </style>
+            </head>
+            <body>
+              <div class="container">
+                <h1>MDS AI Analytics</h1>
+                <div class="error">Application is starting up...</div>
+                <div class="info">The frontend application is being prepared. Please check back in a moment.</div>
+                <div class="info">API endpoints are available at <a href="/api/health">/api/health</a></div>
+              </div>
+            </body>
+            </html>
+          `);
+        } else {
+          res.status(404).json({ message: "API endpoint not found" });
+        }
+      });
+      
+      if (process.env.NODE_ENV === 'production') {
+        console.log(`🔥 [PROD STARTUP] No static files found - serving fallback HTML`);
+      }
+    }
   }
 
   /*

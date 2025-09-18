@@ -46,26 +46,26 @@ import { importCashFlowDataFromCsv, getCashFlowData } from "./csvImport";
  * This sets up our connection to OpenAI's GPT-4o model for the AI business assistant.
  * The AI assistant helps users ask natural language questions about their practice data.
  *
- * ENVIRONMENT VARIABLE HANDLING:
- * We check multiple environment variable names to ensure compatibility:
- * - OPENAI_API_KEY: Standard OpenAI environment variable name
- * - OPENAI_API_KEY_ENV_VAR: Alternative naming convention
- * - "default_key": Fallback for development (should be replaced with real key)
- *
- * GPT-4o MODEL CHOICE:
- * GPT-4o was released in May 2024 and offers the best balance of:
- * - Speed (faster than GPT-4)
- * - Cost (cheaper than GPT-4)
- * - Capability (multimodal, large context window)
- * - Accuracy (excellent for business intelligence queries)
+ * PRODUCTION-SAFE INITIALIZATION:
+ * Only initialize OpenAI client if a valid API key is present.
+ * This prevents server crashes in production when API key is missing.
  */
-// the newest OpenAI model is "gpt-4o" which was released May 13, 2024. do not change this unless explicitly requested by the user
-const openai = new OpenAI({
-  apiKey:
-    process.env.OPENAI_API_KEY ||
-    process.env.OPENAI_API_KEY_ENV_VAR ||
-    "default_key",
-});
+// Get OpenAI API key from environment variables
+const openaiApiKey = process.env.OPENAI_API_KEY || process.env.OPENAI_API_KEY_ENV_VAR;
+const hasValidOpenAIKey = openaiApiKey && openaiApiKey !== "default_key" && openaiApiKey.length > 10;
+
+// Initialize OpenAI client only if valid key is present
+let openai: OpenAI | null = null;
+if (hasValidOpenAIKey) {
+  openai = new OpenAI({
+    apiKey: openaiApiKey,
+  });
+} else {
+  console.log(`⚠️  [STARTUP] OpenAI API key not configured - AI features will be disabled`);
+  if (process.env.NODE_ENV === 'production') {
+    console.log(`🔥 [PROD STARTUP] OpenAI key status: ${openaiApiKey ? 'INVALID/DEFAULT' : 'MISSING'} - AI endpoints will return 503`);
+  }
+}
 
 // Import AI assistant utilities (moved to separate modules for better architecture)
 import { processAIQuery } from "./utils/aiAssistant";
@@ -84,8 +84,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
     console.log(`🔥 [PRODUCTION] Platform: ${process.platform} ${process.arch}`);
     console.log(`🔥 [PRODUCTION] Working dir: ${process.cwd()}`);
     console.log(`🔥 [PRODUCTION] Process args: ${process.argv.slice(2).join(' ')}`);
-    console.log(`🔥 [PRODUCTION] OpenAI Key: ${!!openai.apiKey && openai.apiKey !== 'default_key' ? 'CONFIGURED' : 'MISSING/DEFAULT'}`);
-    console.log(`🔥 [PRODUCTION] OpenAI Key Length: ${openai.apiKey?.length || 0}`);
+    console.log(`🔥 [PRODUCTION] OpenAI Key: ${hasValidOpenAIKey ? 'CONFIGURED' : 'MISSING/DEFAULT'}`);
+    console.log(`🔥 [PRODUCTION] OpenAI Key Length: ${openaiApiKey?.length || 0}`);
     console.log(`🔥 [PRODUCTION] Initial Memory: ${JSON.stringify(process.memoryUsage())}`);
     console.log(`🔥 [PRODUCTION] Environment vars loaded: ${Object.keys(process.env).length}`);
     console.log(`🔥 [PRODUCTION] =============================================`);
@@ -754,14 +754,25 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post("/api/ai/query", async (req, res) => {
     const startTime = Date.now();
     
+    // Early return if OpenAI is not configured
+    if (!openai || !hasValidOpenAIKey) {
+      if (process.env.NODE_ENV === 'production') {
+        console.log(`🔥 [PROD AI] OpenAI not configured - returning 503`);
+      }
+      return res.status(503).json({ 
+        message: "AI assistant is temporarily unavailable. OpenAI API key not configured.",
+        queryType: "error",
+        response: "The AI assistant feature requires an OpenAI API key to function. Please contact your administrator to configure this service."
+      });
+    }
+    
     if (process.env.NODE_ENV === 'production') {
       console.log(`🔥 [PROD AI] ============================================`);
       console.log(`🔥 [PROD AI] Query started at ${new Date().toISOString()}`);
       console.log(`🔥 [PROD AI] Request IP: ${req.ip}, User-Agent: ${req.get('User-Agent')?.substring(0, 50)}`);
       console.log(`🔥 [PROD AI] Request body keys: ${Object.keys(req.body).join(',')}`);
       console.log(`🔥 [PROD AI] Query length: ${req.body.query?.length || 0}`);
-      console.log(`🔥 [PROD AI] OpenAI client: ${openai ? 'EXISTS' : 'MISSING'}`);
-      console.log(`🔥 [PROD AI] OpenAI key status: ${openai?.apiKey ? (openai.apiKey === 'default_key' ? 'DEFAULT' : 'CONFIGURED') : 'MISSING'}`);
+      console.log(`🔥 [PROD AI] OpenAI client: CONFIGURED`);
       console.log(`🔥 [PROD AI] Storage available: ${!!storage}`);
     }
     
