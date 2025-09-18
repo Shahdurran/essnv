@@ -288,25 +288,29 @@ app.use((req, res, next) => {
    * - No hot reloading (changes require rebuild/restart)
    */
 
-  // Improved production detection
-  const isProduction = process.env.NODE_ENV === "production" || 
-                      process.env.REPLIT_DEPLOYMENT === "true" || 
-                      !!process.env.REPL_SLUG;
+  // Simple production detection - only when NODE_ENV is explicitly production
+  const isProduction = process.env.NODE_ENV === "production";
                       
   if (process.env.NODE_ENV === 'production') {
-    console.log(`🔥 [PROD STARTUP] Production mode detected: NODE_ENV=${process.env.NODE_ENV}, REPLIT_DEPLOYMENT=${process.env.REPLIT_DEPLOYMENT}, REPL_SLUG=${!!process.env.REPL_SLUG}`);
+    console.log(`🔥 [PROD STARTUP] Production mode detected: NODE_ENV=${process.env.NODE_ENV}`);
   }
 
   if (!isProduction) {
-    // Dynamically import Vite only in development
+    // Development mode: dynamically import Vite
     try {
       const { setupVite } = await import("./vite");
       await setupVite(app, server);
       log("Development server with Vite hot reload enabled");
     } catch (error) {
       console.error("Failed to setup Vite development server:", error);
-      // Fallback to static serving even in development
-      app.use(express.static(path.join(__dirname, "../client/dist")));
+      // Fallback: import serveStatic from vite.ts
+      try {
+        const { serveStatic } = await import("./vite");
+        serveStatic(app);
+        log("Fallback to static serving in development");
+      } catch (fallbackError) {
+        console.error("Failed to setup any file serving:", fallbackError);
+      }
     }
   } else {
     // Production: serve static files with fallbacks
