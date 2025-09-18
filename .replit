@@ -17,8 +17,6 @@ healthCheckTimeout = 30
 [[ports]]
 localPort = 8080
 externalPort = 80
-# Ensure proper port forwarding
-exposeLocalhost = true
 
 [env]
 PORT = "8080"
