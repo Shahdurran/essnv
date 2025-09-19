@@ -9,7 +9,8 @@
           "server/**",
           "shared/**",
           "dist/**"
-        ]
+        ],
+        "maxDuration": 30
       }
     },
     {
@@ -38,11 +39,6 @@
       "dest": "/dist/public/index.html"
     }
   ],
-  "functions": {
-    "server/index.ts": {
-      "maxDuration": 30
-    }
-  },
   "env": {
     "NODE_ENV": "production"
   }
