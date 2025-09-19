@@ -23,6 +23,18 @@
   ],
   "routes": [
     {
+      "src": "/api/financial/revenue/(.*)",
+      "dest": "/api/financial/revenue"
+    },
+    {
+      "src": "/api/financial/expenses/(.*)",
+      "dest": "/api/financial/expenses"
+    },
+    {
+      "src": "/api/analytics/key-metrics/(.*)",
+      "dest": "/api/analytics/key-metrics"
+    },
+    {
       "src": "/api/(.*)",
       "dest": "/api/$1"
     },
