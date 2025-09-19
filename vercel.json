@@ -2,18 +2,6 @@
   "version": 2,
   "builds": [
     {
-      "src": "api/**/*.ts",
-      "use": "@vercel/node",
-      "config": {
-        "includeFiles": [
-          "server/**",
-          "shared/**",
-          "dist/**"
-        ],
-        "maxDuration": 30
-      }
-    },
-    {
       "src": "package.json",
       "use": "@vercel/static-build",
       "config": {
@@ -22,22 +10,6 @@
     }
   ],
   "routes": [
-    {
-      "src": "/api/financial/revenue/(.*)",
-      "dest": "/api/financial/revenue"
-    },
-    {
-      "src": "/api/financial/expenses/(.*)",
-      "dest": "/api/financial/expenses"
-    },
-    {
-      "src": "/api/analytics/key-metrics/(.*)",
-      "dest": "/api/analytics/key-metrics"
-    },
-    {
-      "src": "/api/(.*)",
-      "dest": "/api/$1"
-    },
     {
       "src": "/(.*)",
       "dest": "/dist/public/$1"
