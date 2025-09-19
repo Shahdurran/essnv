@@ -9,7 +9,6 @@
 import express from "express";
 import path from "path";
 import { fileURLToPath } from "url";
-import { registerRoutes } from "../server/routes";
 
 // ESM equivalent of __dirname
 const __filename = fileURLToPath(import.meta.url);
@@ -25,8 +24,23 @@ app.set('trust proxy', true);
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 
-// Register API routes
-const server = await registerRoutes(app);
+// Simple health check
+app.get("/api/health", (req, res) => {
+  res.json({
+    status: "healthy",
+    timestamp: new Date().toISOString(),
+    service: "MDS AI Analytics API",
+    environment: process.env.NODE_ENV || "development"
+  });
+});
+
+// Simple test endpoint
+app.get("/api/test", (req, res) => {
+  res.json({
+    message: "API is working!",
+    timestamp: new Date().toISOString()
+  });
+});
 
 // Serve static files in production
 if (process.env.NODE_ENV === "production") {
@@ -44,13 +58,14 @@ if (process.env.NODE_ENV === "production") {
   
   // Check which static path exists
   try {
-    const fs = await import("fs");
+    const fs = require("fs");
     for (const testPath of possibleStaticPaths) {
       try {
-        await fs.promises.access(testPath);
-        staticPath = testPath;
-        staticPathExists = true;
-        break;
+        if (fs.existsSync(testPath)) {
+          staticPath = testPath;
+          staticPathExists = true;
+          break;
+        }
       } catch {
         // Continue to next path
       }
