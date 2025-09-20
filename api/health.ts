@@ -8,3 +8,4 @@ export default function handler(req: VercelRequest, res: VercelResponse) {
     environment: process.env.NODE_ENV || "development"
   });
 }
+
