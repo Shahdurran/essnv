@@ -122,11 +122,11 @@ export async function apiRequest(
 type UnauthorizedBehavior = "returnNull" | "throw";
 
 /*
- * QUERY FUNCTION FACTORY
- * ======================
+ * EMBEDDED DATA QUERY FUNCTION
+ * ============================
  * 
- * This creates customized query functions for TanStack Query with specific
- * authentication error handling behavior.
+ * This creates query functions that use embedded data instead of making API calls.
+ * All data is served from the embedded data service for faster, more reliable performance.
  * 
  * TANSTACK QUERY INTEGRATION:
  * TanStack Query uses "query functions" to fetch data. These functions:
@@ -135,13 +135,11 @@ type UnauthorizedBehavior = "returnNull" | "throw";
  * - Can throw errors that TanStack Query will handle
  * 
  * QUERY KEY CONVENTION:
- * We use the query key as the URL path by joining array elements with "/".
- * For example: queryKey: ["/api", "analytics", "revenue"] becomes "/api/analytics/revenue"
- * 
- * This approach makes queries self-documenting and easy to cache-bust.
+ * We use the query key to determine which data service function to call.
+ * For example: queryKey: ["/api", "locations"] calls dataService.getLocations()
  * 
  * @param {Object} options - Configuration options for the query function
- * @param {UnauthorizedBehavior} options.on401 - How to handle 401 responses
+ * @param {UnauthorizedBehavior} options.on401 - How to handle 401 responses (not used with embedded data)
  * @returns {QueryFunction<T>} A query function configured for TanStack Query
  */
 export const getQueryFn: <T>(options: {
@@ -149,21 +147,93 @@ export const getQueryFn: <T>(options: {
 }) => QueryFunction<T> =
   ({ on401: unauthorizedBehavior }) =>
   async ({ queryKey }) => {
-    // Convert query key array to URL path
-    const res = await fetch(queryKey.join("/") as string, {
-      // Include credentials for authentication
-      credentials: "include",
-    });
-
-    // Handle 401 (Unauthorized) responses based on configuration
-    if (unauthorizedBehavior === "returnNull" && res.status === 401) {
-      return null;
+    // Import the data service
+    const { dataService } = await import('./dataService');
+    
+    // Convert query key array to determine which function to call
+    const path = queryKey.join("/");
+    
+    // Route to appropriate data service function based on the path
+    if (path === "/api/locations") {
+      return await dataService.getLocations();
     }
-
-    // Check for other HTTP errors and throw if found
-    await throwIfResNotOk(res);
-    // Parse and return JSON response
-    return await res.json();
+    
+    if (path.startsWith("/api/analytics/key-metrics")) {
+      const locationId = queryKey[2] || 'all';
+      const timeRange = queryKey[3] || '1';
+      return await dataService.getKeyMetrics(locationId, timeRange);
+    }
+    
+    if (path.startsWith("/api/financial/revenue")) {
+      const locationId = queryKey[3] || 'all';
+      const period = queryKey[4] || '1Y';
+      return await dataService.getFinancialRevenue(locationId, period);
+    }
+    
+    if (path.startsWith("/api/financial/expenses")) {
+      const locationId = queryKey[3] || 'all';
+      const period = queryKey[4] || '1Y';
+      return await dataService.getFinancialExpenses(locationId, period);
+    }
+    
+    if (path.startsWith("/api/financial/cashflow")) {
+      const locationId = queryKey[3] || 'all';
+      const period = queryKey[4] || '1Y';
+      return await dataService.getCashFlow(locationId, period);
+    }
+    
+    if (path.startsWith("/api/financial/profit-loss")) {
+      const locationId = queryKey[3] || 'all';
+      const period = queryKey[4] || '1Y';
+      return await dataService.getProfitLoss(locationId, period);
+    }
+    
+    if (path.startsWith("/api/analytics/revenue-trends")) {
+      const locationId = queryKey[3] || 'all';
+      const period = queryKey[4] || '1yr';
+      return await dataService.getRevenueTrends(locationId, period);
+    }
+    
+    if (path.startsWith("/api/analytics/ar-buckets")) {
+      const locationId = queryKey[3] || 'all';
+      return await dataService.getARBuckets(locationId);
+    }
+    
+    if (path.startsWith("/api/analytics/insurance-claims")) {
+      const locationId = queryKey[3] || 'all';
+      return await dataService.getInsuranceClaims(locationId);
+    }
+    
+    if (path.startsWith("/api/analytics/patient-billing")) {
+      const locationId = queryKey[3] || 'all';
+      const timeRange = queryKey[4] || '30';
+      return await dataService.getPatientBilling(locationId, timeRange);
+    }
+    
+    if (path.startsWith("/api/analytics/top-procedures")) {
+      const locationId = queryKey[3] || 'all';
+      const category = queryKey[4] || 'all';
+      const timeRange = queryKey[5] || '1';
+      return await dataService.getTopRevenueProcedures(locationId, category, timeRange);
+    }
+    
+    if (path.startsWith("/api/analytics/insurance-breakdown")) {
+      const locationId = queryKey[3] || 'all';
+      const timeRange = queryKey[4] || '1';
+      return await dataService.getInsurancePayerBreakdown(locationId, timeRange);
+    }
+    
+    if (path.startsWith("/api/analytics/projections")) {
+      const locationId = queryKey[3] || 'all';
+      return await dataService.getPatientVolumeProjections(locationId);
+    }
+    
+    if (path === "/api/ai/popular-questions") {
+      return await dataService.getPopularQuestions();
+    }
+    
+    // If no matching route found, throw an error
+    throw new Error(`No embedded data available for path: ${path}`);
   };
 
 /*
