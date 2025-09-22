@@ -136,7 +136,7 @@ export default function CashOutWidget({ selectedLocationId, selectedPeriod }: Ca
               data-testid="cash-out-total-change"
             >
               {getTrendIcon(weightedChange > 0 ? "up" : weightedChange < 0 ? "down" : "neutral", weightedChange)}
-              {Math.abs(weightedChange).toFixed(1)}%
+              {isNaN(weightedChange) ? '0.0' : Math.abs(weightedChange).toFixed(1)}%
             </Badge>
           </div>
         </CardTitle>
@@ -167,7 +167,7 @@ export default function CashOutWidget({ selectedLocationId, selectedPeriod }: Ca
                   data-testid={`cash-out-trend-${category.name.toLowerCase().replace(/\s+/g, '-')}`}
                 >
                   {getTrendIcon(category.trend, category.change)}
-                  {Math.abs(category.change).toFixed(1)}%
+                  {isNaN(category.change) ? '0.0' : Math.abs(category.change).toFixed(1)}%
                 </Badge>
               </div>
             </div>

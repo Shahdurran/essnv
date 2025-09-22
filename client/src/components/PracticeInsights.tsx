@@ -122,12 +122,17 @@ export default function PracticeInsights({ selectedLocationId }: PracticeInsight
    * @returns {string} Formatted number string
    */
   const formatNumber = (value: number): string => {
+    // Handle NaN, undefined, or null values
+    if (!value || isNaN(value) || !isFinite(value)) {
+      return '0';
+    }
+    
     if (value >= 1000000) {
       return `${(value / 1000000).toFixed(1)}M`;
     } else if (value >= 1000) {
       return `${(value / 1000).toFixed(0)}K`;
     }
-    return value?.toLocaleString() || '0';
+    return value.toLocaleString();
   };
 
   /**
@@ -136,12 +141,17 @@ export default function PracticeInsights({ selectedLocationId }: PracticeInsight
    * @returns {string} Formatted currency string
    */
   const formatCurrency = (value: number): string => {
+    // Handle NaN, undefined, or null values
+    if (!value || isNaN(value) || !isFinite(value)) {
+      return '$0';
+    }
+    
     if (value >= 1000000) {
       return `$${(value / 1000000).toFixed(1)}M`;
     } else if (value >= 1000) {
       return `$${(value / 1000).toFixed(0)}K`;
     }
-    return `$${value?.toLocaleString() || '0'}`;
+    return `$${value.toLocaleString()}`;
   };
 
   /**
@@ -392,10 +402,10 @@ export default function PracticeInsights({ selectedLocationId }: PracticeInsight
                     </div>
                     <div className="text-right flex-shrink-0">
                       <p className="text-xs sm:text-sm font-semibold text-gray-900">
-                        {payer.percentage?.toFixed(1) || '0.0'}%
+                        {(payer.percentage && !isNaN(payer.percentage)) ? payer.percentage.toFixed(1) : '0.0'}%
                       </p>
                       <p className="text-xs text-gray-600">
-                        {payer.arDays?.toFixed(1) || '0.0'} days
+                        {(payer.arDays && !isNaN(payer.arDays)) ? payer.arDays.toFixed(1) : '0.0'} days
                       </p>
                     </div>
                   </div>

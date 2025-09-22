@@ -117,6 +117,11 @@ export default function ARBucketsWidget({ selectedLocationId }: ARBucketsWidgetP
    * @returns {string} Formatted currency string
    */
   const formatCurrency = (amount: number): string => {
+    // Handle NaN, undefined, or null values
+    if (!amount || isNaN(amount) || !isFinite(amount)) {
+      return '$0';
+    }
+    
     if (amount >= 1000000) {
       return `$${(amount / 1000000).toFixed(1)}M`;
     } else if (amount >= 1000) {
@@ -217,7 +222,7 @@ export default function ARBucketsWidget({ selectedLocationId }: ARBucketsWidgetP
   }
 
   const totalAR = getTotalAR();
-  const maxAmount = Math.max(...(arData?.buckets?.map((b: ARBucket) => b.amount) || [0]));
+  const maxAmount = Math.max(...(arData?.buckets?.map((b: ARBucket) => b.amount || 0) || [0]));
 
   return (
     <div className="bg-white rounded-lg border border-gray-200 p-6">

@@ -126,6 +126,11 @@ export default function FinancialRevenueWidget({ selectedLocationId, selectedPer
    * ========================
    */
   const formatGrowth = (current: number, previous: number): string => {
+    // Handle NaN, undefined, or division by zero
+    if (!current || !previous || isNaN(current) || isNaN(previous) || previous === 0) {
+      return '+0.0%';
+    }
+    
     const growth = ((current - previous) / previous) * 100;
     const sign = growth > 0 ? '+' : '';
     return `${sign}${growth.toFixed(1)}%`;

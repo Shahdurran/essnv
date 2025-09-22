@@ -81,7 +81,7 @@ export default function FinancialExpensesWidget({ selectedLocationId, selectedPe
             data-testid="expenses-total-change"
           >
             {getTrendIcon(weightedChange > 0 ? "up" : weightedChange < 0 ? "down" : "neutral", weightedChange)}
-            {Math.abs(weightedChange).toFixed(1)}%
+            {isNaN(weightedChange) ? '0.0' : Math.abs(weightedChange).toFixed(1)}%
           </Badge>
         </div>
       </CardHeader>
@@ -121,7 +121,7 @@ export default function FinancialExpensesWidget({ selectedLocationId, selectedPe
                   data-testid={`expense-trend-${category.id}`}
                 >
                   {getTrendIcon(category.trend, category.change)}
-                  {Math.abs(category.change).toFixed(1)}%
+                  {isNaN(category.change) ? '0.0' : Math.abs(category.change).toFixed(1)}%
                 </Badge>
               </div>
             </div>
