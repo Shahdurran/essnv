@@ -101,17 +101,10 @@ export default function PracticeInsights({ selectedLocationId }: PracticeInsight
   const [timeRange, setTimeRange] = useState("1");
 
   /**
-   * Fetch key performance metrics from API
+   * Fetch key performance metrics from embedded data
    */
   const { data: keyMetrics = {} as KeyMetrics, isLoading: metricsLoading, error: metricsError } = useQuery<KeyMetrics>({
     queryKey: ['/api/analytics/key-metrics', selectedLocationId, timeRange],
-    queryFn: async () => {
-      const response = await fetch(`/api/analytics/key-metrics/${selectedLocationId}?timeRange=${timeRange}`);
-      if (!response.ok) {
-        throw new Error('Failed to fetch key metrics data');
-      }
-      return response.json();
-    },
     staleTime: 1 * 60 * 1000, // Cache for 1 minute for real-time feel
   });
 
@@ -120,13 +113,6 @@ export default function PracticeInsights({ selectedLocationId }: PracticeInsight
    */
   const { data: insuranceData = [], isLoading: insuranceLoading, error: insuranceError } = useQuery<InsurancePayerData[]>({
     queryKey: ['/api/analytics/insurance-breakdown', selectedLocationId, timeRange],
-    queryFn: async () => {
-      const response = await fetch(`/api/analytics/insurance-breakdown/${selectedLocationId}?timeRange=${timeRange}`);
-      if (!response.ok) {
-        throw new Error('Failed to fetch insurance breakdown data');
-      }
-      return response.json();
-    },
     staleTime: 5 * 60 * 1000, // Cache for 5 minutes
   });
 

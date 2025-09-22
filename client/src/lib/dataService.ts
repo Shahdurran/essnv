@@ -286,7 +286,12 @@ export const dataService = {
   },
 
   // Get cash flow data
-  async getCashFlow(locationId?: string, period?: string): Promise<CashFlowResponse> {
+  async getCashFlow(locationId?: string, period?: string): Promise<any> {
+    const operatingCashFlow = 7659268;
+    const investingCashFlow = -630000;
+    const financingCashFlow = -210000;
+    const netCashFlow = operatingCashFlow + investingCashFlow + financingCashFlow;
+
     return {
       operating: [
         {
@@ -330,8 +335,17 @@ export const dataService = {
           trend: 'down'
         }
       ],
-      netCashFlow: 6871188,
-      period: period || '1Y'
+      operatingCashFlow,
+      investingCashFlow,
+      financingCashFlow,
+      netCashFlow,
+      period: period || '1Y',
+      totals: {
+        operating: operatingCashFlow,
+        investing: investingCashFlow,
+        financing: financingCashFlow,
+        netCashFlow
+      }
     };
   },
 

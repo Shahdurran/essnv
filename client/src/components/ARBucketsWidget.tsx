@@ -108,13 +108,6 @@ export default function ARBucketsWidget({ selectedLocationId }: ARBucketsWidgetP
    */
   const { data: arData, isLoading, error } = useQuery({
     queryKey: ['/api/analytics/ar-buckets', selectedLocationId],
-    queryFn: async () => {
-      const response = await fetch(`/api/analytics/ar-buckets/${selectedLocationId}`);
-      if (!response.ok) {
-        throw new Error('Failed to fetch AR buckets data');
-      }
-      return response.json();
-    },
     staleTime: 5 * 60 * 1000, // Cache for 5 minutes - AR data changes frequently
   });
 

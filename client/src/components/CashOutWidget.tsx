@@ -44,14 +44,9 @@ const timePeriods = [
 ];
 
 export default function CashOutWidget({ selectedLocationId, selectedPeriod }: CashOutWidgetProps) {
-  // Fetch real cash flow data from API
+  // Fetch cash flow data from embedded data service
   const { data: cashFlowData, isLoading, isError } = useQuery<CashFlowApiResponse>({
     queryKey: ['/api/financial/cashflow', selectedLocationId, selectedPeriod],
-    queryFn: () => 
-      fetch(`/api/financial/cashflow/${selectedLocationId}/${selectedPeriod}`).then(res => {
-        if (!res.ok) throw new Error('Failed to fetch cash flow data');
-        return res.json();
-      })
   });
 
   // Filter operating activities for negative cash flows (Cash Out), excluding summary items, and convert to positive amounts for display

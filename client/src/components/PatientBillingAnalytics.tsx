@@ -110,13 +110,6 @@ export default function PatientBillingAnalytics({ selectedLocationId }: PatientB
    */
   const { data: billingData, isLoading, error } = useQuery<PatientBillingData>({
     queryKey: ['/api/analytics/patient-billing', selectedLocationId, timeRange],
-    queryFn: async () => {
-      const response = await fetch(`/api/analytics/patient-billing/${selectedLocationId}?timeRange=${timeRange}`);
-      if (!response.ok) {
-        throw new Error('Failed to fetch patient billing data');
-      }
-      return response.json();
-    }
   });
 
   /**
