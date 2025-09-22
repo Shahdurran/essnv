@@ -36,8 +36,8 @@ import { storage } from "./storage";
 import OpenAI from "openai";
 // Zod schema for AI query validation
 import { insertAiQuerySchema } from "@shared/schema";
-// Cash flow CSV import functions
-import { importCashFlowDataFromCsv, getCashFlowData } from "./csvImport";
+// Cash flow CSV import functions (imported conditionally to avoid database requirement)
+// import { importCashFlowDataFromCsv, getCashFlowData } from "./csvImport";
 
 /*
  * OPENAI CLIENT INITIALIZATION
@@ -1107,7 +1107,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Use Fairfax location as default
       const locationId = "fairfax";
 
-      // Import cash flow data from CSV
+      // Import cash flow data from CSV (conditional import to avoid database requirement)
       const fs = await import("fs");
       const path = await import("path");
       const csvPath = path.join(process.cwd(), "Cashflow-Eye-Specialists.csv");
@@ -1118,10 +1118,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
           .json({ message: "Cash flow CSV file not found" });
       }
 
+      // Dynamic import to avoid database requirement at startup
+      const { importCashFlowDataFromCsv, getCashFlowData } = await import("./csvImport");
       const result = await importCashFlowDataFromCsv(csvPath, locationId);
 
       // Transfer imported data to storage layer for time-based filtering
-      const { getCashFlowData } = await import("./csvImport");
       const importedData = getCashFlowData();
 
       // Helper function to normalize month format to YYYY-MM
