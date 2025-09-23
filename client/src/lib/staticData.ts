@@ -141,18 +141,18 @@ export function getCashFlowDataForLocation(locationId: string = 'all', period: s
 export function getPLDataForLocation(locationId: string = 'all', period: string = '1Y') {
   let filteredData = rawPLData;
   
-  // Filter by location if not 'all'
+  // Filter by location if not 'all' (though all data has same location_id)
   if (locationId !== 'all') {
     filteredData = rawPLData.filter(item => item.location_id === locationId);
   }
   
-  // Group data by category type
+  // Group data by category type and aggregate across all months
   const revenueData = filteredData.filter(item => item.category_type === 'revenue');
   const directCostsData = filteredData.filter(item => item.category_type === 'direct_costs');
   const operatingExpensesData = filteredData.filter(item => item.category_type === 'operating_expenses');
   const calculatedTotals = filteredData.filter(item => item.category_type === 'calculated_totals');
   
-  // Group and sum by line item
+  // Group and sum by line item across all months
   const revenueItems = groupAndSumByLineItem(revenueData);
   const expenseItems = [
     ...groupAndSumByLineItem(directCostsData),
@@ -162,20 +162,27 @@ export function getPLDataForLocation(locationId: string = 'all', period: string 
   // Create revenue and expenses objects
   const revenue: Record<string, number> = {};
   revenueItems.forEach(item => {
-    revenue[item.line_item] = item.total_amount;
+    revenue[item.line_item] = Math.round(item.total_amount);
   });
   
   const expenses: Record<string, number> = {};
   expenseItems.forEach(item => {
-    expenses[item.line_item] = Math.abs(item.total_amount); // Make expenses positive for display
+    expenses[item.line_item] = Math.round(Math.abs(item.total_amount)); // Make expenses positive for display
   });
   
-  // Get calculated totals
+  // Get calculated totals (sum across all months)
   const grossProfitItems = calculatedTotals.filter(item => item.line_item === 'Gross Profit');
   const ebitdaItems = calculatedTotals.filter(item => item.line_item === 'EBITDA');
   
+  console.log('Gross Profit items:', grossProfitItems.length);
+  console.log('EBITDA items:', ebitdaItems.length);
+  console.log('Sample EBITDA item:', ebitdaItems[0]);
+  
   const grossProfit = grossProfitItems.reduce((sum, item) => sum + parseFloat(item.amount), 0);
   const ebitda = ebitdaItems.reduce((sum, item) => sum + parseFloat(item.amount), 0);
+  
+  console.log('Calculated Gross Profit:', grossProfit);
+  console.log('Calculated EBITDA:', ebitda);
   
   // Calculate net income (simplified as EBITDA for now)
   const netIncome = ebitda * 0.85; // Assume 85% of EBITDA after taxes and interest
@@ -183,9 +190,9 @@ export function getPLDataForLocation(locationId: string = 'all', period: string 
   return {
     revenue,
     expenses,
-    grossProfit,
-    ebitda,
-    netIncome,
+    grossProfit: Math.round(grossProfit),
+    ebitda: Math.round(ebitda),
+    netIncome: Math.round(netIncome),
     period
   };
 }
@@ -249,25 +256,32 @@ export function getRevenueTrendsFromPL(locationId: string = 'all', period: strin
 export function getFinancialRevenueFromPL(locationId: string = 'all', period: string = '1Y') {
   let filteredData = rawPLData;
   
-  // Filter by location if not 'all'
+  // Filter by location if not 'all' (though all data has same location_id)
   if (locationId !== 'all') {
     filteredData = rawPLData.filter(item => item.location_id === locationId);
   }
   
-  // Get revenue items only
+  // Get revenue items only and aggregate across all months
   const revenueData = filteredData.filter(item => item.category_type === 'revenue');
+  console.log('Revenue data count:', revenueData.length);
+  console.log('Sample revenue item:', revenueData[0]);
+  
   const revenueItems = groupAndSumByLineItem(revenueData);
+  console.log('Revenue items after grouping:', revenueItems);
   
   // Convert to expected format
   const categories = revenueItems.map((item, index) => ({
     id: item.line_item.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, ''),
     name: item.line_item,
-    amount: item.total_amount,
+    amount: Math.round(item.total_amount), // Round to whole numbers
     change: Math.random() * 10 - 2, // Random positive change
     trend: 'up' as const
   }));
   
   const total = categories.reduce((sum, cat) => sum + cat.amount, 0);
+  
+  console.log('Final revenue categories:', categories);
+  console.log('Total revenue:', total);
   
   return {
     categories,
@@ -282,12 +296,12 @@ export function getFinancialRevenueFromPL(locationId: string = 'all', period: st
 export function getFinancialExpensesFromPL(locationId: string = 'all', period: string = '1Y') {
   let filteredData = rawPLData;
   
-  // Filter by location if not 'all'
+  // Filter by location if not 'all' (though all data has same location_id)
   if (locationId !== 'all') {
     filteredData = rawPLData.filter(item => item.location_id === locationId);
   }
   
-  // Get expense items (direct costs and operating expenses)
+  // Get expense items (direct costs and operating expenses) and aggregate across all months
   const expenseData = filteredData.filter(item => 
     item.category_type === 'direct_costs' || item.category_type === 'operating_expenses'
   );
@@ -297,7 +311,7 @@ export function getFinancialExpensesFromPL(locationId: string = 'all', period: s
   const categories = expenseItems.map((item, index) => ({
     id: item.line_item.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, ''),
     name: item.line_item,
-    amount: Math.abs(item.total_amount), // Make positive for display
+    amount: Math.round(Math.abs(item.total_amount)), // Make positive and round for display
     change: Math.random() * 6 - 3, // Random change
     trend: Math.random() > 0.5 ? 'up' : 'down' as const
   }));
@@ -315,7 +329,7 @@ export function getFinancialExpensesFromPL(locationId: string = 'all', period: s
  * Calculate key metrics from the data
  */
 export function calculateKeyMetrics(locationId: string = 'all', timeRange: string = '1') {
-  // Get recent month data for calculations
+  // Get recent month data for calculations - use the most recent month available
   const recentMonth = '2025-08'; // Use the most recent month in the data
   
   let filteredPLData = rawPLData;
@@ -330,7 +344,7 @@ export function calculateKeyMetrics(locationId: string = 'all', timeRange: strin
   const currentMonthPL = filteredPLData.filter(item => item.month_year === recentMonth);
   const currentMonthCF = filteredCashFlowData.filter(item => item.month_year === recentMonth);
   
-  // Calculate monthly revenue
+  // Calculate monthly revenue from current month
   const revenueItems = currentMonthPL.filter(item => item.category_type === 'revenue');
   const monthlyRevenue = revenueItems.reduce((sum, item) => sum + parseFloat(item.amount), 0);
   
@@ -345,12 +359,12 @@ export function calculateKeyMetrics(locationId: string = 'all', timeRange: strin
   
   return {
     monthlyPatients,
-    monthlyRevenue,
+    monthlyRevenue: Math.round(monthlyRevenue),
     arDays,
     cleanClaimRate,
     patientGrowth: "+8.2%", // Static for now
     revenueGrowth: "+12.5%", // Static for now
-    averageRevenuePerPatient: Math.round(monthlyRevenue / monthlyPatients),
+    averageRevenuePerPatient: monthlyPatients > 0 ? Math.round(monthlyRevenue / monthlyPatients) : 0,
     noShowRate: 6.8,
     cancellationRate: 4.2,
     newPatientRate: 18.5,
