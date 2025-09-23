@@ -27,6 +27,9 @@
  * - Compound calculations that mirror real business relationships
  */
 
+// Import types from shared schema
+import type { ClaimsBreakdown } from "../../../shared/schema";
+
 /*
  * REVENUE TIME SERIES GENERATOR
  * =============================
@@ -711,3 +714,137 @@ export const sampleChatHistory = [
     timestamp: new Date(Date.now() - 30000).toISOString()
   }
 ];
+
+/*
+ * INSURANCE CLAIMS BREAKDOWN GENERATOR
+ * ====================================
+ * 
+ * This function generates realistic insurance claims data organized by status
+ * and insurance provider for the Insurance Claims Tracker widget.
+ */
+export function generateInsuranceClaimsBreakdown(locationId: string = 'all'): ClaimsBreakdown[] {
+  return [
+    {
+      status: 'Pending',
+      totalClaims: 156,
+      totalAmount: 89500,
+      providers: [
+        { name: 'Blue Cross Blue Shield', claimCount: 45, amount: 32000 },
+        { name: 'Aetna', claimCount: 38, amount: 28500 },
+        { name: 'Medicare', claimCount: 73, amount: 29000 }
+      ]
+    },
+    {
+      status: 'Submitted',
+      totalClaims: 89,
+      totalAmount: 45600,
+      providers: [
+        { name: 'United Healthcare', claimCount: 32, amount: 18200 },
+        { name: 'Cigna', claimCount: 28, amount: 15600 },
+        { name: 'Humana', claimCount: 29, amount: 11800 }
+      ]
+    },
+    {
+      status: 'Denied',
+      totalClaims: 23,
+      totalAmount: 12800,
+      providers: [
+        { name: 'Blue Cross Blue Shield', claimCount: 8, amount: 4200 },
+        { name: 'Aetna', claimCount: 7, amount: 3800 },
+        { name: 'Medicare', claimCount: 8, amount: 4800 }
+      ]
+    }
+  ];
+}
+
+/*
+ * AR BUCKETS DATA GENERATOR
+ * =========================
+ * 
+ * This function generates accounts receivable aging data for the AR Buckets widget.
+ */
+export function generateARBucketsData(locationId: string = 'all') {
+  return {
+    buckets: [
+      {
+        ageRange: '0-30',
+        amount: 125000,
+        claimCount: 89,
+        color: {
+          bg: 'bg-green-50',
+          border: 'border-green-200',
+          text: 'text-green-800'
+        }
+      },
+      {
+        ageRange: '31-60',
+        amount: 78000,
+        claimCount: 45,
+        color: {
+          bg: 'bg-yellow-50',
+          border: 'border-yellow-200',
+          text: 'text-yellow-800'
+        }
+      },
+      {
+        ageRange: '61-90',
+        amount: 42000,
+        claimCount: 23,
+        color: {
+          bg: 'bg-orange-50',
+          border: 'border-orange-200',
+          text: 'text-orange-800'
+        }
+      },
+      {
+        ageRange: '90+',
+        amount: 18000,
+        claimCount: 12,
+        color: {
+          bg: 'bg-red-50',
+          border: 'border-red-200',
+          text: 'text-red-800'
+        }
+      }
+    ],
+    totalAR: 263000,
+    currentAR: 125000,
+    agedAR: 138000
+  };
+}
+
+/*
+ * KEY METRICS DATA GENERATOR
+ * ==========================
+ * 
+ * This function generates key performance indicators for the Practice Insights widget.
+ */
+export function generateKeyMetrics(locationId: string = 'all', timeRange: string = '1') {
+  return {
+    monthlyPatients: 1247,
+    monthlyRevenue: 245000,
+    arDays: 28.4,
+    cleanClaimRate: 94.2,
+    patientGrowth: "+8.2%",
+    revenueGrowth: "+12.5%",
+    averageRevenuePerPatient: 196,
+    noShowRate: 6.8,
+    cancellationRate: 4.2,
+    newPatientRate: 18.5,
+    referralRate: 23.7
+  };
+}
+
+/*
+ * PATIENT BILLING ANALYTICS DATA GENERATOR
+ * ========================================
+ * 
+ * This function generates patient billing analytics data for the PatientBillingAnalytics widget.
+ */
+export function generatePatientBillingData(locationId: string = 'all') {
+  return {
+    totalRevenue: 125000,
+    totalPaid: 109125,  // 87.3% collection rate
+    totalOutstanding: 15875
+  };
+}

@@ -28,13 +28,13 @@
  * - Modern React hooks (useQuery)
  */
 
-// TanStack Query for efficient server state management
-import { useQuery } from "@tanstack/react-query";
 // Shadcn UI components for consistent design system
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 // Lucide React icons for visual enhancement
 import { MapPin, TrendingUp } from "lucide-react";
+// Static data for practice locations
+import { getProcessedLocations } from "@/lib/staticData";
 
 /*
  * TYPESCRIPT INTERFACE DEFINITION
@@ -71,25 +71,13 @@ interface LocationSelectorProps {
 export default function LocationSelector({ selectedLocationId, onLocationChange }: LocationSelectorProps) {
   
   /*
-   * API DATA FETCHING WITH TANSTACK QUERY
-   * =====================================
+   * GET LOCATION DATA FROM STATIC DATA
+   * ==================================
    * 
-   * Fetch practice location data from our backend API using TanStack Query.
-   * This provides automatic caching, loading states, and error handling.
-   * 
-   * QUERY CONFIGURATION:
-   * - queryKey: Unique identifier for this query (enables caching)
-   * - staleTime: How long data stays "fresh" before background refetch
-   * - Default data: Empty array prevents undefined errors during loading
-   * 
-   * CACHING STRATEGY:
-   * Location data rarely changes, so we cache for 5 minutes to improve performance
-   * and reduce unnecessary API calls.
+   * Get practice location data from static data instead of API calls.
+   * This provides immediate data availability without loading states.
    */
-  const { data: locations = [], isLoading, error } = useQuery({
-    queryKey: ['/api/locations'],
-    staleTime: 5 * 60 * 1000, // Cache for 5 minutes since locations rarely change
-  });
+  const locations = getProcessedLocations();
 
   /*
    * LOCATION SELECTION HANDLER
@@ -115,42 +103,6 @@ export default function LocationSelector({ selectedLocationId, onLocationChange 
   /**
    * Render loading state while fetching location data
    */
-  if (isLoading) {
-    return (
-      <Card className="bg-white rounded-xl shadow-sm border border-gray-200">
-        <CardContent className="p-6">
-          <div className="flex items-center mb-4">
-            <MapPin className="text-primary mr-3 h-5 w-5" />
-            <h2 className="text-lg font-semibold text-gray-900">Practice Locations</h2>
-          </div>
-          <p className="text-gray-600 mb-6">Loading practice locations...</p>
-          <div className="flex flex-wrap gap-3">
-            {/* Loading skeleton buttons */}
-            {[...Array(6)].map((_, index) => (
-              <div key={index} className="px-4 py-2 bg-gray-200 animate-pulse rounded-lg h-10 w-32"></div>
-            ))}
-          </div>
-        </CardContent>
-      </Card>
-    );
-  }
-
-  /**
-   * Render error state if location data fails to load
-   */
-  if (error) {
-    return (
-      <Card className="bg-white rounded-xl shadow-sm border border-red-200">
-        <CardContent className="p-6">
-          <div className="flex items-center mb-4">
-            <MapPin className="text-red-600 mr-3 h-5 w-5" />
-            <h2 className="text-lg font-semibold text-gray-900">Practice Locations</h2>
-          </div>
-          <p className="text-red-600 mb-6">Failed to load practice locations. Please try refreshing the page.</p>
-        </CardContent>
-      </Card>
-    );
-  }
 
   return (
     <Card className="bg-white rounded-xl shadow-sm border border-gray-200">

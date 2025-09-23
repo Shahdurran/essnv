@@ -36,12 +36,12 @@
 
 // React hooks for state management
 import { useState } from "react";
-// TanStack Query for efficient server state management
-import { useQuery } from "@tanstack/react-query";
 // Shadcn UI components for consistent design
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+// Mock data for procedure analytics
+import { topRevenueProcedures } from "@/lib/mockData";
 // Lucide React icons representing medical procedures and analytics
 import { 
   DollarSign,   // Revenue indicators
@@ -102,16 +102,19 @@ export default function TopRevenueProcedures({
   const [selectedPeriod, setSelectedPeriod] = useState<string>("1Y");
 
   /**
-   * Fetch real revenue data from P&L using Financial Revenue API
+   * Get procedure data from mock data
    */
-  const { data: revenueData, isLoading, error } = useQuery<{
-    categories: FinancialRevenueCategory[];
-    totalRevenue: number;
-    period: string;
-  }>({
-    queryKey: [`/api/financial/revenue/${selectedLocationId}/${selectedPeriod}`],
-    staleTime: 2 * 60 * 1000, // Cache for 2 minutes
-  });
+  const revenueData = {
+    categories: topRevenueProcedures.map(proc => ({
+      id: proc.id,
+      name: proc.name,
+      amount: proc.monthlyRevenue,
+      change: parseFloat(proc.growth.replace('%', '')),
+      trend: parseFloat(proc.growth.replace('%', '')) > 0 ? 'up' as const : 'down' as const
+    })),
+    totalRevenue: topRevenueProcedures.reduce((sum, proc) => sum + proc.monthlyRevenue, 0),
+    period: selectedPeriod
+  };
 
   /**
    * Map P&L revenue line items to CPT codes
@@ -281,59 +284,6 @@ export default function TopRevenueProcedures({
   /**
    * Render loading state
    */
-  if (isLoading) {
-    return (
-      <Card className="bg-white rounded-xl shadow-sm border border-gray-200">
-        <CardContent className="p-6">
-          <div className="flex items-center justify-between mb-6">
-            <div>
-              <h3 className="text-lg font-semibold text-gray-900">Top Revenue Procedures</h3>
-              <p className="text-gray-600">Loading procedure analytics...</p>
-            </div>
-          </div>
-          <div className="space-y-4">
-            {[...Array(5)].map((_, index) => (
-              <div key={index} className="flex items-center justify-between p-4 bg-gray-100 rounded-lg animate-pulse">
-                <div className="flex items-center space-x-4">
-                  <div className="w-10 h-10 bg-gray-300 rounded-lg"></div>
-                  <div className="space-y-2">
-                    <div className="w-32 h-4 bg-gray-300 rounded"></div>
-                    <div className="w-24 h-3 bg-gray-300 rounded"></div>
-                  </div>
-                </div>
-                <div className="text-right space-y-2">
-                  <div className="w-16 h-4 bg-gray-300 rounded"></div>
-                  <div className="w-12 h-3 bg-gray-300 rounded"></div>
-                </div>
-              </div>
-            ))}
-          </div>
-        </CardContent>
-      </Card>
-    );
-  }
-
-  /**
-   * Render error state
-   */
-  if (error) {
-    return (
-      <Card className="bg-white rounded-xl shadow-sm border border-red-200">
-        <CardContent className="p-6">
-          <div className="flex items-center justify-between mb-6">
-            <div>
-              <h3 className="text-lg font-semibold text-gray-900">Top Revenue Procedures</h3>
-              <p className="text-red-600">Failed to load procedure analytics</p>
-            </div>
-          </div>
-          <div className="text-center py-8">
-            <DollarSign className="h-12 w-12 text-red-400 mx-auto mb-4" />
-            <p className="text-gray-600">Please try refreshing the page</p>
-          </div>
-        </CardContent>
-      </Card>
-    );
-  }
 
   return (
     <Card className="bg-white rounded-xl shadow-sm border border-gray-200">

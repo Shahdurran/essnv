@@ -38,12 +38,12 @@
 
 // React hooks for state management
 import { useState } from "react";
-// TanStack Query for server state management
-import { useQuery } from "@tanstack/react-query";
 // Shadcn UI components for consistent design
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+// Mock data for practice insights
+import { generateKeyMetrics, insurancePayerBreakdown } from "@/lib/mockData";
 // Lucide React icons for medical and business metrics
 import { 
   Users,        // Patient volume metrics
@@ -101,20 +101,14 @@ export default function PracticeInsights({ selectedLocationId }: PracticeInsight
   const [timeRange, setTimeRange] = useState("1");
 
   /**
-   * Fetch key performance metrics from embedded data
+   * Get key performance metrics from mock data
    */
-  const { data: keyMetrics = {} as KeyMetrics, isLoading: metricsLoading, error: metricsError } = useQuery<KeyMetrics>({
-    queryKey: ['/api/analytics/key-metrics', selectedLocationId, timeRange],
-    staleTime: 1 * 60 * 1000, // Cache for 1 minute for real-time feel
-  });
+  const keyMetrics = generateKeyMetrics(selectedLocationId, timeRange);
 
   /**
-   * Fetch insurance payer breakdown from API
+   * Get insurance payer breakdown from mock data
    */
-  const { data: insuranceData = [], isLoading: insuranceLoading, error: insuranceError } = useQuery<InsurancePayerData[]>({
-    queryKey: ['/api/analytics/insurance-breakdown', selectedLocationId, timeRange],
-    staleTime: 5 * 60 * 1000, // Cache for 5 minutes
-  });
+  const insuranceData = insurancePayerBreakdown;
 
   /**
    * Format large numbers for display
@@ -220,66 +214,6 @@ export default function PracticeInsights({ selectedLocationId }: PracticeInsight
     return colorMap[payerName as keyof typeof colorMap] || colorMap.default;
   };
 
-  /**
-   * Render loading state for metrics
-   */
-  if (metricsLoading || insuranceLoading) {
-    return (
-      <Card className="bg-white rounded-xl shadow-sm border border-gray-200">
-        <CardContent className="p-6">
-          <h3 className="text-lg font-semibold text-gray-900 mb-6">Practice Insights</h3>
-          
-          {/* Loading skeleton for metrics grid */}
-          <div className="grid grid-cols-2 gap-4 mb-6">
-            {[...Array(4)].map((_, index) => (
-              <div key={index} className="bg-gray-100 p-4 rounded-lg animate-pulse">
-                <div className="h-4 bg-gray-300 rounded w-3/4 mb-2"></div>
-                <div className="h-6 bg-gray-300 rounded w-1/2 mb-2"></div>
-                <div className="h-3 bg-gray-300 rounded w-1/3"></div>
-              </div>
-            ))}
-          </div>
-          
-          {/* Loading skeleton for insurance breakdown */}
-          <div className="border-t border-gray-100 pt-6">
-            <div className="h-4 bg-gray-300 rounded w-1/3 mb-4"></div>
-            <div className="space-y-3">
-              {[...Array(4)].map((_, index) => (
-                <div key={index} className="flex items-center justify-between">
-                  <div className="flex items-center space-x-3">
-                    <div className="w-8 h-8 bg-gray-300 rounded-lg"></div>
-                    <div className="h-4 bg-gray-300 rounded w-24"></div>
-                  </div>
-                  <div className="text-right space-y-1">
-                    <div className="h-3 bg-gray-300 rounded w-12"></div>
-                    <div className="h-3 bg-gray-300 rounded w-16"></div>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-        </CardContent>
-      </Card>
-    );
-  }
-
-  /**
-   * Render error state
-   */
-  if (metricsError || insuranceError) {
-    return (
-      <Card className="bg-white rounded-xl shadow-sm border border-red-200">
-        <CardContent className="p-6">
-          <h3 className="text-lg font-semibold text-gray-900 mb-6">Practice Insights</h3>
-          <div className="text-center py-8">
-            <Users className="h-12 w-12 text-red-400 mx-auto mb-4" />
-            <p className="text-red-600">Failed to load practice insights</p>
-            <p className="text-sm text-gray-600 mt-2">Please try refreshing the page</p>
-          </div>
-        </CardContent>
-      </Card>
-    );
-  }
 
   return (
     <Card className="bg-white rounded-xl shadow-sm border border-gray-200">

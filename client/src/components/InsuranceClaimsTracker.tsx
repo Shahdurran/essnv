@@ -40,11 +40,11 @@
 
 // React hooks for state management
 import { useState } from "react";
-// TanStack Query for server state management
-import { useQuery } from "@tanstack/react-query";
 // Shadcn UI components for consistent design
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+// Mock data generator for insurance claims
+import { generateInsuranceClaimsBreakdown } from "@/lib/mockData";
 // Lucide React icons for claims management interface
 import { 
   Clock,         // Pending/timing indicators
@@ -112,29 +112,10 @@ export default function InsuranceClaimsTracker({ selectedLocationId }: Insurance
   });
 
   /**
-   * Fetch insurance claims data from API
+   * Get insurance claims data from mock data
    * Includes location-based and date-based filtering
    */
-  const { data: claimsData = [], isLoading, error } = useQuery<ClaimsBreakdown[]>({
-    queryKey: ['/api/analytics/insurance-claims', selectedLocationId, dateRange.start, dateRange.end],
-    queryFn: async () => {
-      const params = new URLSearchParams();
-      if (dateRange.start) {
-        params.append('startDate', dateRange.start.toISOString());
-      }
-      if (dateRange.end) {
-        params.append('endDate', dateRange.end.toISOString());
-      }
-      
-      const url = `/api/analytics/insurance-claims/${selectedLocationId}?${params.toString()}`;
-      const response = await fetch(url);
-      if (!response.ok) {
-        throw new Error('Failed to fetch claims data');
-      }
-      return response.json();
-    },
-    staleTime: 2 * 60 * 1000, // Cache for 2 minutes for fresh claims data
-  });
+  const claimsData = generateInsuranceClaimsBreakdown(selectedLocationId);
 
   /**
    * Handle date range changes from DateFilter
@@ -223,57 +204,6 @@ export default function InsuranceClaimsTracker({ selectedLocationId }: Insurance
     return `$${amount.toLocaleString()}`;
   };
 
-  /**
-   * Render loading state
-   */
-  if (isLoading) {
-    return (
-      <Card className="bg-white rounded-xl shadow-sm border border-gray-200">
-        <CardContent className="p-6">
-          <div className="flex items-center justify-between mb-6">
-            <div>
-              <h3 className="text-lg font-semibold text-gray-900">Insurance Claims Tracker</h3>
-              <p className="text-gray-600">Loading claims data...</p>
-            </div>
-          </div>
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-            {[...Array(3)].map((_, index) => (
-              <div key={index} className="bg-gray-100 rounded-lg p-4 animate-pulse">
-                <div className="w-24 h-6 bg-gray-300 rounded mb-4"></div>
-                <div className="space-y-3">
-                  <div className="w-full h-4 bg-gray-300 rounded"></div>
-                  <div className="w-3/4 h-4 bg-gray-300 rounded"></div>
-                  <div className="w-1/2 h-4 bg-gray-300 rounded"></div>
-                </div>
-              </div>
-            ))}
-          </div>
-        </CardContent>
-      </Card>
-    );
-  }
-
-  /**
-   * Render error state
-   */
-  if (error) {
-    return (
-      <Card className="bg-white rounded-xl shadow-sm border border-red-200">
-        <CardContent className="p-6">
-          <div className="flex items-center justify-between mb-6">
-            <div>
-              <h3 className="text-lg font-semibold text-gray-900">Insurance Claims Tracker</h3>
-              <p className="text-red-600">Failed to load claims data</p>
-            </div>
-          </div>
-          <div className="text-center py-8">
-            <AlertTriangle className="h-12 w-12 text-red-400 mx-auto mb-4" />
-            <p className="text-gray-600">Please try refreshing the page</p>
-          </div>
-        </CardContent>
-      </Card>
-    );
-  }
 
   /**
    * Calculate dynamic success rate based on claims data

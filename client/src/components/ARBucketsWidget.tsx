@@ -41,8 +41,8 @@
  * - Optimized billing processes reduce delays
  */
 
-// TanStack Query for server state management
-import { useQuery } from '@tanstack/react-query';
+// Mock data for AR buckets analytics
+import { generateARBucketsData } from '@/lib/mockData';
 // Lucide React icons for aging and urgency indicators
 import { Clock, TrendingDown, AlertTriangle } from 'lucide-react';
 
@@ -103,13 +103,10 @@ interface ARBucketsWidgetProps {
 export default function ARBucketsWidget({ selectedLocationId }: ARBucketsWidgetProps) {
   
   /**
-   * Fetch AR buckets data from the API
+   * Get AR buckets data from mock data
    * This data shows aging of outstanding insurance claims by location
    */
-  const { data: arData, isLoading, error } = useQuery({
-    queryKey: ['/api/analytics/ar-buckets', selectedLocationId],
-    staleTime: 5 * 60 * 1000, // Cache for 5 minutes - AR data changes frequently
-  });
+  const arData = generateARBucketsData(selectedLocationId);
 
   /**
    * Format currency values for display
@@ -180,46 +177,6 @@ export default function ARBucketsWidget({ selectedLocationId }: ARBucketsWidgetP
     };
   };
 
-  /**
-   * Render loading state
-   */
-  if (isLoading) {
-    return (
-      <div className="bg-white rounded-lg border border-gray-200 p-6">
-        <div className="flex items-center justify-between mb-6">
-          <div>
-            <h2 className="text-xl font-semibold text-gray-900 flex items-center">
-              <Clock className="w-6 h-6 mr-2 text-blue-600" />
-              AR Buckets (Outstanding Claims)
-            </h2>
-            <p className="text-sm text-gray-600 mt-1">Loading aging analysis...</p>
-          </div>
-        </div>
-        <div className="space-y-4">
-          {[...Array(4)].map((_, index) => (
-            <div key={index} className="bg-gray-100 rounded-lg p-4 animate-pulse">
-              <div className="w-24 h-4 bg-gray-300 rounded mb-2"></div>
-              <div className="w-full h-6 bg-gray-300 rounded"></div>
-            </div>
-          ))}
-        </div>
-      </div>
-    );
-  }
-
-  /**
-   * Render error state
-   */
-  if (error) {
-    return (
-      <div className="bg-white rounded-lg border border-gray-200 p-6">
-        <div className="flex items-center text-red-600">
-          <AlertTriangle className="w-5 h-5 mr-2" />
-          <span>Unable to load AR buckets data</span>
-        </div>
-      </div>
-    );
-  }
 
   const totalAR = getTotalAR();
   const maxAmount = Math.max(...(arData?.buckets?.map((b: ARBucket) => b.amount || 0) || [0]));

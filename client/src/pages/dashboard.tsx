@@ -240,22 +240,6 @@ export default function Dashboard() {
 
   return (
     <div className="min-h-screen bg-gray-50 overflow-x-hidden">
-      {/* 
-        Demo Disclaimer Banner
-        Informs users this is a demonstration with static mock data
-      */}
-      <div className="bg-amber-50 border-b border-amber-200 px-3 sm:px-6 lg:px-8 py-3 relative">
-        <div className="max-w-7xl mx-auto">
-          <div className="flex items-center justify-center text-center">
-            <div className="flex items-center space-x-2">
-              <div className="w-3 h-3 bg-amber-500 rounded-full animate-pulse"></div>
-              <p className="text-sm sm:text-base text-amber-900 font-medium">
-                <span className="font-bold">DEMO MODE:</span> This is a demonstration using static mock data. Some functionality may be limited.
-              </p>
-            </div>
-          </div>
-        </div>
-      </div>
 
       {/* 
         Header Section - Mobile Responsive

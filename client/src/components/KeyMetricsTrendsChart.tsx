@@ -39,8 +39,6 @@
 
 // React hooks for state management and lifecycle
 import { useState, useEffect, useRef } from "react";
-// TanStack Query for server state management
-import { useQuery } from "@tanstack/react-query";
 // Shadcn UI components for consistent design
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -48,8 +46,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Badge } from "@/components/ui/badge";
 // Lucide React icons for visual enhancement
 import { TrendingUp, Calendar, BarChart3 } from "lucide-react";
-// Mock data generator for realistic analytics
-import { generateRevenueTimeSeriesData } from "@/lib/mockData";
+// Static data functions for analytics
+import { getRevenueTrendsFromPL } from "@/lib/staticData";
 // TypeScript interfaces for type safety
 import type { RevenueDataPoint } from "../../../shared/schema";
 
@@ -150,12 +148,9 @@ export default function KeyMetricsTrendsChart({ selectedLocationId }: KeyMetrics
   const chartInstance = useRef<Chart | null>(null);
 
   /**
-   * Fetch clinical metrics data from API using real P&L data
+   * Get clinical metrics data from static data
    */
-  const { data: revenueData = [], isLoading, error } = useQuery<RevenueDataPoint[]>({
-    queryKey: ['/api/analytics/clinical-metrics', selectedLocationId, selectedTimePeriod],
-    staleTime: 2 * 60 * 1000, // Cache for 2 minutes for fresh analytics
-  });
+  const revenueData = getRevenueTrendsFromPL(selectedLocationId, selectedTimePeriod);
 
   /**
    * Process chart data - filter out projections and use only historical data
@@ -370,36 +365,6 @@ export default function KeyMetricsTrendsChart({ selectedLocationId }: KeyMetrics
     setSelectedMetric(metric);
   };
 
-  if (isLoading) {
-    return (
-      <Card className="w-full">
-        <CardContent className="p-6">
-          <div className="flex items-center justify-center h-64">
-            <div className="flex items-center space-x-2 text-slate-600">
-              <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-600"></div>
-              <span>Loading analytics data...</span>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
-    );
-  }
-
-  if (error) {
-    return (
-      <Card className="w-full">
-        <CardContent className="p-6">
-          <div className="flex items-center justify-center h-64">
-            <div className="text-center text-slate-500">
-              <BarChart3 className="h-12 w-12 mx-auto mb-2 opacity-50" />
-              <p>Unable to load analytics data</p>
-              <p className="text-sm">Please try again later</p>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
-    );
-  }
 
   return (
     <Card className="w-full">

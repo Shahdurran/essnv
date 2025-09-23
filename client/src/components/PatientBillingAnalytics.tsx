@@ -42,8 +42,8 @@
 
 // React hooks for state management
 import { useState } from "react";
-// TanStack Query for server state management
-import { useQuery } from "@tanstack/react-query";
+// Mock data for patient billing analytics
+import { generatePatientBillingData } from "@/lib/mockData";
 // Lucide React icons for financial and analytics interface
 import { DollarSign, TrendingUp, TrendingDown, Clock, AlertCircle } from "lucide-react";
 
@@ -108,9 +108,7 @@ export default function PatientBillingAnalytics({ selectedLocationId }: PatientB
    * Fetch simplified patient billing data from API
    * Includes total revenue, total paid, and total outstanding
    */
-  const { data: billingData, isLoading, error } = useQuery<PatientBillingData>({
-    queryKey: ['/api/analytics/patient-billing', selectedLocationId, timeRange],
-  });
+  const billingData = generatePatientBillingData(selectedLocationId);
 
   /**
    * Calculate collection rate percentage
@@ -147,31 +145,6 @@ export default function PatientBillingAnalytics({ selectedLocationId }: PatientB
     return labels[range as keyof typeof labels] || '1 Month';
   };
 
-  if (isLoading) {
-    return (
-      <div className="bg-white rounded-lg border border-gray-200 p-6 h-full">
-        <div className="animate-pulse">
-          <div className="h-6 bg-gray-300 rounded w-1/3 mb-6 mx-auto"></div>
-          <div className="space-y-4">
-            <div className="h-24 bg-gray-300 rounded"></div>
-            <div className="h-24 bg-gray-300 rounded"></div>
-            <div className="h-24 bg-gray-300 rounded"></div>
-          </div>
-        </div>
-      </div>
-    );
-  }
-
-  if (error) {
-    return (
-      <div className="bg-white rounded-lg border border-gray-200 p-6 h-full flex items-center justify-center">
-        <div className="flex items-center text-red-600">
-          <AlertCircle className="w-5 h-5 mr-2" />
-          <span>Unable to load patient billing data</span>
-        </div>
-      </div>
-    );
-  }
 
   return (
     <div className="bg-white rounded-lg border border-gray-200 p-6 h-full flex flex-col">
