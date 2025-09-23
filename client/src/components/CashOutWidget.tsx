@@ -3,7 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { TrendingDown, TrendingUp, Minus, Loader2 } from "lucide-react";
 import { useState } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { getCashFlowDataForLocation } from "@/lib/staticData";
 
 interface CashOutWidgetProps {
   selectedLocationId: string;
@@ -44,10 +44,8 @@ const timePeriods = [
 ];
 
 export default function CashOutWidget({ selectedLocationId, selectedPeriod }: CashOutWidgetProps) {
-  // Fetch cash flow data from embedded data service
-  const { data: cashFlowData, isLoading, isError } = useQuery<CashFlowApiResponse>({
-    queryKey: ['/api/financial/cashflow', selectedLocationId, selectedPeriod],
-  });
+  // Get cash flow data from static data
+  const cashFlowData = getCashFlowDataForLocation(selectedLocationId, selectedPeriod);
 
   // Filter operating activities for negative cash flows (Cash Out), excluding summary items, and convert to positive amounts for display
   const cashOutCategories = cashFlowData?.operating
@@ -93,34 +91,6 @@ export default function CashOutWidget({ selectedLocationId, selectedPeriod }: Ca
     }).format(amount);
   };
 
-  // Show loading state
-  if (isLoading) {
-    return (
-      <Card className="bg-white shadow-sm border border-gray-200" data-testid="cash-out-widget">
-        <CardHeader className="pb-4">
-          <CardTitle className="text-xl font-bold text-gray-900">Cash Out</CardTitle>
-        </CardHeader>
-        <CardContent className="flex items-center justify-center py-8">
-          <Loader2 className="h-6 w-6 animate-spin" />
-          <span className="ml-2 text-gray-600">Loading cash flow data...</span>
-        </CardContent>
-      </Card>
-    );
-  }
-
-  // Show error state
-  if (isError || !cashFlowData) {
-    return (
-      <Card className="bg-white shadow-sm border border-gray-200" data-testid="cash-out-widget">
-        <CardHeader className="pb-4">
-          <CardTitle className="text-xl font-bold text-gray-900">Cash Out</CardTitle>
-        </CardHeader>
-        <CardContent className="flex items-center justify-center py-8">
-          <span className="text-gray-600">Unable to load cash flow data</span>
-        </CardContent>
-      </Card>
-    );
-  }
 
   return (
     <Card className="bg-white shadow-sm border border-gray-200" data-testid="cash-out-widget">

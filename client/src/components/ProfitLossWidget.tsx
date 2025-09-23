@@ -3,7 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { BarChart3, List, TrendingUp, TrendingDown, ChevronDown, ChevronUp } from "lucide-react";
 import { useState } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { getPLDataForLocation } from "@/lib/staticData";
 import { Line } from "react-chartjs-2";
 import {
   Chart as ChartJS,
@@ -106,24 +106,10 @@ export default function ProfitLossWidget({ selectedLocationId, selectedPeriod }:
   const [revenueCollapsed, setRevenueCollapsed] = useState(true);
   const [expensesCollapsed, setExpensesCollapsed] = useState(true);
 
-  // Fetch real P&L data from API
-  const { data: profitLossApiData, isLoading, error } = useQuery<ProfitLossApiResponse>({
-    queryKey: ['/api/financial/profit-loss', selectedLocationId, selectedPeriod],
-    enabled: Boolean(selectedLocationId && selectedPeriod),
-  });
+  // Get P&L data from static data
+  const profitLossData = getPLDataForLocation(selectedLocationId, selectedPeriod);
 
-  // Use API data or fallback to empty structure
-  const profitLossData = profitLossApiData || {
-    revenue: {},
-    expenses: {},
-    totalRevenue: 0,
-    totalExpenses: 0,
-    netProfit: 0,
-    period: selectedPeriod || '6M',
-    locationId: selectedLocationId
-  };
-
-  // Calculate totals from API data
+  // Calculate totals from static data
   const totalRevenue = profitLossData.totalRevenue;
   const totalExpenses = profitLossData.totalExpenses;
   const netProfit = profitLossData.netProfit;
@@ -197,15 +183,7 @@ export default function ProfitLossWidget({ selectedLocationId, selectedPeriod }:
               
               {!revenueCollapsed && (
                 <div className="space-y-2 mt-3 ml-4">
-                {isLoading ? (
-                  <div className="space-y-2">
-                    <div className="h-4 bg-gray-200 rounded animate-pulse"></div>
-                    <div className="h-4 bg-gray-200 rounded animate-pulse"></div>
-                    <div className="h-4 bg-gray-200 rounded animate-pulse"></div>
-                  </div>
-                ) : error ? (
-                  <div className="text-red-600 text-sm">Error loading revenue data</div>
-                ) : Object.keys(profitLossData.revenue).length === 0 ? (
+                {Object.keys(profitLossData.revenue).length === 0 ? (
                   <div className="text-gray-500 text-sm">No revenue data available</div>
                 ) : (
                   Object.entries(profitLossData.revenue).map(([key, value]) => (
@@ -240,15 +218,7 @@ export default function ProfitLossWidget({ selectedLocationId, selectedPeriod }:
               
               {!expensesCollapsed && (
                 <div className="space-y-2 mt-3 ml-4">
-                {isLoading ? (
-                  <div className="space-y-2">
-                    <div className="h-4 bg-gray-200 rounded animate-pulse"></div>
-                    <div className="h-4 bg-gray-200 rounded animate-pulse"></div>
-                    <div className="h-4 bg-gray-200 rounded animate-pulse"></div>
-                  </div>
-                ) : error ? (
-                  <div className="text-red-600 text-sm">Error loading expense data</div>
-                ) : Object.keys(profitLossData.expenses).length === 0 ? (
+                {Object.keys(profitLossData.expenses).length === 0 ? (
                   <div className="text-gray-500 text-sm">No expense data available</div>
                 ) : (
                   Object.entries(profitLossData.expenses).map(([key, value]) => (

@@ -3,7 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { TrendingDown, TrendingUp, Minus } from "lucide-react";
 import { useState } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { getFinancialExpensesFromPL } from "@/lib/staticData";
 
 interface FinancialExpensesWidgetProps {
   selectedLocationId: string;
@@ -27,17 +27,14 @@ const timePeriods = [
 
 export default function FinancialExpensesWidget({ selectedLocationId, selectedPeriod }: FinancialExpensesWidgetProps) {
 
-  // Fetch real expense data from CSV-based API
-  const { data: expenseApiData, isLoading, error } = useQuery<ExpenseApiResponse>({
-    queryKey: ['/api/financial/expenses', selectedLocationId, selectedPeriod],
-    enabled: Boolean(selectedLocationId && selectedPeriod),
-  });
+  // Get expense data from static data
+  const expenseData = getFinancialExpensesFromPL(selectedLocationId, selectedPeriod);
 
-  // Use API data or fallback to empty array
-  const expenseCategories = expenseApiData?.categories || [];
+  // Use static data
+  const expenseCategories = expenseData.categories;
   
-  // Calculate total expenses from API data
-  const totalExpenses = expenseApiData?.totalExpenses || 0;
+  // Calculate total expenses from static data
+  const totalExpenses = expenseData.total;
   
   // Calculate weighted average change
   const weightedChange = totalExpenses > 0 ? expenseCategories.reduce((sum, category) => {
@@ -92,15 +89,7 @@ export default function FinancialExpensesWidget({ selectedLocationId, selectedPe
           className="space-y-3 flex-1 min-h-0 overflow-y-auto scrollbar-thin scrollbar-thumb-red-200 scrollbar-track-gray-100"
           data-testid="expenses-categories-list"
         >
-          {isLoading ? (
-            <div className="space-y-3">
-              <div className="h-16 bg-gray-200 rounded animate-pulse"></div>
-              <div className="h-16 bg-gray-200 rounded animate-pulse"></div>
-              <div className="h-16 bg-gray-200 rounded animate-pulse"></div>
-            </div>
-          ) : error ? (
-            <div className="text-red-600 text-sm text-center">Error loading expense data</div>
-          ) : expenseCategories.length === 0 ? (
+          {expenseCategories.length === 0 ? (
             <div className="text-gray-500 text-sm text-center">No expense data available</div>
           ) : (
             expenseCategories.map((category) => (

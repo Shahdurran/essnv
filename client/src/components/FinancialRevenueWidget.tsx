@@ -32,7 +32,7 @@ import {
   Calendar,
   Filter
 } from "lucide-react";
-import { useQuery } from "@tanstack/react-query";
+import { getFinancialRevenueFromPL } from "@/lib/staticData";
 
 /*
  * REVENUE CATEGORY DATA INTERFACE
@@ -74,19 +74,12 @@ const TIME_PERIODS = [
  */
 export default function FinancialRevenueWidget({ selectedLocationId, selectedPeriod }: FinancialRevenueWidgetProps) {
 
-  // Fetch real revenue data from CSV-based API
-  const { data: revenueApiData, isLoading, error } = useQuery<{
-    categories: { id: string; name: string; amount: number; change: number; trend: 'up' | 'down' | 'neutral' }[];
-    totalRevenue: number;
-    period: string;
-  }>({
-    queryKey: ['/api/financial/revenue', selectedLocationId, selectedPeriod],
-    enabled: Boolean(selectedLocationId && selectedPeriod),
-  });
+  // Get revenue data from static data
+  const revenueData = getFinancialRevenueFromPL(selectedLocationId, selectedPeriod);
 
-  // Convert API data to expected format with calculated percentages
-  const revenueCategories: RevenueCategory[] = revenueApiData?.categories.map(cat => {
-    const totalRevenue = revenueApiData.totalRevenue;
+  // Convert static data to expected format with calculated percentages
+  const revenueCategories: RevenueCategory[] = revenueData.categories.map(cat => {
+    const totalRevenue = revenueData.total;
     const percentage = totalRevenue > 0 ? (cat.amount / totalRevenue) * 100 : 0;
     const previousAmount = cat.amount / (1 + (cat.change / 100)); // Reverse calculate previous amount
     
@@ -98,13 +91,13 @@ export default function FinancialRevenueWidget({ selectedLocationId, selectedPer
       percentage: percentage,
       trend: cat.trend === 'up' ? 'up' : cat.trend === 'down' ? 'down' : 'stable'
     };
-  }) || [];
+  });
 
   /*
-   * CALCULATE TOTAL REVENUE FROM API DATA
-   * =====================================
+   * CALCULATE TOTAL REVENUE FROM STATIC DATA
+   * ========================================
    */
-  const totalRevenue = revenueApiData?.totalRevenue || 0;
+  const totalRevenue = revenueData.total;
   const totalPreviousRevenue = revenueCategories.reduce((sum, category) => sum + category.previousAmount, 0);
   const overallGrowth = totalPreviousRevenue > 0 ? ((totalRevenue - totalPreviousRevenue) / totalPreviousRevenue) * 100 : 0;
 

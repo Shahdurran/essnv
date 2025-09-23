@@ -4,7 +4,7 @@ import { Badge } from "@/components/ui/badge";
 import { BarChart3, List, TrendingUp, TrendingDown, ChevronDown, ChevronUp } from "lucide-react";
 import { useState } from "react";
 import { Line } from "react-chartjs-2";
-import { useQuery } from "@tanstack/react-query";
+import { getCashFlowDataForLocation } from "@/lib/staticData";
 import {
   Chart as ChartJS,
   CategoryScale,
@@ -117,17 +117,14 @@ export default function CashFlowWidget({ selectedLocationId, selectedPeriod }: C
   const [investingCollapsed, setInvestingCollapsed] = useState(true);
   const [financingCollapsed, setFinancingCollapsed] = useState(true);
 
-  // Fetch real cash flow data from CSV-based API
-  const { data: cashFlowApiData, isLoading, error } = useQuery<CashFlowApiResponse>({
-    queryKey: ['/api/financial/cashflow', selectedLocationId, selectedPeriod],
-    enabled: Boolean(selectedLocationId && selectedPeriod),
-  });
+  // Get cash flow data from static data
+  const cashFlowData = getCashFlowDataForLocation(selectedLocationId, selectedPeriod);
 
-  // Calculate totals from API data
-  const operatingCashFlow = cashFlowApiData?.operatingCashFlow || 0;
-  const investingCashFlow = cashFlowApiData?.investingCashFlow || 0;
-  const financingCashFlow = cashFlowApiData?.financingCashFlow || 0;
-  const netCashFlow = cashFlowApiData?.netCashFlow || 0;
+  // Calculate totals from static data
+  const operatingCashFlow = cashFlowData.operatingCashFlow;
+  const investingCashFlow = cashFlowData.investingCashFlow;
+  const financingCashFlow = cashFlowData.financingCashFlow;
+  const netCashFlow = cashFlowData.netCashFlow;
 
   const formatCurrency = (amount: number) => {
     return new Intl.NumberFormat("en-US", {
@@ -207,17 +204,8 @@ export default function CashFlowWidget({ selectedLocationId, selectedPeriod }: C
               
               {!operatingCollapsed && (
                 <div className="space-y-2 mt-3 ml-4">
-                {isLoading ? (
-                  <div className="space-y-2">
-                    <div className="h-4 bg-gray-200 rounded animate-pulse"></div>
-                    <div className="h-4 bg-gray-200 rounded animate-pulse"></div>
-                  </div>
-                ) : error ? (
-                  <div className="text-red-600 text-sm">Error loading operating data</div>
-                ) : (
-                  cashFlowApiData?.operating?.map((item) => 
-                    formatCashFlowItem(item.name, item.amount)
-                  )
+                {cashFlowData?.operating?.map((item) => 
+                  formatCashFlowItem(item.name, item.amount)
                 )}
                 </div>
               )}
@@ -244,16 +232,10 @@ export default function CashFlowWidget({ selectedLocationId, selectedPeriod }: C
               
               {!investingCollapsed && (
                 <div className="space-y-2 mt-3 ml-4">
-                {isLoading ? (
-                  <div className="space-y-2">
-                    <div className="h-4 bg-gray-200 rounded animate-pulse"></div>
-                  </div>
-                ) : error ? (
-                  <div className="text-red-600 text-sm">Error loading investing data</div>
-                ) : cashFlowApiData?.investing?.length === 0 ? (
+                {cashFlowData?.investing?.length === 0 ? (
                   <div className="text-gray-500 text-sm">No investing activities</div>
                 ) : (
-                  cashFlowApiData?.investing?.map((item) => 
+                  cashFlowData?.investing?.map((item) => 
                     formatCashFlowItem(item.name, item.amount)
                   )
                 )}
@@ -282,16 +264,10 @@ export default function CashFlowWidget({ selectedLocationId, selectedPeriod }: C
               
               {!financingCollapsed && (
                 <div className="space-y-2 mt-3 ml-4">
-                {isLoading ? (
-                  <div className="space-y-2">
-                    <div className="h-4 bg-gray-200 rounded animate-pulse"></div>
-                  </div>
-                ) : error ? (
-                  <div className="text-red-600 text-sm">Error loading financing data</div>
-                ) : cashFlowApiData?.financing?.length === 0 ? (
+                {cashFlowData?.financing?.length === 0 ? (
                   <div className="text-gray-500 text-sm">No financing activities</div>
                 ) : (
-                  cashFlowApiData?.financing?.map((item) => 
+                  cashFlowData?.financing?.map((item) => 
                     formatCashFlowItem(item.name, item.amount)
                   )
                 )}
