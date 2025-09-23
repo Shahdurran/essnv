@@ -174,22 +174,23 @@ export function getPLDataForLocation(locationId: string = 'all', period: string 
   const grossProfitItems = calculatedTotals.filter(item => item.line_item === 'Gross Profit');
   const ebitdaItems = calculatedTotals.filter(item => item.line_item === 'EBITDA');
   
-  console.log('Gross Profit items:', grossProfitItems.length);
-  console.log('EBITDA items:', ebitdaItems.length);
-  console.log('Sample EBITDA item:', ebitdaItems[0]);
-  
   const grossProfit = grossProfitItems.reduce((sum, item) => sum + parseFloat(item.amount), 0);
   const ebitda = ebitdaItems.reduce((sum, item) => sum + parseFloat(item.amount), 0);
-  
-  console.log('Calculated Gross Profit:', grossProfit);
-  console.log('Calculated EBITDA:', ebitda);
   
   // Calculate net income (simplified as EBITDA for now)
   const netIncome = ebitda * 0.85; // Assume 85% of EBITDA after taxes and interest
   
+  // Calculate totals for the widget
+  const totalRevenue = Object.values(revenue).reduce((sum, amount) => sum + amount, 0);
+  const totalExpenses = Object.values(expenses).reduce((sum, amount) => sum + amount, 0);
+  const netProfit = ebitda; // Use EBITDA as net profit for the widget
+
   return {
     revenue,
     expenses,
+    totalRevenue: Math.round(totalRevenue),
+    totalExpenses: Math.round(totalExpenses),
+    netProfit: Math.round(netProfit),
     grossProfit: Math.round(grossProfit),
     ebitda: Math.round(ebitda),
     netIncome: Math.round(netIncome),
@@ -263,11 +264,7 @@ export function getFinancialRevenueFromPL(locationId: string = 'all', period: st
   
   // Get revenue items only and aggregate across all months
   const revenueData = filteredData.filter(item => item.category_type === 'revenue');
-  console.log('Revenue data count:', revenueData.length);
-  console.log('Sample revenue item:', revenueData[0]);
-  
   const revenueItems = groupAndSumByLineItem(revenueData);
-  console.log('Revenue items after grouping:', revenueItems);
   
   // Convert to expected format
   const categories = revenueItems.map((item, index) => ({
@@ -279,9 +276,6 @@ export function getFinancialRevenueFromPL(locationId: string = 'all', period: st
   }));
   
   const total = categories.reduce((sum, cat) => sum + cat.amount, 0);
-  
-  console.log('Final revenue categories:', categories);
-  console.log('Total revenue:', total);
   
   return {
     categories,
