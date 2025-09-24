@@ -34,9 +34,9 @@
  * SUBMIT AI QUERY FUNCTION
  * ========================
  * 
- * This is the main function for sending natural language questions to our AI
- * business assistant. It handles the complete request/response cycle with proper
- * error handling and response formatting.
+ * This function now uses static data instead of API calls to provide AI-like responses
+ * based on the practice data. It simulates AI responses using keyword matching and
+ * real practice data from the static data service.
  * 
  * FUNCTION PARAMETERS:
  * @param {string} query - The user's natural language question about their practice
@@ -66,37 +66,26 @@ export async function submitAIQuery(query: string, userId: string | null = null,
       throw new Error('Query is required and must be a non-empty string');
     }
 
-    // Prepare request payload for the AI assistant with enhanced routing
-    const requestBody = {
-      query: query.trim(),
-      userId: userId,
-      locationId: locationId || 'all',
-      timeRange: timeRange || '1'
-    };
-
-    // Send request to backend AI endpoint
-    const response = await fetch('/api/ai/query', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify(requestBody),
-      credentials: 'include' // Include cookies for session management
-    });
-
-    // Handle HTTP errors
-    if (!response.ok) {
-      const errorData = await response.json().catch(() => ({ message: 'Unknown error occurred' }));
-      throw new Error(errorData.message || `HTTP error! status: ${response.status}`);
-    }
-
-    // Parse and return the AI response
-    const aiResponse = await response.json();
+    // Import data service for static data
+    const { dataService } = await import('./dataService');
     
-    // Validate response structure
-    if (!aiResponse.response) {
-      throw new Error('Invalid response format from AI assistant');
-    }
+    // Get relevant data based on the query
+    const [keyMetrics, topProcedures, insuranceData, locations] = await Promise.all([
+      dataService.getKeyMetrics(locationId, timeRange),
+      dataService.getTopRevenueProcedures(locationId, undefined, timeRange),
+      dataService.getInsurancePayerBreakdown(locationId, timeRange),
+      dataService.getLocations()
+    ]);
+
+    // Generate AI-like response based on query content and real data
+    const aiResponse = generateStaticAIResponse(query, {
+      keyMetrics,
+      topProcedures,
+      insuranceData,
+      locations,
+      locationId,
+      timeRange
+    });
 
     return {
       success: true,
@@ -105,7 +94,7 @@ export async function submitAIQuery(query: string, userId: string | null = null,
     };
 
   } catch (error: any) {
-    console.error('Error submitting AI query:', error);
+    console.error('Error processing AI query:', error);
     
     // Return structured error response
     return {
@@ -123,21 +112,168 @@ export async function submitAIQuery(query: string, userId: string | null = null,
 }
 
 /**
+ * Generate AI-like response using static data and keyword matching
+ */
+function generateStaticAIResponse(query: string, data: any) {
+  const queryLower = query.toLowerCase();
+  const locationName = data.locationId === 'all' 
+    ? 'all locations' 
+    : data.locations.find((loc: any) => loc.id === data.locationId)?.name || data.locationId;
+  
+  let response = "";
+  let queryType = "general";
+  let confidence = 0.8;
+  let recommendations: string[] = [];
+  let keyMetrics: Record<string, any> = {};
+
+  // Revenue-related queries
+  if (queryLower.includes("revenue") || queryLower.includes("income") || queryLower.includes("money") || queryLower.includes("earnings")) {
+    queryType = "revenue_analysis";
+    const totalRevenue = data.keyMetrics.monthlyRevenue || 0;
+    const topProcedure = data.topProcedures[0];
+    
+    response = `Based on the latest data for ${locationName}, your practice shows strong revenue performance. `;
+    response += `Monthly revenue is $${totalRevenue.toLocaleString()}, `;
+    if (topProcedure) {
+      response += `with ${topProcedure.description} being your top revenue generator at $${topProcedure.revenue?.toLocaleString() || 'N/A'}. `;
+    }
+    response += `Revenue growth is ${data.keyMetrics.revenueGrowth || 'N/A'}% compared to the previous period.`;
+    
+    keyMetrics = {
+      monthlyRevenue: totalRevenue,
+      topProcedure: topProcedure?.description || 'N/A',
+      revenueGrowth: data.keyMetrics.revenueGrowth || 'N/A'
+    };
+    
+    recommendations = [
+      "Focus on high-value procedures to maximize revenue",
+      "Consider expanding popular service offerings",
+      "Monitor revenue trends monthly for optimization opportunities"
+    ];
+  }
+  // Patient volume queries
+  else if (queryLower.includes("patient") || queryLower.includes("volume") || queryLower.includes("appointment") || queryLower.includes("visits")) {
+    queryType = "patient_volume";
+    const monthlyPatients = data.keyMetrics.monthlyPatients || 0;
+    const patientGrowth = data.keyMetrics.patientGrowth || 'N/A';
+    
+    response = `Patient volume analysis for ${locationName} shows consistent activity. `;
+    response += `You're seeing approximately ${monthlyPatients.toLocaleString()} patients per month, `;
+    response += `with a patient growth rate of ${patientGrowth}%. `;
+    response += `The average revenue per patient is $${data.keyMetrics.averageRevenuePerPatient?.toLocaleString() || 'N/A'}.`;
+    
+    keyMetrics = {
+      monthlyPatients: monthlyPatients,
+      patientGrowth: patientGrowth,
+      avgRevenuePerPatient: data.keyMetrics.averageRevenuePerPatient || 'N/A'
+    };
+    
+    recommendations = [
+      "Implement patient retention strategies",
+      "Optimize appointment scheduling for efficiency",
+      "Focus on patient experience improvements"
+    ];
+  }
+  // Insurance and claims queries
+  else if (queryLower.includes("insurance") || queryLower.includes("claim") || queryLower.includes("payer") || queryLower.includes("ar days")) {
+    queryType = "insurance_analysis";
+    const arDays = data.keyMetrics.arDays || 0;
+    const cleanClaimRate = data.keyMetrics.cleanClaimRate || 0;
+    const topPayer = data.insuranceData[0];
+    
+    response = `Insurance claims analysis for ${locationName} shows solid performance. `;
+    response += `Average AR days are ${arDays} days, with a clean claim rate of ${cleanClaimRate}%. `;
+    if (topPayer) {
+      response += `${topPayer.name} is your largest payer, representing ${topPayer.percentage?.toFixed(1) || 'N/A'}% of revenue.`;
+    }
+    
+    keyMetrics = {
+      arDays: arDays,
+      cleanClaimRate: cleanClaimRate,
+      topPayer: topPayer?.name || 'N/A'
+    };
+    
+    recommendations = [
+      "Streamline claims submission process",
+      "Focus on reducing AR days through better follow-up",
+      "Monitor payer performance regularly"
+    ];
+  }
+  // Procedure-specific queries
+  else if (queryLower.includes("procedure") || queryLower.includes("surgery") || queryLower.includes("treatment") || queryLower.includes("lasik") || queryLower.includes("cataract")) {
+    queryType = "procedure_analysis";
+    const topProcedures = data.topProcedures.slice(0, 3);
+    
+    response = `Procedure analysis for ${locationName} shows strong performance across key services. `;
+    if (topProcedures.length > 0) {
+      response += `Your top procedures are: `;
+      topProcedures.forEach((proc: any, index: number) => {
+        response += `${proc.description} ($${proc.revenue?.toLocaleString() || 'N/A'})`;
+        if (index < topProcedures.length - 1) response += ', ';
+      });
+      response += '.';
+    }
+    
+    keyMetrics = {
+      topProcedures: topProcedures.map((p: any) => ({
+        name: p.description,
+        revenue: p.revenue
+      }))
+    };
+    
+    recommendations = [
+      "Focus on expanding high-performing procedures",
+      "Consider marketing for top revenue generators",
+      "Evaluate procedure efficiency and outcomes"
+    ];
+  }
+  // General queries
+  else {
+    queryType = "general";
+    response = `Thank you for your question about "${query}". Based on the current data for ${locationName}, `;
+    response += `I can provide insights on your practice performance. `;
+    response += `Your key metrics show ${data.keyMetrics.monthlyPatients?.toLocaleString() || 'N/A'} monthly patients, `;
+    response += `$${data.keyMetrics.monthlyRevenue?.toLocaleString() || 'N/A'} in monthly revenue, `;
+    response += `and ${data.keyMetrics.arDays || 'N/A'} average AR days. `;
+    response += `Would you like me to elaborate on any specific aspect of your practice?`;
+    
+    keyMetrics = {
+      monthlyPatients: data.keyMetrics.monthlyPatients || 'N/A',
+      monthlyRevenue: data.keyMetrics.monthlyRevenue || 'N/A',
+      arDays: data.keyMetrics.arDays || 'N/A'
+    };
+    
+    recommendations = [
+      "Ask about specific revenue metrics",
+      "Inquire about patient volume trends", 
+      "Request insurance claims analysis",
+      "Get procedure performance data"
+    ];
+  }
+
+  return {
+    response,
+    queryType,
+    confidence,
+    locationContext: data.locationId,
+    timeContext: data.timeRange,
+    recommendations,
+    keyMetrics,
+    timestamp: new Date().toISOString()
+  };
+}
+
+/**
  * Fetch popular/suggested questions for the AI assistant
  * @returns {Promise<Array>} List of popular questions with metadata
  */
 export async function getPopularQuestions() {
   try {
-    const response = await fetch('/api/ai/popular-questions', {
-      method: 'GET',
-      credentials: 'include'
-    });
-
-    if (!response.ok) {
-      throw new Error(`Failed to fetch popular questions: ${response.status}`);
-    }
-
-    const questions = await response.json();
+    // Import data service for static data
+    const { dataService } = await import('./dataService');
+    
+    // Get popular questions from static data
+    const questions = await dataService.getPopularQuestions();
     
     return {
       success: true,
@@ -148,7 +284,7 @@ export async function getPopularQuestions() {
   } catch (error: any) {
     console.error('Error fetching popular questions:', error);
     
-    // Return fallback questions if API fails
+    // Return fallback questions if static data fails
     return {
       success: false,
       error: error.message,
@@ -170,6 +306,24 @@ export async function getPopularQuestions() {
           question: "AR days by insurance payer",
           icon: "clock",
           category: "operations"
+        },
+        {
+          id: "lasik-analytics",
+          question: "LASIK surgery analytics",
+          icon: "zap",
+          category: "procedures"
+        },
+        {
+          id: "refractive-vs-medical",
+          question: "Bad debt analysis",
+          icon: "balance-scale",
+          category: "revenue"
+        },
+        {
+          id: "best-location",
+          question: "Best performing location",
+          icon: "trophy",
+          category: "locations"
         }
       ],
       timestamp: new Date().toISOString()
@@ -188,16 +342,9 @@ export async function getQueryHistory(userId: string) {
       throw new Error('User ID is required to fetch query history');
     }
 
-    const response = await fetch(`/api/ai/query-history/${userId}`, {
-      method: 'GET',
-      credentials: 'include'
-    });
-
-    if (!response.ok) {
-      throw new Error(`Failed to fetch query history: ${response.status}`);
-    }
-
-    const history = await response.json();
+    // For static data implementation, we'll return an empty array
+    // In a real implementation, this could be stored in localStorage or a simple in-memory cache
+    const history: any[] = [];
     
     return {
       success: true,

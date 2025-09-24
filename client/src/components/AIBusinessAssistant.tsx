@@ -186,9 +186,14 @@ export default function AIBusinessAssistant({ selectedLocationId }: AIBusinessAs
    * QUERY CONFIGURATION:
    * - Cache for 10 minutes since popular questions don't change often
    * - Default to empty array to prevent undefined errors
+   * - Now uses static data instead of API calls
    */
   const { data: popularQuestions = [], isLoading: questionsLoading } = useQuery({
-    queryKey: ['/api/ai/popular-questions'],
+    queryKey: ['popular-questions-static'],
+    queryFn: async () => {
+      const result = await getPopularQuestions();
+      return result.success ? result.data : [];
+    },
     staleTime: 10 * 60 * 1000, // Cache for 10 minutes
   });
 
