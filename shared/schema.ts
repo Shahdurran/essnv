@@ -1005,7 +1005,7 @@ export interface InsuranceClaim {
  * - Which payers are creating bottlenecks in our cash flow?
  */
 export interface ClaimsBreakdown {
-  status: 'Pending' | 'Submitted' | 'Denied';
+  status: 'Pending' | 'Submitted' | 'Denied' | 'Paid';
   totalClaims: number;
   totalAmount: number;
   providers: {

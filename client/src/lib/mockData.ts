@@ -387,6 +387,7 @@ export const practiceLocations = [
  * This function generates top revenue procedures data scaled by time period.
  */
 export function generateTopRevenueProcedures(timeRange: string = '1Y') {
+  // Data remains the same for all locations
   // Base monthly data
   const baseProcedures = [
   {
@@ -761,80 +762,125 @@ export const sampleChatHistory = [
  * and insurance provider for the Insurance Claims Tracker widget.
  */
 export function generateInsuranceClaimsBreakdown(locationId: string = 'all', period: string = '1Y'): ClaimsBreakdown[] {
-  // Base monthly claims data
+  // Ignore locationId - data remains the same for all locations
+  // Base monthly claims data - Submitted = Paid + Pending + Denied
+  // Submitted: ~$500,000 per month (±10%)
   const baseClaimsData = [
     {
-      status: 'Pending',
-      totalClaims: 156,
-      totalAmount: 89500,
-      providers: [
-        { name: 'Blue Cross Blue Shield', claimCount: 45, amount: 32000 },
-        { name: 'Aetna', claimCount: 38, amount: 28500 },
-        { name: 'Medicare', claimCount: 73, amount: 29000 }
-      ]
-    },
-    {
       status: 'Submitted',
-      totalClaims: 89,
-      totalAmount: 45600,
+      totalClaims: 450,
+      totalAmount: 495000, // $495K (within ±10% of $500K)
       providers: [
-        { name: 'United Healthcare', claimCount: 32, amount: 18200 },
-        { name: 'Cigna', claimCount: 28, amount: 15600 },
-        { name: 'Humana', claimCount: 29, amount: 11800 }
+        { name: 'Blue Cross Blue Shield', claimCount: 145, amount: 180000 },
+        { name: 'Aetna', claimCount: 98, amount: 125000 },
+        { name: 'Medicare', claimCount: 120, amount: 110000 },
+        { name: 'United Healthcare', claimCount: 87, amount: 80000 }
       ]
     },
     {
       status: 'Paid',
-      totalClaims: 234,
-      totalAmount: 125600,
+      totalClaims: 290,
+      totalAmount: 290000, // $290K
       providers: [
-        { name: 'Blue Cross Blue Shield', claimCount: 78, amount: 45600 },
-        { name: 'Aetna', claimCount: 65, amount: 38200 },
-        { name: 'Medicare', claimCount: 91, amount: 41800 }
+        { name: 'Blue Cross Blue Shield', claimCount: 95, amount: 110000 },
+        { name: 'Aetna', claimCount: 78, amount: 85000 },
+        { name: 'Medicare', claimCount: 85, amount: 70000 },
+        { name: 'United Healthcare', claimCount: 32, amount: 25000 }
+      ]
+    },
+    {
+      status: 'Pending',
+      totalClaims: 110,
+      totalAmount: 110000, // $110K
+      providers: [
+        { name: 'Blue Cross Blue Shield', claimCount: 35, amount: 45000 },
+        { name: 'Aetna', claimCount: 28, amount: 32000 },
+        { name: 'Medicare', claimCount: 25, amount: 20000 },
+        { name: 'Cigna', claimCount: 22, amount: 13000 }
       ]
     },
     {
       status: 'Denied',
-      totalClaims: 23,
-      totalAmount: 12800,
+      totalClaims: 50,
+      totalAmount: 95000, // $95K
       providers: [
-        { name: 'Blue Cross Blue Shield', claimCount: 8, amount: 4200 },
-        { name: 'Aetna', claimCount: 7, amount: 3800 },
-        { name: 'Medicare', claimCount: 8, amount: 4800 }
+        { name: 'Blue Cross Blue Shield', claimCount: 15, amount: 25000 },
+        { name: 'Aetna', claimCount: 12, amount: 20000 },
+        { name: 'Medicare', claimCount: 10, amount: 20000 },
+        { name: 'United Healthcare', claimCount: 13, amount: 30000 }
       ]
     }
   ];
 
-  // Scale based on time period
+  // Scale based on time period - ensure Submitted stays around $500K per month (±10%)
   let multiplier = 1;
+  let submittedBaseAmount = 495000; // Base monthly amount for Submitted
+  
   switch (period) {
     case '1M':
       multiplier = 1;
+      submittedBaseAmount = 495000; // $495K for 1 month
       break;
     case '3M':
       multiplier = 3;
+      submittedBaseAmount = 1485000; // $1.485M for 3 months (495K * 3)
       break;
     case '6M':
       multiplier = 6;
+      submittedBaseAmount = 2970000; // $2.97M for 6 months (495K * 6)
       break;
     case '1Y':
       multiplier = 12;
+      submittedBaseAmount = 5940000; // $5.94M for 1 year (495K * 12)
       break;
     default:
       multiplier = 12;
+      submittedBaseAmount = 5940000;
   }
-
-  // Return scaled data
-  return baseClaimsData.map(status => ({
-    status: status.status as 'Pending' | 'Submitted' | 'Denied',
-    totalClaims: Math.round(status.totalClaims * multiplier),
-    totalAmount: Math.round(status.totalAmount * multiplier),
-    providers: status.providers.map(provider => ({
-      name: provider.name,
-      claimCount: Math.round(provider.claimCount * multiplier),
-      amount: Math.round(provider.amount * multiplier)
-    }))
-  }));
+  
+  // Calculate the ratio to maintain the relationship: Submitted = Paid + Pending + Denied
+  const paidRatio = 290000 / 495000; // 0.586
+  const pendingRatio = 110000 / 495000; // 0.222
+  const deniedRatio = 95000 / 495000; // 0.192
+  
+  // Return scaled data with proper relationships maintained
+  return baseClaimsData.map(status => {
+    let scaledAmount;
+    let scaledClaims;
+    
+    switch (status.status) {
+      case 'Submitted':
+        scaledAmount = submittedBaseAmount;
+        scaledClaims = Math.round(status.totalClaims * multiplier);
+        break;
+      case 'Paid':
+        scaledAmount = Math.round(submittedBaseAmount * paidRatio);
+        scaledClaims = Math.round(status.totalClaims * multiplier);
+        break;
+      case 'Pending':
+        scaledAmount = Math.round(submittedBaseAmount * pendingRatio);
+        scaledClaims = Math.round(status.totalClaims * multiplier);
+        break;
+      case 'Denied':
+        scaledAmount = Math.round(submittedBaseAmount * deniedRatio);
+        scaledClaims = Math.round(status.totalClaims * multiplier);
+        break;
+      default:
+        scaledAmount = Math.round(status.totalAmount * multiplier);
+        scaledClaims = Math.round(status.totalClaims * multiplier);
+    }
+    
+    return {
+      status: status.status as 'Pending' | 'Submitted' | 'Denied' | 'Paid', // Include 'Paid' in type
+      totalClaims: scaledClaims,
+      totalAmount: scaledAmount,
+      providers: status.providers.map(provider => ({
+        name: provider.name,
+        claimCount: Math.round(provider.claimCount * multiplier),
+        amount: Math.round(provider.amount * multiplier)
+      }))
+    };
+  });
 }
 
 /*
@@ -844,53 +890,55 @@ export function generateInsuranceClaimsBreakdown(locationId: string = 'all', per
  * This function generates accounts receivable aging data for the AR Buckets widget.
  */
 export function generateARBucketsData(locationId: string = 'all', period: string = '1Y') {
-  // Base monthly values
-  const monthlyBuckets = [
-    { ageRange: '0-30', amount: 125000, claimCount: 89 },
-    { ageRange: '31-60', amount: 78000, claimCount: 45 },
-    { ageRange: '61-90', amount: 42000, claimCount: 23 },
-    { ageRange: '90+', amount: 18000, claimCount: 12 }
+  // Ignore locationId - data remains the same for all locations
+  // Fixed AR bucket values as requested
+  const buckets = [
+    { 
+      ageRange: '0-30', 
+      amount: 254000, 
+      claimCount: 145,
+      color: {
+        bg: 'bg-green-50',
+        border: 'border-green-200',
+        text: 'text-green-800'
+      }
+    },
+    { 
+      ageRange: '31-60', 
+      amount: 115000, 
+      claimCount: 78,
+      color: {
+        bg: 'bg-yellow-50',
+        border: 'border-yellow-200',
+        text: 'text-yellow-800'
+      }
+    },
+    { 
+      ageRange: '61-90', 
+      amount: 55000, 
+      claimCount: 42,
+      color: {
+        bg: 'bg-orange-50',
+        border: 'border-orange-200',
+        text: 'text-orange-800'
+      }
+    },
+    { 
+      ageRange: '90+', 
+      amount: 37000, 
+      claimCount: 28,
+      color: {
+        bg: 'bg-red-50',
+        border: 'border-red-200',
+        text: 'text-red-800'
+      }
+    }
   ];
   
-  // Scale based on time period (AR is cumulative, so it doesn't scale linearly)
-  let multiplier = 1;
-  switch (period) {
-    case '1M':
-      multiplier = 0.8; // Slightly less than full month
-      break;
-    case '3M':
-      multiplier = 1.2; // Slightly more than 1 month
-      break;
-    case '6M':
-      multiplier = 1.5; // Moderate increase
-      break;
-    case '1Y':
-      multiplier = 1; // Full values
-      break;
-    default:
-      multiplier = 1;
-  }
-  
-  const buckets = monthlyBuckets.map(bucket => ({
-    ageRange: bucket.ageRange,
-    amount: Math.round(bucket.amount * multiplier),
-    claimCount: Math.round(bucket.claimCount * multiplier),
-    color: {
-      bg: bucket.ageRange === '0-30' ? 'bg-green-50' : 
-          bucket.ageRange === '31-60' ? 'bg-yellow-50' :
-          bucket.ageRange === '61-90' ? 'bg-orange-50' : 'bg-red-50',
-      border: bucket.ageRange === '0-30' ? 'border-green-200' : 
-              bucket.ageRange === '31-60' ? 'border-yellow-200' :
-              bucket.ageRange === '61-90' ? 'border-orange-200' : 'border-red-200',
-      text: bucket.ageRange === '0-30' ? 'text-green-800' : 
-            bucket.ageRange === '31-60' ? 'text-yellow-800' :
-            bucket.ageRange === '61-90' ? 'text-orange-800' : 'text-red-800'
-    }
-  }));
-  
-  const totalAR = buckets.reduce((sum, bucket) => sum + bucket.amount, 0);
-  const currentAR = buckets.filter(b => ['0-30', '31-60'].includes(b.ageRange)).reduce((sum, bucket) => sum + bucket.amount, 0);
-  const agedAR = buckets.filter(b => ['61-90', '90+'].includes(b.ageRange)).reduce((sum, bucket) => sum + bucket.amount, 0);
+  // Calculate totals
+  const totalAR = 462000; // $462k as requested
+  const currentAR = 369000; // 0-30 + 31-60 = $254k + $115k = $369k
+  const agedAR = 92000; // 61-90 + 90+ = $55k + $37k = $92k
   
   return {
     buckets,
@@ -907,9 +955,10 @@ export function generateARBucketsData(locationId: string = 'all', period: string
  * This function generates key performance indicators for the Practice Insights widget.
  */
 export function generateKeyMetrics(locationId: string = 'all', timeRange: string = '1Y') {
-  // Base monthly values
-  const monthlyPatients = 1247;
-  const monthlyRevenue = 245000;
+  // Ignore locationId - data remains the same for all locations
+  // Base monthly values as requested
+  const monthlyPatients = 2200; // 2.2k patients
+  const monthlyRevenue = 675000; // $675k revenue
   
   // Scale based on time period
   let multiplier = 1;
@@ -934,10 +983,10 @@ export function generateKeyMetrics(locationId: string = 'all', timeRange: string
     monthlyPatients: Math.round(monthlyPatients * multiplier),
     monthlyRevenue: Math.round(monthlyRevenue * multiplier),
     arDays: 28.4, // AR days don't scale with time period
-    cleanClaimRate: 94.2, // Rate doesn't scale
+    cleanClaimRate: 60.0, // 60% as requested
     patientGrowth: "+8.2%", // Growth rate doesn't scale
     revenueGrowth: "+12.5%", // Growth rate doesn't scale
-    averageRevenuePerPatient: 196, // Average doesn't scale
+    averageRevenuePerPatient: Math.round(675000 / 2200), // Calculate from new values: ~$307
     noShowRate: 6.8, // Rate doesn't scale
     cancellationRate: 4.2, // Rate doesn't scale
     newPatientRate: 18.5, // Rate doesn't scale
@@ -952,6 +1001,7 @@ export function generateKeyMetrics(locationId: string = 'all', timeRange: string
  * This function generates patient billing analytics data for the PatientBillingAnalytics widget.
  */
 export function generatePatientBillingData(locationId: string = 'all', period: string = '1Y') {
+  // Ignore locationId - data remains the same for all locations
   // Base monthly values
   const monthlyRevenue = 125000;
   const monthlyPaid = 109125;

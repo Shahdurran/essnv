@@ -41,8 +41,6 @@
  * - Optimized billing processes reduce delays
  */
 
-// React hooks for state management
-import { useState } from "react";
 // Mock data for AR buckets analytics
 import { generateARBucketsData } from '@/lib/mockData';
 // Lucide React icons for aging and urgency indicators
@@ -105,33 +103,11 @@ interface ARBucketsWidgetProps {
  */
 export default function ARBucketsWidget({ selectedLocationId, selectedTimePeriod }: ARBucketsWidgetProps) {
 
-  // State for local time range filtering - Initialize with "last-month" preset
-  const [localTimeRange, setLocalTimeRange] = useState("last-month");
-
-  /**
-   * Convert local time range to time period format
-   */
-  const getTimePeriodFromLocalRange = (range: string): string => {
-    switch (range) {
-      case 'last-month':
-        return '1M';
-      case 'last-3-months':
-        return '3M';
-      case 'last-6-months':
-        return '6M';
-      case 'last-year':
-        return '1Y';
-      default:
-        return selectedTimePeriod; // Fallback to global time period
-    }
-  };
-
   /**
    * Get AR buckets data from mock data
-   * Uses local time range if set, otherwise uses global time period
+   * Uses fixed values regardless of time period
    */
-  const effectiveTimePeriod = getTimePeriodFromLocalRange(localTimeRange);
-  const arData = generateARBucketsData(selectedLocationId, effectiveTimePeriod);
+  const arData = generateARBucketsData(selectedLocationId, selectedTimePeriod);
 
   /**
    * Format currency values for display
@@ -229,33 +205,6 @@ export default function ARBucketsWidget({ selectedLocationId, selectedTimePeriod
         </div>
       </div>
 
-      {/* Local Time Range Filter */}
-      <div className="mb-6">
-        <div className="flex items-center flex-wrap gap-2">
-          <span className="text-sm font-medium text-gray-700">AR Period:</span>
-          {[
-            { key: 'last-month', label: 'Last Month' },
-            { key: 'last-3-months', label: 'Last 3 Months' },
-            { key: 'last-6-months', label: 'Last 6 Months' },
-            { key: 'last-year', label: 'Last Year' }
-          ].map((period) => (
-            <button
-              key={period.key}
-              onClick={() => setLocalTimeRange(period.key)}
-              className={`px-3 py-1 text-sm rounded-md border transition-colors ${
-                localTimeRange === period.key
-                  ? 'bg-blue-600 text-white border-blue-600'
-                  : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50'
-              }`}
-            >
-              {period.label}
-            </button>
-          ))}
-        </div>
-        <p className="text-xs text-gray-500 mt-2">
-          Showing AR data for {localTimeRange.replace('-', ' ')} period
-        </p>
-      </div>
 
       {/* AR Buckets Display */}
       <div className="space-y-4">

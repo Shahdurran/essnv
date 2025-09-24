@@ -1,1 +1,4 @@
-[{"id":"376c77e9-8ae5-491f-a1ab-81d3a9c7ab25","name":"Eye Specialists & Surgeons of Northern Virginia","address":"123 Medical Plaza Drive","city":"Fairfax","state":"VA","zip_code":"22030","phone":"555-0100","is_active":true}]
+[
+  {"id":"fairfax","name":"Fairfax","address":"123 Medical Plaza Drive","city":"Fairfax","state":"VA","zip_code":"22030","phone":"555-0100","is_active":true},
+  {"id":"gainesville","name":"Gainesville","address":"456 Healthcare Boulevard","city":"Gainesville","state":"VA","zip_code":"20155","phone":"555-0200","is_active":true}
+]

@@ -75,12 +75,8 @@ export function getProcessedLocations() {
  * Get cash flow data for a specific location and time period
  */
 export function getCashFlowDataForLocation(locationId: string = 'all', period: string = '1Y') {
+  // Ignore locationId - data remains the same for all locations
   let filteredData = rawCashFlowData;
-  
-  // Filter by location if not 'all'
-  if (locationId !== 'all') {
-    filteredData = rawCashFlowData.filter(item => item.location_id === locationId);
-  }
   
   // Filter by time period
   filteredData = filterDataByPeriod(filteredData, period);
@@ -142,12 +138,8 @@ export function getCashFlowDataForLocation(locationId: string = 'all', period: s
  * Get P&L data for a specific location and time period
  */
 export function getPLDataForLocation(locationId: string = 'all', period: string = '1Y') {
+  // Ignore locationId - data remains the same for all locations
   let filteredData = rawPLData;
-  
-  // Filter by location if not 'all' (though all data has same location_id)
-  if (locationId !== 'all') {
-    filteredData = rawPLData.filter(item => item.location_id === locationId);
-  }
   
   // Filter by time period
   filteredData = filterDataByPeriod(filteredData, period);
@@ -208,12 +200,8 @@ export function getPLDataForLocation(locationId: string = 'all', period: string 
  * Get revenue trends data from P&L data
  */
 export function getRevenueTrendsFromPL(locationId: string = 'all', period: string = '1Y') {
+  // Ignore locationId - data remains the same for all locations
   let filteredData = rawPLData;
-  
-  // Filter by location if not 'all'
-  if (locationId !== 'all') {
-    filteredData = rawPLData.filter(item => item.location_id === locationId);
-  }
   
   // Group by month_year
   const monthlyData: Record<string, any> = {};
@@ -296,12 +284,8 @@ function filterDataByPeriod(data: RawPLItem[] | RawCashFlowItem[], period: strin
  * Get financial revenue data from P&L
  */
 export function getFinancialRevenueFromPL(locationId: string = 'all', period: string = '1Y') {
+  // Ignore locationId - data remains the same for all locations
   let filteredData = rawPLData;
-  
-  // Filter by location if not 'all' (though all data has same location_id)
-  if (locationId !== 'all') {
-    filteredData = rawPLData.filter(item => item.location_id === locationId);
-  }
   
   // Filter by time period
   filteredData = filterDataByPeriod(filteredData, period);
@@ -332,12 +316,8 @@ export function getFinancialRevenueFromPL(locationId: string = 'all', period: st
  * Get financial expenses data from P&L
  */
 export function getFinancialExpensesFromPL(locationId: string = 'all', period: string = '1Y') {
+  // Ignore locationId - data remains the same for all locations
   let filteredData = rawPLData;
-  
-  // Filter by location if not 'all' (though all data has same location_id)
-  if (locationId !== 'all') {
-    filteredData = rawPLData.filter(item => item.location_id === locationId);
-  }
   
   // Filter by time period
   filteredData = filterDataByPeriod(filteredData, period);
