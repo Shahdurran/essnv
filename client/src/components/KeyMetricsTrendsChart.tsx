@@ -112,6 +112,7 @@ ChartJS.register(
  */
 interface KeyMetricsTrendsChartProps {
   selectedLocationId: string;  // Location filter for analytics data
+  selectedTimePeriod: string;  // Time period filter for data
 }
 
 /*
@@ -137,10 +138,9 @@ interface KeyMetricsTrendsChartProps {
  * 
  * @param {KeyMetricsTrendsChartProps} props - Component properties
  */
-export default function KeyMetricsTrendsChart({ selectedLocationId }: KeyMetricsTrendsChartProps) {
+export default function KeyMetricsTrendsChart({ selectedLocationId, selectedTimePeriod }: KeyMetricsTrendsChartProps) {
   
   // State management for chart controls
-  const [selectedTimePeriod, setSelectedTimePeriod] = useState<string>("1yr");
   const [selectedMetric, setSelectedMetric] = useState<string>("revenue");
   
   // Chart.js instance reference

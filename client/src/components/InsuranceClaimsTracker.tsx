@@ -56,8 +56,6 @@ import {
   CheckCircle2,  // Approved/paid claims
   DollarSign     // Financial amounts
 } from "lucide-react";
-// Date filtering component for time-based analysis
-import DateFilter from "./DateFilter";
 // TypeScript interface for claims data
 import type { ClaimsBreakdown } from "../../../shared/schema";
 
@@ -70,6 +68,7 @@ import type { ClaimsBreakdown } from "../../../shared/schema";
  */
 interface InsuranceClaimsTrackerProps {
   selectedLocationId: string;  // Location filter for claims analysis
+  selectedTimePeriod: string;  // Time period filter for data
 }
 
 /*
@@ -96,36 +95,36 @@ interface InsuranceClaimsTrackerProps {
  * 
  * @param {InsuranceClaimsTrackerProps} props - Component properties
  */
-export default function InsuranceClaimsTracker({ selectedLocationId }: InsuranceClaimsTrackerProps) {
+export default function InsuranceClaimsTracker({ selectedLocationId, selectedTimePeriod }: InsuranceClaimsTrackerProps) {
 
-  // State for date filtering - Initialize with "last-month" preset
-  const [dateRange, setDateRange] = useState(() => {
-    const end = new Date();
-    const start = new Date();
-    start.setMonth(start.getMonth() - 1);
-    
-    return {
-      start,
-      end,
-      preset: "last-month"
-    };
-  });
+  // State for local date filtering - Initialize with "last-month" preset
+  const [localDateFilter, setLocalDateFilter] = useState("last-month");
+
+  /**
+   * Convert local date filter to time period format
+   */
+  const getTimePeriodFromLocalFilter = (filter: string): string => {
+    switch (filter) {
+      case 'last-month':
+        return '1M';
+      case 'last-3-months':
+        return '3M';
+      case 'last-6-months':
+        return '6M';
+      case 'last-year':
+        return '1Y';
+      default:
+        return selectedTimePeriod; // Fallback to global time period
+    }
+  };
 
   /**
    * Get insurance claims data from mock data
-   * Includes location-based and date-based filtering
+   * Uses local date filter if set, otherwise uses global time period
    */
-  const claimsData = generateInsuranceClaimsBreakdown(selectedLocationId);
+  const effectiveTimePeriod = getTimePeriodFromLocalFilter(localDateFilter);
+  const claimsData = generateInsuranceClaimsBreakdown(selectedLocationId, effectiveTimePeriod);
 
-  /**
-   * Handle date range changes from DateFilter
-   * @param {Date|null} startDate - Start date
-   * @param {Date|null} endDate - End date  
-   * @param {string} preset - Selected preset
-   */
-  const handleDateRangeChange = (startDate: Date | null, endDate: Date | null, preset: string) => {
-    setDateRange({ start: startDate, end: endDate, preset });
-  };
 
   /**
    * Get appropriate icon for each claim status
@@ -255,46 +254,31 @@ export default function InsuranceClaimsTracker({ selectedLocationId }: Insurance
           </div>
         </div>
 
-        {/* Date Filter - Limited presets for mock data compatibility */}
+        {/* Local Date Filter - Claims specific filtering */}
         <div className="mb-6">
           <div className="flex items-center flex-wrap gap-2">
-            <span className="text-sm font-medium text-gray-700">Filter by:</span>
-            {['Last Month', 'Last 3 Months', 'Last 6 Months', 'Last Year'].map((period) => (
+            <span className="text-sm font-medium text-gray-700">Claims Period:</span>
+            {[
+              { key: 'last-month', label: 'Last Month' },
+              { key: 'last-3-months', label: 'Last 3 Months' },
+              { key: 'last-6-months', label: 'Last 6 Months' },
+              { key: 'last-year', label: 'Last Year' }
+            ].map((period) => (
               <button
-                key={period}
-                onClick={() => {
-                  const end = new Date();
-                  const start = new Date();
-                  
-                  switch(period) {
-                    case 'Last Month':
-                      start.setMonth(start.getMonth() - 1);
-                      break;
-                    case 'Last 3 Months':
-                      start.setMonth(start.getMonth() - 3);
-                      break;
-                    case 'Last 6 Months':
-                      start.setMonth(start.getMonth() - 6);
-                      break;
-                    case 'Last Year':
-                      start.setFullYear(start.getFullYear() - 1);
-                      break;
-                  }
-                  
-                  setDateRange({ start, end, preset: period.toLowerCase().replace(' ', '-') });
-                }}
+                key={period.key}
+                onClick={() => setLocalDateFilter(period.key)}
                 className={`px-3 py-1 text-sm rounded-md border transition-colors ${
-                  dateRange.preset === period.toLowerCase().replace(' ', '-')
-                    ? 'bg-primary text-white border-primary'
+                  localDateFilter === period.key
+                    ? 'bg-blue-600 text-white border-blue-600'
                     : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50'
                 }`}
               >
-                {period}
+                {period.label}
               </button>
             ))}
           </div>
           <p className="text-xs text-gray-500 mt-2">
-            Claims data from {dateRange.start?.toLocaleDateString()} to {dateRange.end?.toLocaleDateString()}
+            Showing claims data for {localDateFilter.replace('-', ' ')} period
           </p>
         </div>
 

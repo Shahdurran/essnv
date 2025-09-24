@@ -439,6 +439,7 @@ export default function Dashboard() {
                 */}
                 <KeyMetricsTrendsChart 
                   selectedLocationId={selectedLocationId}
+                  selectedTimePeriod={selectedFinancialPeriod}
                 />
 
                 {/* 
@@ -447,6 +448,7 @@ export default function Dashboard() {
                 */}
                 <InsuranceClaimsTracker 
                   selectedLocationId={selectedLocationId}
+                  selectedTimePeriod={selectedFinancialPeriod}
                 />
 
                 {/* 
@@ -461,6 +463,7 @@ export default function Dashboard() {
                   */}
                   <TopRevenueProcedures 
                     selectedLocationId={selectedLocationId}
+                    selectedTimePeriod={selectedFinancialPeriod}
                   />
 
                   {/* 
@@ -469,6 +472,7 @@ export default function Dashboard() {
                   */}
                   <PracticeInsights 
                     selectedLocationId={selectedLocationId}
+                    selectedTimePeriod={selectedFinancialPeriod}
                   />
 
                 </div>
@@ -486,6 +490,7 @@ export default function Dashboard() {
                   */}
                   <PatientBillingAnalytics 
                     selectedLocationId={selectedLocationId}
+                    selectedTimePeriod={selectedFinancialPeriod}
                   />
 
                   {/* 
@@ -495,6 +500,7 @@ export default function Dashboard() {
                   */}
                   <ARBucketsWidget 
                     selectedLocationId={selectedLocationId}
+                    selectedTimePeriod={selectedFinancialPeriod}
                   />
 
                 </div>

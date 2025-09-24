@@ -60,6 +60,7 @@ import { DollarSign, TrendingUp, TrendingDown, Clock, AlertCircle } from "lucide
  */
 interface PatientBillingAnalyticsProps {
   selectedLocationId: string;  // Location filter for patient billing data
+  selectedTimePeriod: string;  // Time period filter for data
 }
 
 /*
@@ -99,16 +100,35 @@ interface PatientBillingData {
  * 
  * @param {PatientBillingAnalyticsProps} props - Component properties
  */
-export default function PatientBillingAnalytics({ selectedLocationId }: PatientBillingAnalyticsProps) {
+export default function PatientBillingAnalytics({ selectedLocationId, selectedTimePeriod }: PatientBillingAnalyticsProps) {
 
-  // State for time range filtering - default to 1 month
-  const [timeRange, setTimeRange] = useState("1");
+  // State for local time range filtering - Initialize with "last-month" preset
+  const [localTimeRange, setLocalTimeRange] = useState("last-month");
+
+  /**
+   * Convert local time range to time period format
+   */
+  const getTimePeriodFromLocalRange = (range: string): string => {
+    switch (range) {
+      case 'last-month':
+        return '1M';
+      case 'last-3-months':
+        return '3M';
+      case 'last-6-months':
+        return '6M';
+      case 'last-year':
+        return '1Y';
+      default:
+        return selectedTimePeriod; // Fallback to global time period
+    }
+  };
 
   /**
    * Fetch simplified patient billing data from API
-   * Includes total revenue, total paid, and total outstanding
+   * Uses local time range if set, otherwise uses global time period
    */
-  const billingData = generatePatientBillingData(selectedLocationId);
+  const effectiveTimePeriod = getTimePeriodFromLocalRange(localTimeRange);
+  const billingData = generatePatientBillingData(selectedLocationId, effectiveTimePeriod);
 
   /**
    * Calculate collection rate percentage
@@ -160,25 +180,34 @@ export default function PatientBillingAnalytics({ selectedLocationId }: PatientB
           </p>
         </div>
 
-        {/* Time Range Filter - Mobile Responsive */}
-        <div className="flex flex-col space-y-2 items-center sm:flex-row sm:justify-center sm:space-y-0 sm:gap-2">
-          <span className="text-sm font-medium text-gray-700 flex-shrink-0">Time Range:</span>
-          <div className="grid grid-cols-2 gap-2 sm:flex sm:gap-2">
-            {['1', '3', '6', '12'].map((months) => (
+        {/* Local Time Range Filter */}
+        <div className="mb-4">
+          <div className="flex items-center flex-wrap gap-2">
+            <span className="text-sm font-medium text-gray-700">Billing Period:</span>
+            {[
+              { key: 'last-month', label: 'Last Month' },
+              { key: 'last-3-months', label: 'Last 3 Months' },
+              { key: 'last-6-months', label: 'Last 6 Months' },
+              { key: 'last-year', label: 'Last Year' }
+            ].map((period) => (
               <button
-                key={months}
-                onClick={() => setTimeRange(months)}
-                className={`px-2 py-1 text-xs sm:px-3 sm:py-1 sm:text-sm rounded border transition-colors ${
-                  timeRange === months
+                key={period.key}
+                onClick={() => setLocalTimeRange(period.key)}
+                className={`px-3 py-1 text-sm rounded-md border transition-colors ${
+                  localTimeRange === period.key
                     ? 'bg-blue-600 text-white border-blue-600'
                     : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50'
                 }`}
               >
-                {getTimeRangeLabel(months)}
+                {period.label}
               </button>
             ))}
           </div>
+          <p className="text-xs text-gray-500 mt-2">
+            Showing billing data for {localTimeRange.replace('-', ' ')} period
+          </p>
         </div>
+
       </div>
 
       {/* Simplified Metrics - Vertical Layout */}

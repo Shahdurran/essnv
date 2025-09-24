@@ -380,7 +380,15 @@ export const practiceLocations = [
 /**
  * Real ophthalmology procedures with actual CPT codes and revenue data
  */
-export const topRevenueProcedures = [
+/*
+ * TOP REVENUE PROCEDURES DATA GENERATOR
+ * =====================================
+ * 
+ * This function generates top revenue procedures data scaled by time period.
+ */
+export function generateTopRevenueProcedures(timeRange: string = '1Y') {
+  // Base monthly data
+  const baseProcedures = [
   {
     id: "cataract-surgery-66984",
     cptCode: "66984",
@@ -485,7 +493,37 @@ export const topRevenueProcedures = [
     icon: "user-plus",
     rvuValue: 2.75
   }
-];
+  ];
+  
+  // Scale based on time period
+  let multiplier = 1;
+  switch (timeRange) {
+    case '1M':
+      multiplier = 1;
+      break;
+    case '3M':
+      multiplier = 3;
+      break;
+    case '6M':
+      multiplier = 6;
+      break;
+    case '1Y':
+      multiplier = 12;
+      break;
+    default:
+      multiplier = 12;
+  }
+  
+  // Return scaled data
+  return baseProcedures.map(proc => ({
+    ...proc,
+    monthlyVolume: Math.round(proc.monthlyVolume * multiplier),
+    monthlyRevenue: Math.round(proc.monthlyRevenue * multiplier)
+  }));
+}
+
+// Keep the original export for backward compatibility
+export const topRevenueProcedures = generateTopRevenueProcedures('1Y');
 
 /**
  * Insurance payer breakdown with real-world data
@@ -722,8 +760,9 @@ export const sampleChatHistory = [
  * This function generates realistic insurance claims data organized by status
  * and insurance provider for the Insurance Claims Tracker widget.
  */
-export function generateInsuranceClaimsBreakdown(locationId: string = 'all'): ClaimsBreakdown[] {
-  return [
+export function generateInsuranceClaimsBreakdown(locationId: string = 'all', period: string = '1Y'): ClaimsBreakdown[] {
+  // Base monthly claims data
+  const baseClaimsData = [
     {
       status: 'Pending',
       totalClaims: 156,
@@ -745,6 +784,16 @@ export function generateInsuranceClaimsBreakdown(locationId: string = 'all'): Cl
       ]
     },
     {
+      status: 'Paid',
+      totalClaims: 234,
+      totalAmount: 125600,
+      providers: [
+        { name: 'Blue Cross Blue Shield', claimCount: 78, amount: 45600 },
+        { name: 'Aetna', claimCount: 65, amount: 38200 },
+        { name: 'Medicare', claimCount: 91, amount: 41800 }
+      ]
+    },
+    {
       status: 'Denied',
       totalClaims: 23,
       totalAmount: 12800,
@@ -755,6 +804,37 @@ export function generateInsuranceClaimsBreakdown(locationId: string = 'all'): Cl
       ]
     }
   ];
+
+  // Scale based on time period
+  let multiplier = 1;
+  switch (period) {
+    case '1M':
+      multiplier = 1;
+      break;
+    case '3M':
+      multiplier = 3;
+      break;
+    case '6M':
+      multiplier = 6;
+      break;
+    case '1Y':
+      multiplier = 12;
+      break;
+    default:
+      multiplier = 12;
+  }
+
+  // Return scaled data
+  return baseClaimsData.map(status => ({
+    status: status.status as 'Pending' | 'Submitted' | 'Denied',
+    totalClaims: Math.round(status.totalClaims * multiplier),
+    totalAmount: Math.round(status.totalAmount * multiplier),
+    providers: status.providers.map(provider => ({
+      name: provider.name,
+      claimCount: Math.round(provider.claimCount * multiplier),
+      amount: Math.round(provider.amount * multiplier)
+    }))
+  }));
 }
 
 /*
@@ -763,53 +843,60 @@ export function generateInsuranceClaimsBreakdown(locationId: string = 'all'): Cl
  * 
  * This function generates accounts receivable aging data for the AR Buckets widget.
  */
-export function generateARBucketsData(locationId: string = 'all') {
+export function generateARBucketsData(locationId: string = 'all', period: string = '1Y') {
+  // Base monthly values
+  const monthlyBuckets = [
+    { ageRange: '0-30', amount: 125000, claimCount: 89 },
+    { ageRange: '31-60', amount: 78000, claimCount: 45 },
+    { ageRange: '61-90', amount: 42000, claimCount: 23 },
+    { ageRange: '90+', amount: 18000, claimCount: 12 }
+  ];
+  
+  // Scale based on time period (AR is cumulative, so it doesn't scale linearly)
+  let multiplier = 1;
+  switch (period) {
+    case '1M':
+      multiplier = 0.8; // Slightly less than full month
+      break;
+    case '3M':
+      multiplier = 1.2; // Slightly more than 1 month
+      break;
+    case '6M':
+      multiplier = 1.5; // Moderate increase
+      break;
+    case '1Y':
+      multiplier = 1; // Full values
+      break;
+    default:
+      multiplier = 1;
+  }
+  
+  const buckets = monthlyBuckets.map(bucket => ({
+    ageRange: bucket.ageRange,
+    amount: Math.round(bucket.amount * multiplier),
+    claimCount: Math.round(bucket.claimCount * multiplier),
+    color: {
+      bg: bucket.ageRange === '0-30' ? 'bg-green-50' : 
+          bucket.ageRange === '31-60' ? 'bg-yellow-50' :
+          bucket.ageRange === '61-90' ? 'bg-orange-50' : 'bg-red-50',
+      border: bucket.ageRange === '0-30' ? 'border-green-200' : 
+              bucket.ageRange === '31-60' ? 'border-yellow-200' :
+              bucket.ageRange === '61-90' ? 'border-orange-200' : 'border-red-200',
+      text: bucket.ageRange === '0-30' ? 'text-green-800' : 
+            bucket.ageRange === '31-60' ? 'text-yellow-800' :
+            bucket.ageRange === '61-90' ? 'text-orange-800' : 'text-red-800'
+    }
+  }));
+  
+  const totalAR = buckets.reduce((sum, bucket) => sum + bucket.amount, 0);
+  const currentAR = buckets.filter(b => ['0-30', '31-60'].includes(b.ageRange)).reduce((sum, bucket) => sum + bucket.amount, 0);
+  const agedAR = buckets.filter(b => ['61-90', '90+'].includes(b.ageRange)).reduce((sum, bucket) => sum + bucket.amount, 0);
+  
   return {
-    buckets: [
-      {
-        ageRange: '0-30',
-        amount: 125000,
-        claimCount: 89,
-        color: {
-          bg: 'bg-green-50',
-          border: 'border-green-200',
-          text: 'text-green-800'
-        }
-      },
-      {
-        ageRange: '31-60',
-        amount: 78000,
-        claimCount: 45,
-        color: {
-          bg: 'bg-yellow-50',
-          border: 'border-yellow-200',
-          text: 'text-yellow-800'
-        }
-      },
-      {
-        ageRange: '61-90',
-        amount: 42000,
-        claimCount: 23,
-        color: {
-          bg: 'bg-orange-50',
-          border: 'border-orange-200',
-          text: 'text-orange-800'
-        }
-      },
-      {
-        ageRange: '90+',
-        amount: 18000,
-        claimCount: 12,
-        color: {
-          bg: 'bg-red-50',
-          border: 'border-red-200',
-          text: 'text-red-800'
-        }
-      }
-    ],
-    totalAR: 263000,
-    currentAR: 125000,
-    agedAR: 138000
+    buckets,
+    totalAR,
+    currentAR,
+    agedAR
   };
 }
 
@@ -819,19 +906,42 @@ export function generateARBucketsData(locationId: string = 'all') {
  * 
  * This function generates key performance indicators for the Practice Insights widget.
  */
-export function generateKeyMetrics(locationId: string = 'all', timeRange: string = '1') {
+export function generateKeyMetrics(locationId: string = 'all', timeRange: string = '1Y') {
+  // Base monthly values
+  const monthlyPatients = 1247;
+  const monthlyRevenue = 245000;
+  
+  // Scale based on time period
+  let multiplier = 1;
+  switch (timeRange) {
+    case '1M':
+      multiplier = 1;
+      break;
+    case '3M':
+      multiplier = 3;
+      break;
+    case '6M':
+      multiplier = 6;
+      break;
+    case '1Y':
+      multiplier = 12;
+      break;
+    default:
+      multiplier = 12;
+  }
+  
   return {
-    monthlyPatients: 1247,
-    monthlyRevenue: 245000,
-    arDays: 28.4,
-    cleanClaimRate: 94.2,
-    patientGrowth: "+8.2%",
-    revenueGrowth: "+12.5%",
-    averageRevenuePerPatient: 196,
-    noShowRate: 6.8,
-    cancellationRate: 4.2,
-    newPatientRate: 18.5,
-    referralRate: 23.7
+    monthlyPatients: Math.round(monthlyPatients * multiplier),
+    monthlyRevenue: Math.round(monthlyRevenue * multiplier),
+    arDays: 28.4, // AR days don't scale with time period
+    cleanClaimRate: 94.2, // Rate doesn't scale
+    patientGrowth: "+8.2%", // Growth rate doesn't scale
+    revenueGrowth: "+12.5%", // Growth rate doesn't scale
+    averageRevenuePerPatient: 196, // Average doesn't scale
+    noShowRate: 6.8, // Rate doesn't scale
+    cancellationRate: 4.2, // Rate doesn't scale
+    newPatientRate: 18.5, // Rate doesn't scale
+    referralRate: 23.7 // Rate doesn't scale
   };
 }
 
@@ -841,10 +951,34 @@ export function generateKeyMetrics(locationId: string = 'all', timeRange: string
  * 
  * This function generates patient billing analytics data for the PatientBillingAnalytics widget.
  */
-export function generatePatientBillingData(locationId: string = 'all') {
+export function generatePatientBillingData(locationId: string = 'all', period: string = '1Y') {
+  // Base monthly values
+  const monthlyRevenue = 125000;
+  const monthlyPaid = 109125;
+  const monthlyOutstanding = 15875;
+  
+  // Scale based on time period
+  let multiplier = 1;
+  switch (period) {
+    case '1M':
+      multiplier = 1;
+      break;
+    case '3M':
+      multiplier = 3;
+      break;
+    case '6M':
+      multiplier = 6;
+      break;
+    case '1Y':
+      multiplier = 12;
+      break;
+    default:
+      multiplier = 12;
+  }
+  
   return {
-    totalRevenue: 125000,
-    totalPaid: 109125,  // 87.3% collection rate
-    totalOutstanding: 15875
+    totalRevenue: Math.round(monthlyRevenue * multiplier),
+    totalPaid: Math.round(monthlyPaid * multiplier),
+    totalOutstanding: Math.round(monthlyOutstanding * multiplier)
   };
 }

@@ -82,6 +82,9 @@ export function getCashFlowDataForLocation(locationId: string = 'all', period: s
     filteredData = rawCashFlowData.filter(item => item.location_id === locationId);
   }
   
+  // Filter by time period
+  filteredData = filterDataByPeriod(filteredData, period);
+  
   // Group data by category type
   const operatingData = filteredData.filter(item => item.category_type === 'operating');
   const investingData = filteredData.filter(item => item.category_type === 'investing');
@@ -146,13 +149,16 @@ export function getPLDataForLocation(locationId: string = 'all', period: string 
     filteredData = rawPLData.filter(item => item.location_id === locationId);
   }
   
-  // Group data by category type and aggregate across all months
+  // Filter by time period
+  filteredData = filterDataByPeriod(filteredData, period);
+  
+  // Group data by category type and aggregate across filtered months
   const revenueData = filteredData.filter(item => item.category_type === 'revenue');
   const directCostsData = filteredData.filter(item => item.category_type === 'direct_costs');
   const operatingExpensesData = filteredData.filter(item => item.category_type === 'operating_expenses');
   const calculatedTotals = filteredData.filter(item => item.category_type === 'calculated_totals');
   
-  // Group and sum by line item across all months
+  // Group and sum by line item across filtered months
   const revenueItems = groupAndSumByLineItem(revenueData);
   const expenseItems = [
     ...groupAndSumByLineItem(directCostsData),
@@ -170,7 +176,7 @@ export function getPLDataForLocation(locationId: string = 'all', period: string 
     expenses[item.line_item] = Math.round(Math.abs(item.total_amount)); // Make expenses positive for display
   });
   
-  // Get calculated totals (sum across all months)
+  // Get calculated totals (sum across filtered months)
   const grossProfitItems = calculatedTotals.filter(item => item.line_item === 'Gross Profit');
   const ebitdaItems = calculatedTotals.filter(item => item.line_item === 'EBITDA');
   
@@ -252,6 +258,41 @@ export function getRevenueTrendsFromPL(locationId: string = 'all', period: strin
 }
 
 /**
+ * Helper function to filter data by time period
+ */
+function filterDataByPeriod(data: RawPLItem[] | RawCashFlowItem[], period: string) {
+  if (period === '1Y') {
+    return data; // Return all data for 1 year
+  }
+  
+  // Get the most recent month from the data
+  const allMonths = [...new Set(data.map(item => item.month_year))].sort();
+  const mostRecentMonth = allMonths[allMonths.length - 1];
+  
+  // Calculate the start month based on period
+  const [year, month] = mostRecentMonth.split('-').map(Number);
+  let startMonth: string;
+  
+  switch (period) {
+    case '1M':
+      startMonth = mostRecentMonth;
+      break;
+    case '3M':
+      const threeMonthsAgo = new Date(year, month - 3, 1);
+      startMonth = `${threeMonthsAgo.getFullYear()}-${String(threeMonthsAgo.getMonth() + 1).padStart(2, '0')}`;
+      break;
+    case '6M':
+      const sixMonthsAgo = new Date(year, month - 6, 1);
+      startMonth = `${sixMonthsAgo.getFullYear()}-${String(sixMonthsAgo.getMonth() + 1).padStart(2, '0')}`;
+      break;
+    default:
+      return data; // Return all data for 1Y or unknown periods
+  }
+  
+  return data.filter(item => item.month_year >= startMonth);
+}
+
+/**
  * Get financial revenue data from P&L
  */
 export function getFinancialRevenueFromPL(locationId: string = 'all', period: string = '1Y') {
@@ -262,7 +303,10 @@ export function getFinancialRevenueFromPL(locationId: string = 'all', period: st
     filteredData = rawPLData.filter(item => item.location_id === locationId);
   }
   
-  // Get revenue items only and aggregate across all months
+  // Filter by time period
+  filteredData = filterDataByPeriod(filteredData, period);
+  
+  // Get revenue items only and aggregate across filtered months
   const revenueData = filteredData.filter(item => item.category_type === 'revenue');
   const revenueItems = groupAndSumByLineItem(revenueData);
   
@@ -295,7 +339,10 @@ export function getFinancialExpensesFromPL(locationId: string = 'all', period: s
     filteredData = rawPLData.filter(item => item.location_id === locationId);
   }
   
-  // Get expense items (direct costs and operating expenses) and aggregate across all months
+  // Filter by time period
+  filteredData = filterDataByPeriod(filteredData, period);
+  
+  // Get expense items (direct costs and operating expenses) and aggregate across filtered months
   const expenseData = filteredData.filter(item => 
     item.category_type === 'direct_costs' || item.category_type === 'operating_expenses'
   );

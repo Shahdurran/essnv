@@ -69,6 +69,7 @@ import type { KeyMetrics, InsurancePayerData } from "../../../shared/schema";
  */
 interface PracticeInsightsProps {
   selectedLocationId: string;  // Location filter for metrics and insurance data
+  selectedTimePeriod: string;  // Time period filter for data
 }
 
 /*
@@ -95,15 +96,13 @@ interface PracticeInsightsProps {
  * 
  * @param {PracticeInsightsProps} props - Component properties
  */
-export default function PracticeInsights({ selectedLocationId }: PracticeInsightsProps) {
+export default function PracticeInsights({ selectedLocationId, selectedTimePeriod }: PracticeInsightsProps) {
 
-  // State for time range filtering - default to 1 month
-  const [timeRange, setTimeRange] = useState("1");
 
   /**
    * Get key performance metrics from mock data
    */
-  const keyMetrics = generateKeyMetrics(selectedLocationId, timeRange);
+  const keyMetrics = generateKeyMetrics(selectedLocationId, selectedTimePeriod);
 
   /**
    * Get insurance payer breakdown from mock data
@@ -224,27 +223,6 @@ export default function PracticeInsights({ selectedLocationId }: PracticeInsight
           <h3 className="text-lg font-semibold text-gray-900">Practice Insights</h3>
         </div>
 
-        {/* Time Range Filter - Mobile Responsive */}
-        <div className="flex flex-col space-y-2 mb-6 sm:flex-row sm:items-center sm:space-y-0 sm:gap-2">
-          <span className="text-sm font-medium text-gray-700 flex-shrink-0">Time Range:</span>
-          <div className="grid grid-cols-2 gap-2 sm:flex sm:gap-2">
-            {['1', '3', '6', '12'].map((months) => (
-              <Button
-                key={months}
-                variant="ghost"
-                size="sm"
-                className={`px-2 py-1 text-xs sm:px-3 sm:text-sm rounded transition-colors ${
-                  timeRange === months
-                    ? 'bg-blue-600 text-white'
-                    : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                }`}
-                onClick={() => setTimeRange(months)}
-              >
-                {months === '1' ? '1 Month' : months === '3' ? '3 Months' : months === '6' ? '6 Months' : '1 Year'}
-              </Button>
-            ))}
-          </div>
-        </div>
         
         {/* Key Metrics Grid - Mobile Responsive */}
         <div className="grid grid-cols-1 gap-3 mb-6 sm:grid-cols-2 sm:gap-4">
@@ -259,7 +237,7 @@ export default function PracticeInsights({ selectedLocationId }: PracticeInsight
               {formatNumber(keyMetrics.monthlyPatients)}
             </p>
             <p className="text-xs sm:text-sm text-blue-600">
-              {timeRange === '1' ? 'Monthly Patients' : `Patients (${timeRange}M)`}
+              Monthly Patients
             </p>
           </div>
           
@@ -273,7 +251,7 @@ export default function PracticeInsights({ selectedLocationId }: PracticeInsight
               {formatCurrency(keyMetrics.monthlyRevenue)}
             </p>
             <p className="text-xs sm:text-sm text-green-600">
-              {timeRange === '1' ? 'Monthly Revenue' : `Revenue (${timeRange}M)`}
+              Monthly Revenue
             </p>
           </div>
           

@@ -41,7 +41,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 // Mock data for procedure analytics
-import { topRevenueProcedures } from "@/lib/mockData";
+import { generateTopRevenueProcedures } from "@/lib/mockData";
 // Lucide React icons representing medical procedures and analytics
 import { 
   DollarSign,   // Revenue indicators
@@ -67,6 +67,7 @@ import type { FinancialRevenueCategory } from "../../../shared/schema";
  */
 interface TopRevenueProceduresProps {
   selectedLocationId: string;                           // Location filter for display context
+  selectedTimePeriod: string;                           // Time period filter for data
 }
 
 /*
@@ -95,103 +96,61 @@ interface TopRevenueProceduresProps {
  * @param {TopRevenueProceduresProps} props - Component properties
  */
 export default function TopRevenueProcedures({ 
-  selectedLocationId
+  selectedLocationId,
+  selectedTimePeriod
 }: TopRevenueProceduresProps) {
 
-  // State for date filtering
-  const [selectedPeriod, setSelectedPeriod] = useState<string>("1Y");
+  // State for local time range filtering - Initialize with "last-month" preset
+  const [localTimeRange, setLocalTimeRange] = useState("last-month");
+
+  /**
+   * Convert local time range to time period format
+   */
+  const getTimePeriodFromLocalRange = (range: string): string => {
+    switch (range) {
+      case 'last-month':
+        return '1M';
+      case 'last-3-months':
+        return '3M';
+      case 'last-6-months':
+        return '6M';
+      case 'last-year':
+        return '1Y';
+      default:
+        return selectedTimePeriod; // Fallback to global time period
+    }
+  };
 
   /**
    * Get procedure data from mock data
+   * Uses local time range if set, otherwise uses global time period
    */
+  const effectiveTimePeriod = getTimePeriodFromLocalRange(localTimeRange);
+  const procedures = generateTopRevenueProcedures(effectiveTimePeriod);
+  
+  // Debug logging to check values
+  console.log('TopRevenueProcedures Debug:', {
+    selectedTimePeriod,
+    proceduresCount: procedures.length,
+    firstProcedure: procedures[0],
+    totalRevenue: procedures.reduce((sum, proc) => sum + proc.monthlyRevenue, 0)
+  });
+  
   const revenueData = {
-    categories: topRevenueProcedures.map(proc => ({
+    categories: procedures.map(proc => ({
       id: proc.id,
       name: proc.name,
       amount: proc.monthlyRevenue,
       change: parseFloat(proc.growth.replace('%', '')),
       trend: parseFloat(proc.growth.replace('%', '')) > 0 ? 'up' as const : 'down' as const
     })),
-    totalRevenue: topRevenueProcedures.reduce((sum, proc) => sum + proc.monthlyRevenue, 0),
-    period: selectedPeriod
+    totalRevenue: procedures.reduce((sum, proc) => sum + proc.monthlyRevenue, 0),
+    period: selectedTimePeriod
   };
 
-  /**
-   * Map P&L revenue line items to CPT codes
-   */
-  const getCPTCode = (procedureName: string): string => {
-    const cptMap: Record<string, string> = {
-      "Office Visits": "99213",
-      "Diagnostics & Minor Procedures": "92235", 
-      "Cataract Surgeries": "66984",
-      "Intravitreal Injections": "67028",
-      "Refractive Cash": "LASIK",
-      "Corneal Procedures": "65710",
-      "Oculoplastics": "15823",
-      "Optical / Contact Lens Sales": "OPTICAL"
-    };
-    return cptMap[procedureName] || "00000";
-  };
 
-  /**
-   * Calculate base price from revenue and estimated volume
-   */
-  const calculateBasePrice = (revenue: number): string => {
-    // Estimate based on typical procedure volumes
-    const volumeMap: Record<string, number> = {
-      "Office Visits": 1250,
-      "Diagnostics & Minor Procedures": 890,
-      "Cataract Surgeries": 185,
-      "Intravitreal Injections": 240,
-      "Refractive Cash": 75,
-      "Corneal Procedures": 45,
-      "Oculoplastics": 28,
-      "Optical / Contact Lens Sales": 450
-    };
-    
-    // Get appropriate period multiplier based on selected period
-    const periodMultiplier = selectedPeriod === "1Y" ? 12 : selectedPeriod === "6M" ? 6 : selectedPeriod === "3M" ? 3 : 1;
-    const monthlyRevenue = revenue / periodMultiplier;
-    const defaultVolume = 100; // fallback
-    const basePrice = monthlyRevenue / defaultVolume;
-    
-    return new Intl.NumberFormat('en-US', {
-      style: 'currency',
-      currency: 'USD',
-      minimumFractionDigits: 0,
-      maximumFractionDigits: 0
-    }).format(basePrice);
-  };
 
-  /**
-   * Estimate monthly volume from revenue
-   */
-  const estimateMonthlyVolume = (revenue: number, procedureName: string): number => {
-    const volumeMap: Record<string, number> = {
-      "Office Visits": 1250,
-      "Diagnostics & Minor Procedures": 890,
-      "Cataract Surgeries": 185,
-      "Intravitreal Injections": 240,
-      "Refractive Cash": 75,
-      "Corneal Procedures": 45,
-      "Oculoplastics": 28,
-      "Optical / Contact Lens Sales": 450
-    };
-    
-    const periodMultiplier = selectedPeriod === "1Y" ? 12 : selectedPeriod === "6M" ? 6 : selectedPeriod === "3M" ? 3 : 1;
-    const baseVolume = volumeMap[procedureName] || 100;
-    return Math.round(baseVolume / periodMultiplier);
-  };
 
-  // Convert P&L revenue data to procedure format and sort by revenue descending
-  const procedures = revenueData?.categories?.map((category, index) => ({
-    cptCode: getCPTCode(category.name),
-    description: category.name,
-    revenue: category.amount,
-    growth: category.change || 0,
-    basePrice: calculateBasePrice(category.amount),
-    monthlyVolume: estimateMonthlyVolume(category.amount, category.name)
-  })).sort((a, b) => b.revenue - a.revenue) || [];
 
   /**
    * Get appropriate icon for each ophthalmology procedure type
@@ -296,27 +255,33 @@ export default function TopRevenueProcedures({
             <span className="truncate">Top Revenue Procedures</span>
           </h3>
         </div>
-        
-        {/* Time Range Filter - Button Style */}
-        <div className="flex flex-col space-y-2 mb-6 sm:flex-row sm:items-center sm:space-y-0 sm:gap-2">
-          <span className="text-sm font-medium text-gray-700 flex-shrink-0">Time Range:</span>
-          <div className="grid grid-cols-2 gap-2 sm:flex sm:gap-2">
-            {['1M', '3M', '6M', '1Y'].map((period) => (
-              <Button
-                key={period}
-                variant="ghost"
-                size="sm"
-                className={`px-2 py-1 text-xs sm:px-3 sm:text-sm rounded transition-colors ${
-                  selectedPeriod === period
-                    ? 'bg-blue-600 text-white'
-                    : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+
+        {/* Local Time Range Filter */}
+        <div className="mb-6">
+          <div className="flex items-center flex-wrap gap-2">
+            <span className="text-sm font-medium text-gray-700">Revenue Period:</span>
+            {[
+              { key: 'last-month', label: 'Last Month' },
+              { key: 'last-3-months', label: 'Last 3 Months' },
+              { key: 'last-6-months', label: 'Last 6 Months' },
+              { key: 'last-year', label: 'Last Year' }
+            ].map((period) => (
+              <button
+                key={period.key}
+                onClick={() => setLocalTimeRange(period.key)}
+                className={`px-3 py-1 text-sm rounded-md border transition-colors ${
+                  localTimeRange === period.key
+                    ? 'bg-blue-600 text-white border-blue-600'
+                    : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50'
                 }`}
-                onClick={() => setSelectedPeriod(period)}
               >
-                {period === '1M' ? '1 Month' : period === '3M' ? '3 Months' : period === '6M' ? '6 Months' : '1 Year'}
-              </Button>
+                {period.label}
+              </button>
             ))}
           </div>
+          <p className="text-xs text-gray-500 mt-2">
+            Showing procedure revenue for {localTimeRange.replace('-', ' ')} period
+          </p>
         </div>
 
 
@@ -360,7 +325,7 @@ export default function TopRevenueProcedures({
                     {/* Revenue and Growth - Mobile Stacked */}
                     <div className="flex items-center justify-between sm:flex-col sm:text-right sm:justify-start">
                       <p className="font-semibold text-gray-900 text-sm sm:text-base">
-                        {formatRevenue(procedure.revenue || 0)}
+                        {formatRevenue(procedure.monthlyRevenue || 0)}
                       </p>
                       <div className="flex items-center space-x-1 sm:space-x-2 mt-0 sm:mt-1">
                         {formatGrowth(procedure.growth || 0)}
@@ -379,7 +344,7 @@ export default function TopRevenueProcedures({
           <div className="mt-6 pt-4 border-t border-gray-100">
             <div className="flex items-center justify-between text-sm">
               <span className="text-gray-600">
-                Showing {procedures.length} revenue procedures ({selectedPeriod})
+                Showing {procedures.length} revenue procedures ({localTimeRange.replace('-', ' ')})
                 {selectedLocationId !== 'all' && ` for selected location`}
               </span>
               <div className="flex items-center space-x-4">
