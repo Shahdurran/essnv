@@ -812,36 +812,38 @@ export function generateInsuranceClaimsBreakdown(locationId: string = 'all', per
     }
   ];
 
-  // Scale based on time period - ensure Submitted stays around $500K per month (±10%)
+  // Scale based on time period - exact values as specified
   let multiplier = 1;
-  let submittedBaseAmount = 495000; // Base monthly amount for Submitted
+  let submittedBaseAmount = 995000; // Base monthly amount for Submitted
   
   switch (period) {
     case '1M':
       multiplier = 1;
-      submittedBaseAmount = 495000; // $495K for 1 month
+      submittedBaseAmount = 995000; // $995K for 1 month
       break;
     case '3M':
       multiplier = 3;
-      submittedBaseAmount = 1485000; // $1.485M for 3 months (495K * 3)
+      submittedBaseAmount = 1500000; // $1.5M for 3 months
       break;
     case '6M':
       multiplier = 6;
-      submittedBaseAmount = 2970000; // $2.97M for 6 months (495K * 6)
+      submittedBaseAmount = 3000000; // $3.0M for 6 months
       break;
     case '1Y':
       multiplier = 12;
-      submittedBaseAmount = 5940000; // $5.94M for 1 year (495K * 12)
+      submittedBaseAmount = 5900000; // $5.9M for 1 year
       break;
     default:
       multiplier = 12;
-      submittedBaseAmount = 5940000;
+      submittedBaseAmount = 5900000;
   }
   
   // Calculate the ratio to maintain the relationship: Submitted = Paid + Pending + Denied
-  const paidRatio = 290000 / 495000; // 0.586
-  const pendingRatio = 110000 / 495000; // 0.222
-  const deniedRatio = 95000 / 495000; // 0.192
+  // Using the original base amount for ratio calculation
+  const originalBaseAmount = 495000;
+  const paidRatio = 290000 / originalBaseAmount; // 0.586
+  const pendingRatio = 110000 / originalBaseAmount; // 0.222
+  const deniedRatio = 95000 / originalBaseAmount; // 0.192
   
   // Return scaled data with proper relationships maintained
   return baseClaimsData.map(status => {
@@ -956,34 +958,18 @@ export function generateARBucketsData(locationId: string = 'all', period: string
  */
 export function generateKeyMetrics(locationId: string = 'all', timeRange: string = '1Y') {
   // Ignore locationId - data remains the same for all locations
-  // Base monthly values as requested
+  // Base monthly values as requested - always show monthly amounts regardless of time period
   const monthlyPatients = 2200; // 2.2k patients
   const monthlyRevenue = 675000; // $675k revenue
   
-  // Scale based on time period
-  let multiplier = 1;
-  switch (timeRange) {
-    case '1M':
-      multiplier = 1;
-      break;
-    case '3M':
-      multiplier = 3;
-      break;
-    case '6M':
-      multiplier = 6;
-      break;
-    case '1Y':
-      multiplier = 12;
-      break;
-    default:
-      multiplier = 12;
-  }
+  // For Practice Insights, always show monthly values regardless of time period
+  // The time period scaling is handled in other components that need cumulative data
   
   return {
-    monthlyPatients: Math.round(monthlyPatients * multiplier),
-    monthlyRevenue: Math.round(monthlyRevenue * multiplier),
+    monthlyPatients: monthlyPatients, // Always show monthly amount
+    monthlyRevenue: monthlyRevenue, // Always show monthly amount
     arDays: 28.4, // AR days don't scale with time period
-    cleanClaimRate: 60.0, // 60% as requested
+    cleanClaimRate: 94.2, // Updated to match the display value
     patientGrowth: "+8.2%", // Growth rate doesn't scale
     revenueGrowth: "+12.5%", // Growth rate doesn't scale
     averageRevenuePerPatient: Math.round(675000 / 2200), // Calculate from new values: ~$307

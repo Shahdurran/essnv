@@ -246,9 +246,9 @@ export default function InsuranceClaimsTracker({ selectedLocationId, selectedTim
               </p>
             </div>
             <div className="text-center">
-              <p className="text-sm text-gray-600">Total Value</p>
+              <p className="text-sm text-gray-600">Submitted Value</p>
               <p className="text-xl font-semibold text-gray-900">
-                {formatCurrency(claimsData.reduce((sum, bucket) => sum + bucket.totalAmount, 0))}
+                {formatCurrency(claimsData.find(bucket => bucket.status === 'Submitted')?.totalAmount || 0)}
               </p>
             </div>
           </div>
