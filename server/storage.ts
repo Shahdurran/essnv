@@ -1575,7 +1575,7 @@ export class MemStorage implements IStorage {
     this.dashboardCustomization = {
       ...currentCustomization,
       ...data,
-      updatedAt: new Date().toISOString()
+      updatedAt: new Date()
     };
     
     return this.dashboardCustomization;
@@ -1601,7 +1601,7 @@ export class MemStorage implements IStorage {
       cashOutTitle: 'Cash Out',
       topRevenueTitle: 'Top Revenue Procedures',
       locationNameOverrides: null,
-      updatedAt: new Date().toISOString()
+      updatedAt: new Date()
     };
   }
 }
