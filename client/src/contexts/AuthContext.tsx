@@ -16,14 +16,35 @@ import { createContext, useContext, useState, useEffect, ReactNode } from "react
 
 interface User {
   username: string;
+  role: 'admin' | 'user';
+  practiceName: string;
+  practiceSubtitle: string | null;
+  logoUrl: string | null;
+  ownerName: string | null;
+  ownerTitle: string | null;
+  ownerPhotoUrl: string | null;
+  revenueTitle: string;
+  expensesTitle: string;
+  cashInTitle: string;
+  cashOutTitle: string;
+  topRevenueTitle: string;
+  revenueSubheadings: Record<string, string>;
+  expensesSubheadings: Record<string, string>;
+  cashInSubheadings: Record<string, string>;
+  cashOutSubheadings: Record<string, string>;
+  cashFlowSubheadings: Record<string, string>;
+  procedureNameOverrides: Record<string, string>;
+  locationNameOverrides: Record<string, string>;
+  showCollectionsWidget: boolean;
 }
 
 interface AuthContextType {
   isAuthenticated: boolean;
   user: User | null;
-  login: (username: string) => void;
+  login: (userData: User) => void;
   logout: () => void;
   isLoading: boolean;
+  isAdmin: boolean;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -39,20 +60,28 @@ export function AuthProvider({ children }: AuthProviderProps) {
 
   // Check for existing authentication on app load
   useEffect(() => {
-    const checkAuthStatus = () => {
+    const checkAuthStatus = async () => {
       try {
         const authStatus = localStorage.getItem("isAuthenticated");
-        const username = localStorage.getItem("username");
         
-        if (authStatus === "true" && username) {
-          setIsAuthenticated(true);
-          setUser({ username });
+        if (authStatus === "true") {
+          // Fetch current user from API
+          const response = await fetch('/api/auth/me', {
+            credentials: 'include'
+          });
+          
+          if (response.ok) {
+            const userData = await response.json();
+            setIsAuthenticated(true);
+            setUser(userData);
+          } else {
+            // Clear invalid auth
+            localStorage.removeItem("isAuthenticated");
+          }
         }
       } catch (error) {
         console.error("Error checking auth status:", error);
-        // Clear potentially corrupted auth data
         localStorage.removeItem("isAuthenticated");
-        localStorage.removeItem("username");
       } finally {
         setIsLoading(false);
       }
@@ -61,25 +90,28 @@ export function AuthProvider({ children }: AuthProviderProps) {
     checkAuthStatus();
   }, []);
 
-  const login = (username: string) => {
+  const login = (userData: User) => {
     try {
       localStorage.setItem("isAuthenticated", "true");
-      localStorage.setItem("username", username);
       setIsAuthenticated(true);
-      setUser({ username });
+      setUser(userData);
     } catch (error) {
       console.error("Error saving auth data:", error);
     }
   };
 
-  const logout = () => {
+  const logout = async () => {
     try {
+      await fetch('/api/auth/logout', {
+        method: 'POST',
+        credentials: 'include'
+      });
+      
       localStorage.removeItem("isAuthenticated");
-      localStorage.removeItem("username");
       setIsAuthenticated(false);
       setUser(null);
     } catch (error) {
-      console.error("Error clearing auth data:", error);
+      console.error("Error during logout:", error);
     }
   };
 
@@ -89,6 +121,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
     login,
     logout,
     isLoading,
+    isAdmin: user?.role === 'admin'
   };
 
   return (

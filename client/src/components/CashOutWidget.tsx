@@ -8,6 +8,8 @@ import { getCashFlowDataForLocation } from "@/lib/staticData";
 interface CashOutWidgetProps {
   selectedLocationId: string;
   selectedPeriod: string;
+  title?: string;
+  subheadingOverrides?: Record<string, string>;
 }
 
 // Define the cash flow API response interface
@@ -43,11 +45,17 @@ const timePeriods = [
   { id: "custom", label: "Custom", active: false }
 ];
 
-export default function CashOutWidget({ selectedLocationId, selectedPeriod }: CashOutWidgetProps) {
+export default function CashOutWidget({ 
+  selectedLocationId, 
+  selectedPeriod,
+  title = "Cash Out",
+  subheadingOverrides = {}
+}: CashOutWidgetProps) {
   // Get cash flow data from static data
   const cashFlowData = getCashFlowDataForLocation(selectedLocationId, selectedPeriod);
 
   // Filter operating activities for negative cash flows (Cash Out), excluding summary items, and convert to positive amounts for display
+  // Apply subheading overrides
   const cashOutCategories = cashFlowData?.operating
     .filter(item => 
       item.amount < 0 && 
@@ -56,6 +64,7 @@ export default function CashOutWidget({ selectedLocationId, selectedPeriod }: Ca
     )
     .map(item => ({
       ...item,
+      name: subheadingOverrides[item.name] || item.name,
       amount: Math.abs(item.amount) // Convert to positive for display
     })) || [];
   
@@ -96,7 +105,7 @@ export default function CashOutWidget({ selectedLocationId, selectedPeriod }: Ca
     <Card className="bg-white shadow-sm border border-gray-200" data-testid="cash-out-widget">
       <CardHeader className="pb-4">
         <CardTitle className="text-xl font-bold text-gray-900 flex items-center justify-between">
-          Cash Out
+          {title}
           {/* Total Cash Out with Overall Trend */}
           <div className="flex items-center gap-2">
             <span className="text-2xl font-bold text-red-600">{formatCurrency(totalCashOut)}</span>

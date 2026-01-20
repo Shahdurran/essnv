@@ -8,6 +8,8 @@ import { getFinancialExpensesFromPL } from "@/lib/staticData";
 interface FinancialExpensesWidgetProps {
   selectedLocationId: string;
   selectedPeriod: string;
+  title?: string;
+  subheadingOverrides?: Record<string, string>;
 }
 
 // Interface for expense API response  
@@ -25,13 +27,21 @@ const timePeriods = [
   { id: "custom", label: "Custom", active: false }
 ];
 
-export default function FinancialExpensesWidget({ selectedLocationId, selectedPeriod }: FinancialExpensesWidgetProps) {
+export default function FinancialExpensesWidget({ 
+  selectedLocationId, 
+  selectedPeriod,
+  title = "Expenses",
+  subheadingOverrides = {}
+}: FinancialExpensesWidgetProps) {
 
   // Get expense data from static data
   const expenseData = getFinancialExpensesFromPL(selectedLocationId, selectedPeriod);
 
-  // Use static data
-  const expenseCategories = expenseData.categories;
+  // Use static data and apply subheading overrides
+  const expenseCategories = expenseData.categories.map(cat => ({
+    ...cat,
+    name: subheadingOverrides[cat.id] || cat.name
+  }));
   
   // Calculate total expenses from static data
   const totalExpenses = expenseData.total;
@@ -67,7 +77,7 @@ export default function FinancialExpensesWidget({ selectedLocationId, selectedPe
     <Card className="bg-white shadow-sm border border-gray-200 flex flex-col h-[28rem]" data-testid="financial-expenses-widget">
       <CardHeader className="pb-4">
         <CardTitle className="text-xl font-bold text-gray-900">
-          Expenses
+          {title}
         </CardTitle>
         {/* Total Expenses with Overall Trend */}
         <div className="flex items-center gap-2 mt-2">

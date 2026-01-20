@@ -54,6 +54,8 @@ interface RevenueCategory {
 interface FinancialRevenueWidgetProps {
   selectedLocationId: string;
   selectedPeriod: string;
+  title?: string;
+  subheadingOverrides?: Record<string, string>;
 }
 
 /*
@@ -72,12 +74,18 @@ const TIME_PERIODS = [
  * MAIN FINANCIAL REVENUE WIDGET COMPONENT
  * ========================================
  */
-export default function FinancialRevenueWidget({ selectedLocationId, selectedPeriod }: FinancialRevenueWidgetProps) {
+export default function FinancialRevenueWidget({ 
+  selectedLocationId, 
+  selectedPeriod,
+  title = "Revenue",
+  subheadingOverrides = {}
+}: FinancialRevenueWidgetProps) {
 
   // Get revenue data from static data
   const revenueData = getFinancialRevenueFromPL(selectedLocationId, selectedPeriod);
 
   // Convert static data to expected format with calculated percentages
+  // Apply subheading overrides if provided
   const revenueCategories: RevenueCategory[] = revenueData.categories.map(cat => {
     const totalRevenue = revenueData.total;
     const percentage = totalRevenue > 0 ? (cat.amount / totalRevenue) * 100 : 0;
@@ -85,7 +93,7 @@ export default function FinancialRevenueWidget({ selectedLocationId, selectedPer
     
     return {
       id: cat.id,
-      name: cat.name,
+      name: subheadingOverrides[cat.id] || cat.name,
       amount: cat.amount,
       previousAmount: Math.round(previousAmount),
       percentage: percentage,
@@ -148,7 +156,7 @@ export default function FinancialRevenueWidget({ selectedLocationId, selectedPer
     <Card className="bg-white shadow-sm border border-gray-200 flex flex-col h-[28rem]" data-testid="financial-revenue-widget">
       <CardHeader className="pb-4">
         <CardTitle className="text-xl font-bold text-gray-900">
-          Revenue
+          {title}
         </CardTitle>
         {/* Total Revenue with Overall Trend */}
         <div className="flex items-center gap-2 mt-2">

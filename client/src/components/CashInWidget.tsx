@@ -8,6 +8,8 @@ import { getCashFlowDataForLocation } from "@/lib/staticData";
 interface CashInWidgetProps {
   selectedLocationId: string;
   selectedPeriod: string;
+  title?: string;
+  subheadingOverrides?: Record<string, string>;
 }
 
 // Define the cash flow API response interface
@@ -43,16 +45,25 @@ const timePeriods = [
   { id: "custom", label: "Custom", active: false }
 ];
 
-export default function CashInWidget({ selectedLocationId, selectedPeriod }: CashInWidgetProps) {
+export default function CashInWidget({ 
+  selectedLocationId, 
+  selectedPeriod,
+  title = "Cash In",
+  subheadingOverrides = {}
+}: CashInWidgetProps) {
   // Get cash flow data from static data
   const cashFlowData = getCashFlowDataForLocation(selectedLocationId, selectedPeriod);
 
   // Filter operating activities for positive cash flows (Cash In), excluding summary items
-  const cashInCategories = cashFlowData?.operating.filter(item => 
+  // Apply subheading overrides
+  const cashInCategories = (cashFlowData?.operating.filter(item => 
     item.amount > 0 && 
     !item.name.includes('Net Cash') && 
     !item.name.includes('Total')
-  ) || [];
+  ) || []).map(item => ({
+    ...item,
+    name: subheadingOverrides[item.name] || item.name
+  }));
   
   // Calculate total cash in
   const totalCashIn = cashInCategories.reduce((sum, category) => sum + category.amount, 0);
@@ -91,7 +102,7 @@ export default function CashInWidget({ selectedLocationId, selectedPeriod }: Cas
     <Card className="bg-white shadow-sm border border-gray-200" data-testid="cash-in-widget">
       <CardHeader className="pb-4">
         <CardTitle className="text-xl font-bold text-gray-900 flex items-center justify-between">
-          Cash In
+          {title}
           {/* Total Cash In with Overall Trend */}
           <div className="flex items-center gap-2">
             <span className="text-2xl font-bold text-green-600">{formatCurrency(totalCashIn)}</span>

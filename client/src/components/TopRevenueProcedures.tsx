@@ -314,11 +314,8 @@ export default function TopRevenueProcedures({
                       {/* Procedure Details */}
                       <div className="min-w-0 flex-1">
                         <h4 className="font-medium text-gray-900 text-sm sm:text-base truncate">
-                          {procedure.description || `${procedure.cptCode} Procedure`}
+                          {procedure.description || 'Procedure'}
                         </h4>
-                        <p className="text-xs sm:text-sm text-gray-600 mt-1">
-                          CPT: {procedure.cptCode}
-                        </p>
                       </div>
                     </div>
                     

@@ -414,6 +414,53 @@ export const plMonthlyData = pgTable("pl_monthly_data", {
 });
 
 /*
+ * DASHBOARD CUSTOMIZATION TABLE
+ * ==============================
+ * 
+ * This table stores customizable dashboard settings for practice-specific branding
+ * and terminology. Enables POC demonstrations with client-specific customization.
+ * 
+ * PURPOSE:
+ * - Allow practice-specific branding (logo, practice name, owner info)
+ * - Customize widget titles to match practice terminology
+ * - Override location names for client-specific naming conventions
+ * 
+ * CUSTOMIZATION SCOPE:
+ * - Header branding: Logo, practice name, subtitle, owner photo and details
+ * - Widget titles: Revenue, Expenses, Cash In/Out, Top Revenue Procedures
+ * - Location names: Custom names for practice locations
+ * 
+ * STORAGE APPROACH:
+ * - For POC: In-memory storage (resets on server restart)
+ * - For production: Can be persisted to PostgreSQL database
+ * - Images stored in file system (server/public/assets/)
+ */
+export const dashboardCustomization = pgTable("dashboard_customization", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  practiceId: varchar("practice_id"),
+  
+  // Header customization
+  logoUrl: text("logo_url"),
+  practiceName: text("practice_name").notNull(),
+  practiceSubtitle: text("practice_subtitle"),
+  ownerName: text("owner_name"),
+  ownerTitle: text("owner_title"),
+  ownerPhotoUrl: text("owner_photo_url"),
+  
+  // Widget title customization
+  revenueTitle: text("revenue_title").default("Revenue"),
+  expensesTitle: text("expenses_title").default("Expenses"),
+  cashInTitle: text("cash_in_title").default("Cash In"),
+  cashOutTitle: text("cash_out_title").default("Cash Out"),
+  topRevenueTitle: text("top_revenue_title").default("Top Revenue Procedures"),
+  
+  // Location name overrides (JSON object: {locationId: customName})
+  locationNameOverrides: json("location_name_overrides"),
+  
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+/*
  * VALIDATION SCHEMAS FOR DATA INSERTION
  * =====================================
  * 
@@ -454,6 +501,7 @@ export const insertVisitProcedureSchema = createInsertSchema(visitProcedures).om
 export const insertAiQuerySchema = createInsertSchema(aiQueries).omit({ id: true, createdAt: true });
 export const insertPerformanceMetricSchema = createInsertSchema(performanceMetrics).omit({ id: true });
 export const insertPlMonthlyDataSchema = createInsertSchema(plMonthlyData).omit({ id: true, createdAt: true, updatedAt: true });
+export const insertDashboardCustomizationSchema = createInsertSchema(dashboardCustomization).omit({ id: true, updatedAt: true });
 
 /*
  * TYPESCRIPT TYPE DEFINITIONS
@@ -519,6 +567,8 @@ export type PerformanceMetric = typeof performanceMetrics.$inferSelect;
 export type InsertPerformanceMetric = z.infer<typeof insertPerformanceMetricSchema>;
 export type PlMonthlyData = typeof plMonthlyData.$inferSelect;
 export type InsertPlMonthlyData = z.infer<typeof insertPlMonthlyDataSchema>;
+export type DashboardCustomization = typeof dashboardCustomization.$inferSelect;
+export type InsertDashboardCustomization = z.infer<typeof insertDashboardCustomizationSchema>;
 
 /*
  * FRONTEND-SPECIFIC TYPE DEFINITIONS

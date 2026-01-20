@@ -20,7 +20,9 @@ import {
   type ProfitLossData,
   type CashInCategory,
   type CashOutCategory,
-  type CashFlowData
+  type CashFlowData,
+  type DashboardCustomization,
+  type InsertDashboardCustomization
 } from "@shared/schema";
 
 // Define RevenueDataPoint interface for server use
@@ -122,6 +124,10 @@ export interface IStorage {
     financingCashFlow: number;
     netCashFlow: number;
   }>;
+
+  // Dashboard customization methods
+  getDashboardCustomization(): Promise<DashboardCustomization>;
+  updateDashboardCustomization(data: Partial<InsertDashboardCustomization>): Promise<DashboardCustomization>;
 }
 
 /**
@@ -178,6 +184,7 @@ export class MemStorage implements IStorage {
   private visitProcedures: Map<string, VisitProcedure>;
   private aiQueries: Map<string, AiQuery>;
   private performanceMetrics: Map<string, PerformanceMetric>;
+  private dashboardCustomization: DashboardCustomization | null = null;
 
   constructor() {
     // Initialize all storage maps
@@ -811,6 +818,57 @@ export class MemStorage implements IStorage {
     return {
       buckets,
       totalOutstanding: Math.round(totalOutstanding)
+    };
+  }
+
+  /**
+   * Get Collections Breakdown Per Provider
+   */
+  async getCollectionsBreakdown(
+    locationId?: string, 
+    timeRange?: string,
+    userProviders?: Array<{ name: string; percentage: number }>
+  ): Promise<{
+    providers: Array<{
+      name: string;
+      amount: number;
+      percentage: number;
+    }>;
+    totalCollections: number;
+  }> {
+    // Get actual revenue data from P&L for the specified time period
+    // This ensures collections breakdown matches the Revenue widget
+    const period = timeRange || '1Y';
+    const revenueData = await this.getFinancialRevenueData(locationId, period);
+    
+    // Use the total revenue from P&L data
+    const totalRevenue = revenueData.totalRevenue;
+    
+    // Use user-provided providers or default distribution
+    const providerData = userProviders || [
+      { name: 'Dr. John Josephson', percentage: 19 },
+      { name: 'Dr. Meghan G. Moroux', percentage: 14 },
+      { name: 'Dr. Hubert H. Pham', percentage: 13 },
+      { name: 'Dr. Sabita Ittoop', percentage: 10 },
+      { name: 'Dr. Kristen E. Dunbar', percentage: 9 },
+      { name: 'Dr. Erin Ong', percentage: 9 },
+      { name: 'Dr. Prema Modak', percentage: 8 },
+      { name: 'Dr. Julia Pierce', percentage: 7 },
+      { name: 'Dr. Heloi Stark', percentage: 6 },
+      { name: 'Dr. Noushin Sahraei', percentage: 5 }
+    ];
+    
+    const providers = providerData.map(provider => ({
+      name: provider.name,
+      amount: Math.round(totalRevenue * (provider.percentage / 100)),
+      percentage: provider.percentage
+    }));
+    
+    const totalCollections = providers.reduce((sum, p) => sum + p.amount, 0);
+    
+    return {
+      providers,
+      totalCollections
     };
   }
 
@@ -1491,6 +1549,60 @@ export class MemStorage implements IStorage {
     });
     
     console.log(`Imported ${this.cashFlowMonthlyData.length} cash flow records to storage`);
+  }
+
+  /**
+   * Get dashboard customization settings
+   * Returns current customization or default values if none exist
+   */
+  async getDashboardCustomization(): Promise<DashboardCustomization> {
+    if (this.dashboardCustomization) {
+      return this.dashboardCustomization;
+    }
+    
+    // Return default customization settings
+    return this.getDefaultCustomization();
+  }
+
+  /**
+   * Update dashboard customization settings
+   * Merges provided data with existing settings
+   */
+  async updateDashboardCustomization(data: Partial<InsertDashboardCustomization>): Promise<DashboardCustomization> {
+    const currentCustomization = this.dashboardCustomization || this.getDefaultCustomization();
+    
+    // Merge new data with existing customization
+    this.dashboardCustomization = {
+      ...currentCustomization,
+      ...data,
+      updatedAt: new Date().toISOString()
+    };
+    
+    return this.dashboardCustomization;
+  }
+
+  /**
+   * Get default dashboard customization settings
+   * These are the baseline values shown when no customization exists
+   */
+  private getDefaultCustomization(): DashboardCustomization {
+    return {
+      id: 'default',
+      practiceId: null,
+      logoUrl: '/assets/MDS Logo_1754254040718-Dv0l5qLn.png',
+      practiceName: 'MDS AI Analytics',
+      practiceSubtitle: 'Eye Specialists & Surgeons of Northern Virginia',
+      ownerName: 'Dr. John Josephson',
+      ownerTitle: 'Practice Owner',
+      ownerPhotoUrl: '/assets/Dr. John Josephson_1757862871625-B4_CVazU.jpeg',
+      revenueTitle: 'Revenue',
+      expensesTitle: 'Expenses',
+      cashInTitle: 'Cash In',
+      cashOutTitle: 'Cash Out',
+      topRevenueTitle: 'Top Revenue Procedures',
+      locationNameOverrides: null,
+      updatedAt: new Date().toISOString()
+    };
   }
 }
 

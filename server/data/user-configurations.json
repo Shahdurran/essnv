@@ -1,0 +1,96 @@
+[
+  {
+    "id": "admin-default",
+    "username": "admin",
+    "password": "admin",
+    "role": "admin",
+    "logoUrl": "/assets/MDS Logo_1754254040718-Dv0l5qLn.png",
+    "practiceName": "MDS AI Analytics",
+    "practiceSubtitle": "Eye Specialists & Surgeons of Northern Virginia",
+    "ownerName": "Dr. John Josephson",
+    "ownerTitle": "Practice Owner",
+    "ownerPhotoUrl": "/assets/Dr. John Josephson_1757862871625-B4_CVazU.jpeg",
+    "revenueTitle": "Revenue",
+    "expensesTitle": "Expenses",
+    "cashInTitle": "Cash In",
+    "cashOutTitle": "Cash Out",
+    "topRevenueTitle": "Top Revenue Procedures",
+    "revenueSubheadings": {
+      "Office Visits": "Office Visits",
+      "Drug Acquisition (injections)": "Drug Acquisition (injections)",
+      "Procedures": "Procedures",
+      "Other Revenue": "Other Revenue"
+    },
+    "expensesSubheadings": {
+      "Salaries & Wages": "Salaries & Wages",
+      "Rent & Utilities": "Rent & Utilities",
+      "Medical Supplies": "Medical Supplies",
+      "Insurance": "Insurance",
+      "Marketing": "Marketing",
+      "Equipment": "Equipment",
+      "Other Expenses": "Other Expenses"
+    },
+    "cashInSubheadings": {
+      "Patient Payments": "Patient Payments",
+      "Insurance Payments": "Insurance Payments",
+      "Other Income": "Other Income"
+    },
+    "cashOutSubheadings": {
+      "Payroll": "Payroll",
+      "Rent": "Rent",
+      "Supplies": "Supplies",
+      "Utilities": "Utilities",
+      "Other Payments": "Other Payments"
+    },
+    "cashFlowSubheadings": {
+      "Operating Activities": "Operating Activities",
+      "Investing Activities": "Investing Activities",
+      "Financing Activities": "Financing Activities"
+    },
+    "procedureNameOverrides": {},
+    "locationNameOverrides": {},
+    "showCollectionsWidget": true,
+    "createdAt": "2026-01-19T18:28:02.436Z",
+    "updatedAt": "2026-01-19T18:28:02.436Z"
+  },
+  {
+    "username": "shahdurran",
+    "password": "Admin123!",
+    "role": "user",
+    "logoUrl": "/assets/channels4_profile_1768849902285.jpg",
+    "practiceName": "Shah Durran AI Analytics",
+    "practiceSubtitle": "AI Integration",
+    "ownerName": "Shah Durran Ahmed",
+    "ownerTitle": "AI Integration Specialist",
+    "ownerPhotoUrl": "/assets/Shah_Durran_Ahmed_let's_change_clothing_to_something_casual_as_in_the_reference_pic_a613343b-f99d-4ce3-a48a-f86f5ab1415c_1768849912281.jpg",
+    "revenueTitle": "Revenue",
+    "expensesTitle": "Expenses",
+    "cashInTitle": "Cash In",
+    "cashOutTitle": "Cash Out",
+    "topRevenueTitle": "Top Revenue Procedures",
+    "revenueSubheadings": {},
+    "expensesSubheadings": {},
+    "cashInSubheadings": {},
+    "cashOutSubheadings": {},
+    "cashFlowSubheadings": {},
+    "procedureNameOverrides": {},
+    "locationNameOverrides": {
+      "fairfax": "California",
+      "gainesville": "Washington"
+    },
+    "showCollectionsWidget": true,
+    "id": "user-1768849891876-4pcq2gavc",
+    "createdAt": "2026-01-19T19:11:31.876Z",
+    "updatedAt": "2026-01-20T21:42:18.053Z",
+    "providers": [
+      {
+        "name": "Shah Jee",
+        "percentage": 23
+      },
+      {
+        "name": "Osama jee",
+        "percentage": 77
+      }
+    ]
+  }
+]
