@@ -46,25 +46,43 @@ export default function Login() {
     setIsLoading(true);
 
     try {
-      // Simple authentication check
-      if (username === "essnv" && password === "essnv") {
-        // Use auth context to handle login
-        login(username);
-        
-        // Show success message
-        toast({
-          title: "Login Successful",
-          description: "Welcome to Eye Specialists & Surgeons Analytics",
-        });
-        
-        // Redirect to dashboard
-        setLocation("/");
-      } else {
-        setError("Invalid username or password. Please try again.");
+      // Call login API endpoint
+      const response = await fetch('/api/auth/login', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        credentials: 'include',
+        body: JSON.stringify({ username, password })
+      });
+
+      if (!response.ok) {
+        const data = await response.json();
+        setError(data.message || "Invalid username or password");
+        setIsLoading(false);
+        return;
       }
+
+      const userData = await response.json();
+      console.log('[LOGIN] Received user data:', userData);
+      
+      // Use auth context to store user data
+      login(userData);
+      console.log('[LOGIN] Login function completed');
+      
+      // Show success message
+      toast({
+        title: "Login Successful",
+        description: `Welcome ${userData.ownerName || userData.practiceName}`,
+      });
+      console.log('[LOGIN] Toast shown');
+      
+      // Redirect to dashboard
+      setLocation("/");
+      console.log('[LOGIN] Redirecting to dashboard');
     } catch (err) {
+      console.error('[LOGIN] Error during login:', err);
       setError("An error occurred during login. Please try again.");
-    } finally {
       setIsLoading(false);
     }
   };

@@ -30,6 +30,8 @@ ChartJS.register(
 interface CashFlowWidgetProps {
   selectedLocationId: string;
   selectedPeriod: string;
+  title?: string;
+  subheadingOverrides?: Record<string, string>;
 }
 
 // Interface for cash flow API response
@@ -111,14 +113,35 @@ const chartOptions = {
   }
 };
 
-export default function CashFlowWidget({ selectedLocationId, selectedPeriod }: CashFlowWidgetProps) {
+export default function CashFlowWidget({ 
+  selectedLocationId, 
+  selectedPeriod,
+  title = "Cash Flow Statement",
+  subheadingOverrides = {}
+}: CashFlowWidgetProps) {
   const [viewMode, setViewMode] = useState<"list" | "graph">("list");
   const [operatingCollapsed, setOperatingCollapsed] = useState(true);
   const [investingCollapsed, setInvestingCollapsed] = useState(true);
   const [financingCollapsed, setFinancingCollapsed] = useState(true);
 
-  // Get cash flow data from static data
-  const cashFlowData = getCashFlowDataForLocation(selectedLocationId, selectedPeriod);
+  // Get cash flow data from static data and apply subheading overrides
+  const rawCashFlowData = getCashFlowDataForLocation(selectedLocationId, selectedPeriod);
+  
+  const cashFlowData = {
+    ...rawCashFlowData,
+    operating: rawCashFlowData.operating.map(item => ({
+      ...item,
+      name: subheadingOverrides[item.name] || item.name
+    })),
+    investing: rawCashFlowData.investing.map(item => ({
+      ...item,
+      name: subheadingOverrides[item.name] || item.name
+    })),
+    financing: rawCashFlowData.financing.map(item => ({
+      ...item,
+      name: subheadingOverrides[item.name] || item.name
+    }))
+  };
 
   // Calculate totals from static data
   const operatingCashFlow = cashFlowData.operatingCashFlow;
@@ -151,7 +174,7 @@ export default function CashFlowWidget({ selectedLocationId, selectedPeriod }: C
     <Card className="bg-white shadow-sm border border-gray-200" data-testid="cash-flow-widget">
       <CardHeader className="pb-4">
         <CardTitle className="text-xl font-bold text-gray-900 flex items-center justify-between">
-          Cash Flow Statement
+          {title}
           
           {/* View Mode Toggle */}
           <div className="flex items-center gap-2" data-testid="cf-view-toggle">

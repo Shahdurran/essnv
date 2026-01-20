@@ -1,0 +1,954 @@
+/*
+ * ADMIN SETTINGS PAGE
+ * ===================
+ * 
+ * This page allows admin users to:
+ * - Manage user accounts (create, edit, delete)
+ * - Customize dashboard settings for each user
+ * - Configure widget titles and subheadings
+ * - Upload branding images
+ */
+
+import { useState, useEffect } from "react";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { useToast } from "@/hooks/use-toast";
+import { ArrowLeft, Upload, Save, RefreshCw, Plus, Edit, Trash2, User } from "lucide-react";
+import { Link } from "wouter";
+import { useAuth } from "@/contexts/AuthContext";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
+
+// Default subheadings - these will be used as keys to display all available fields
+const DEFAULT_REVENUE_KEYS = ['Office Visits', 'Drug Acquisition (injections)', 'Procedures', 'Other Revenue'];
+const DEFAULT_EXPENSES_KEYS = ['Salaries & Wages', 'Rent & Utilities', 'Medical Supplies', 'Insurance', 'Marketing', 'Equipment', 'Other Expenses'];
+const DEFAULT_CASH_IN_KEYS = ['Patient Payments', 'Insurance Payments', 'Other Income'];
+const DEFAULT_CASH_OUT_KEYS = ['Payroll', 'Rent', 'Supplies', 'Utilities', 'Other Payments'];
+const DEFAULT_CASH_FLOW_KEYS = ['Operating Activities', 'Investing Activities', 'Financing Activities'];
+import {
+  Tabs,
+  TabsContent,
+  TabsList,
+  TabsTrigger,
+} from "@/components/ui/tabs";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+
+interface UserConfig {
+  username: string;
+  role: 'admin' | 'user';
+  practiceName: string;
+  practiceSubtitle: string | null;
+  logoUrl: string | null;
+  ownerName: string | null;
+  ownerTitle: string | null;
+  ownerPhotoUrl: string | null;
+  revenueTitle: string;
+  expensesTitle: string;
+  cashInTitle: string;
+  cashOutTitle: string;
+  topRevenueTitle: string;
+  revenueSubheadings: Record<string, string>;
+  expensesSubheadings: Record<string, string>;
+  cashInSubheadings: Record<string, string>;
+  cashOutSubheadings: Record<string, string>;
+  cashFlowSubheadings: Record<string, string>;
+  procedureNameOverrides: Record<string, string>;
+  locationNameOverrides: Record<string, string>;
+  showCollectionsWidget: boolean;
+  providers: Array<{
+    name: string;
+    percentage: number;
+  }>;
+}
+
+interface PracticeLocation {
+  id: string;
+  name: string;
+  address: string;
+  city: string;
+  state: string;
+  zipCode: string;
+  phone: string | null;
+  isActive: boolean | null;
+}
+
+export default function Settings() {
+  const { toast } = useToast();
+  const { user: currentUser, isAdmin } = useAuth();
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
+  const [users, setUsers] = useState<UserConfig[]>([]);
+  const [selectedUser, setSelectedUser] = useState<string | null>(null);
+  const [editingUser, setEditingUser] = useState<UserConfig | null>(null);
+  const [locations, setLocations] = useState<PracticeLocation[]>([]);
+  const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
+  const [newUserData, setNewUserData] = useState({
+    username: '',
+    password: '',
+    role: 'user' as 'admin' | 'user'
+  });
+
+  // Redirect if not admin
+  useEffect(() => {
+    if (!isAdmin) {
+      window.location.href = '/';
+    }
+  }, [isAdmin]);
+
+  // Fetch users and locations
+  useEffect(() => {
+    if (isAdmin) {
+      fetchData();
+    }
+  }, [isAdmin]);
+
+  const fetchData = async () => {
+    try {
+      setLoading(true);
+      
+      // Fetch all users
+      const usersRes = await fetch('/api/users', {
+        credentials: 'include'
+      });
+      const usersData = await usersRes.json();
+      
+      // Initialize providers for users that don't have them
+      const usersWithProviders = usersData.map((user: UserConfig) => {
+        if (!user.providers || user.providers.length === 0) {
+          user.providers = [
+            { name: 'Dr. John Josephson', percentage: 19 },
+            { name: 'Dr. Meghan G. Moroux', percentage: 14 },
+            { name: 'Dr. Hubert H. Pham', percentage: 13 },
+            { name: 'Dr. Sabita Ittoop', percentage: 10 },
+            { name: 'Dr. Kristen E. Dunbar', percentage: 9 },
+            { name: 'Dr. Erin Ong', percentage: 9 },
+            { name: 'Dr. Prema Modak', percentage: 8 },
+            { name: 'Dr. Julia Pierce', percentage: 7 },
+            { name: 'Dr. Heloi Stark', percentage: 6 },
+            { name: 'Dr. Noushin Sahraei', percentage: 5 }
+          ];
+        }
+        return user;
+      });
+      
+      setUsers(usersWithProviders);
+      
+      // Select first user by default
+      if (usersWithProviders.length > 0 && !selectedUser) {
+        setSelectedUser(usersWithProviders[0].username);
+        setEditingUser(usersWithProviders[0]);
+      }
+      
+      // Fetch locations
+      const locRes = await fetch('/api/locations');
+      const locData = await locRes.json();
+      setLocations(locData);
+      
+      setLoading(false);
+    } catch (error) {
+      console.error('Error fetching data:', error);
+      toast({
+        title: "Error",
+        description: "Failed to load settings",
+        variant: "destructive"
+      });
+      setLoading(false);
+    }
+  };
+
+  const handleUserSelect = (username: string) => {
+    setSelectedUser(username);
+    const user = users.find(u => u.username === username);
+    if (user) {
+      // Initialize providers if not present (for existing users)
+      if (!user.providers || user.providers.length === 0) {
+        user.providers = [
+          { name: 'Dr. John Josephson', percentage: 19 },
+          { name: 'Dr. Meghan G. Moroux', percentage: 14 },
+          { name: 'Dr. Hubert H. Pham', percentage: 13 },
+          { name: 'Dr. Sabita Ittoop', percentage: 10 },
+          { name: 'Dr. Kristen E. Dunbar', percentage: 9 },
+          { name: 'Dr. Erin Ong', percentage: 9 },
+          { name: 'Dr. Prema Modak', percentage: 8 },
+          { name: 'Dr. Julia Pierce', percentage: 7 },
+          { name: 'Dr. Heloi Stark', percentage: 6 },
+          { name: 'Dr. Noushin Sahraei', percentage: 5 }
+        ];
+      }
+      setEditingUser(user);
+    }
+  };
+
+  const handleInputChange = (field: keyof UserConfig, value: any) => {
+    if (editingUser) {
+      setEditingUser({
+        ...editingUser,
+        [field]: value
+      });
+    }
+  };
+
+  const handleSubheadingChange = (category: 'revenueSubheadings' | 'expensesSubheadings' | 'cashInSubheadings' | 'cashOutSubheadings' | 'cashFlowSubheadings', key: string, value: string) => {
+    if (editingUser) {
+      setEditingUser({
+        ...editingUser,
+        [category]: {
+          ...editingUser[category],
+          [key]: value
+        }
+      });
+    }
+  };
+
+  const handleImageUpload = async (field: 'logoUrl' | 'ownerPhotoUrl', file: File) => {
+    try {
+      const formData = new FormData();
+      formData.append('image', file);
+      
+      const response = await fetch('/api/dashboard/customization/upload-image', {
+        method: 'POST',
+        body: formData,
+        credentials: 'include'
+      });
+      
+      if (!response.ok) {
+        throw new Error('Upload failed');
+      }
+      
+      const data = await response.json();
+      handleInputChange(field, data.url);
+      
+      toast({
+        title: "Success",
+        description: "Image uploaded successfully"
+      });
+    } catch (error) {
+      console.error('Error uploading image:', error);
+      toast({
+        title: "Error",
+        description: "Failed to upload image",
+        variant: "destructive"
+      });
+    }
+  };
+
+  const handleSave = async () => {
+    if (!editingUser) return;
+    
+    try {
+      setSaving(true);
+      
+      const response = await fetch(`/api/users/${editingUser.username}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        credentials: 'include',
+        body: JSON.stringify(editingUser)
+      });
+      
+      if (!response.ok) {
+        throw new Error('Save failed');
+      }
+      
+      const updatedUser = await response.json();
+      
+      // Update users list
+      setUsers(users.map(u => u.username === updatedUser.username ? updatedUser : u));
+      setEditingUser(updatedUser);
+      
+      toast({
+        title: "Success",
+        description: `Settings saved for ${editingUser.username}`
+      });
+      
+      setSaving(false);
+    } catch (error) {
+      console.error('Error saving settings:', error);
+      toast({
+        title: "Error",
+        description: "Failed to save settings",
+        variant: "destructive"
+      });
+      setSaving(false);
+    }
+  };
+
+  const handleCreateUser = async () => {
+    if (!newUserData.username || !newUserData.password) {
+      toast({
+        title: "Error",
+        description: "Username and password are required",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    try {
+      const response = await fetch('/api/users', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        credentials: 'include',
+        body: JSON.stringify(newUserData)
+      });
+      
+      if (!response.ok) {
+        throw new Error('Failed to create user');
+      }
+      
+      const newUser = await response.json();
+      setUsers([...users, newUser]);
+      setIsCreateDialogOpen(false);
+      setNewUserData({ username: '', password: '', role: 'user' });
+      
+      toast({
+        title: "Success",
+        description: `User ${newUser.username} created successfully`
+      });
+    } catch (error) {
+      console.error('Error creating user:', error);
+      toast({
+        title: "Error",
+        description: "Failed to create user",
+        variant: "destructive"
+      });
+    }
+  };
+
+  const handleDeleteUser = async (username: string) => {
+    if (username === 'admin') {
+      toast({
+        title: "Error",
+        description: "Cannot delete admin user",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    if (!confirm(`Are you sure you want to delete user ${username}?`)) {
+      return;
+    }
+
+    try {
+      const response = await fetch(`/api/users/${username}`, {
+        method: 'DELETE',
+        credentials: 'include'
+      });
+      
+      if (!response.ok) {
+        throw new Error('Failed to delete user');
+      }
+      
+      setUsers(users.filter(u => u.username !== username));
+      
+      if (selectedUser === username) {
+        const remainingUsers = users.filter(u => u.username !== username);
+        if (remainingUsers.length > 0) {
+          handleUserSelect(remainingUsers[0].username);
+        } else {
+          setSelectedUser(null);
+          setEditingUser(null);
+        }
+      }
+      
+      toast({
+        title: "Success",
+        description: `User ${username} deleted successfully`
+      });
+    } catch (error) {
+      console.error('Error deleting user:', error);
+      toast({
+        title: "Error",
+        description: "Failed to delete user",
+        variant: "destructive"
+      });
+    }
+  };
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <RefreshCw className="h-8 w-8 animate-spin mx-auto mb-4 text-blue-600" />
+          <p className="text-gray-600">Loading settings...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (!editingUser) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <p className="text-red-600">No users found</p>
+      </div>
+    );
+  }
+
+  return (
+    <div className="min-h-screen bg-gray-50">
+      {/* Header */}
+      <header className="bg-white border-b border-gray-200 sticky top-0 z-40">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="flex justify-between items-center h-16">
+            <div className="flex items-center space-x-4">
+              <Link href="/">
+                <Button variant="ghost" size="sm">
+                  <ArrowLeft className="h-4 w-4 mr-2" />
+                  Back to Dashboard
+                </Button>
+              </Link>
+              <h1 className="text-xl font-bold text-gray-900">Admin Settings</h1>
+            </div>
+            <Button onClick={handleSave} disabled={saving}>
+              {saving ? (
+                <>
+                  <RefreshCw className="h-4 w-4 mr-2 animate-spin" />
+                  Saving...
+                </>
+              ) : (
+                <>
+                  <Save className="h-4 w-4 mr-2" />
+                  Save Changes
+                </>
+              )}
+            </Button>
+          </div>
+        </div>
+      </header>
+
+      {/* Main Content */}
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
+          
+          {/* User List Sidebar */}
+          <div className="lg:col-span-1">
+            <Card>
+              <CardHeader>
+                <div className="flex justify-between items-center">
+                  <CardTitle>Users</CardTitle>
+                  <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
+                    <DialogTrigger asChild>
+                      <Button size="sm" variant="outline">
+                        <Plus className="h-4 w-4" />
+                      </Button>
+                    </DialogTrigger>
+                    <DialogContent>
+                      <DialogHeader>
+                        <DialogTitle>Create New User</DialogTitle>
+                        <DialogDescription>
+                          Add a new user to the system
+                        </DialogDescription>
+                      </DialogHeader>
+                      <div className="space-y-4 py-4">
+                        <div>
+                          <Label htmlFor="new-username">Username</Label>
+                          <Input
+                            id="new-username"
+                            value={newUserData.username}
+                            onChange={(e) => setNewUserData({ ...newUserData, username: e.target.value })}
+                            placeholder="Enter username"
+                          />
+                        </div>
+                        <div>
+                          <Label htmlFor="new-password">Password</Label>
+                          <Input
+                            id="new-password"
+                            type="password"
+                            value={newUserData.password}
+                            onChange={(e) => setNewUserData({ ...newUserData, password: e.target.value })}
+                            placeholder="Enter password"
+                          />
+                        </div>
+                        <div>
+                          <Label htmlFor="new-role">Role</Label>
+                          <Select
+                            value={newUserData.role}
+                            onValueChange={(value: 'admin' | 'user') => setNewUserData({ ...newUserData, role: value })}
+                          >
+                            <SelectTrigger>
+                              <SelectValue />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="user">User</SelectItem>
+                              <SelectItem value="admin">Admin</SelectItem>
+                            </SelectContent>
+                          </Select>
+                        </div>
+                      </div>
+                      <DialogFooter>
+                        <Button onClick={handleCreateUser}>Create User</Button>
+                      </DialogFooter>
+                    </DialogContent>
+                  </Dialog>
+                </div>
+              </CardHeader>
+              <CardContent className="p-0">
+                <div className="space-y-1">
+                  {users.map((user) => (
+                    <div
+                      key={user.username}
+                      className={`flex items-center justify-between p-3 cursor-pointer hover:bg-gray-50 ${
+                        selectedUser === user.username ? 'bg-blue-50 border-l-4 border-blue-600' : ''
+                      }`}
+                      onClick={() => handleUserSelect(user.username)}
+                    >
+                      <div className="flex items-center space-x-2">
+                        <User className="h-4 w-4 text-gray-500" />
+                        <div>
+                          <p className="text-sm font-medium">{user.username}</p>
+                          <p className="text-xs text-gray-500">{user.role}</p>
+                        </div>
+                      </div>
+                      {user.username !== 'admin' && (
+                        <Button
+                          size="sm"
+                          variant="ghost"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleDeleteUser(user.username);
+                          }}
+                        >
+                          <Trash2 className="h-4 w-4 text-red-500" />
+                        </Button>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+
+          {/* Settings Panel */}
+          <div className="lg:col-span-3">
+            <Tabs defaultValue="branding" className="space-y-6">
+              <TabsList className="grid w-full grid-cols-5">
+                <TabsTrigger value="branding">Branding</TabsTrigger>
+                <TabsTrigger value="widgets">Widgets</TabsTrigger>
+                <TabsTrigger value="subheadings">Subheadings</TabsTrigger>
+                <TabsTrigger value="providers">Providers</TabsTrigger>
+                <TabsTrigger value="locations">Locations</TabsTrigger>
+              </TabsList>
+
+              {/* Branding Tab */}
+              <TabsContent value="branding" className="space-y-6">
+                {/* Practice Branding */}
+                <Card>
+                  <CardHeader>
+                    <CardTitle>Practice Branding</CardTitle>
+                    <CardDescription>Customize practice name and logo for {editingUser.username}</CardDescription>
+                  </CardHeader>
+                  <CardContent className="space-y-4">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div>
+                        <Label htmlFor="practiceName">Practice Name *</Label>
+                        <Input
+                          id="practiceName"
+                          value={editingUser.practiceName}
+                          onChange={(e) => handleInputChange('practiceName', e.target.value)}
+                          placeholder="e.g., Smith Eye Care"
+                        />
+                      </div>
+                      <div>
+                        <Label htmlFor="practiceSubtitle">Practice Subtitle</Label>
+                        <Input
+                          id="practiceSubtitle"
+                          value={editingUser.practiceSubtitle || ''}
+                          onChange={(e) => handleInputChange('practiceSubtitle', e.target.value)}
+                          placeholder="e.g., Premier Vision Care"
+                        />
+                      </div>
+                    </div>
+                    
+                    <div>
+                      <Label>Practice Logo</Label>
+                      <div className="flex items-center space-x-4 mt-2">
+                        {editingUser.logoUrl && (
+                          <img 
+                            src={editingUser.logoUrl} 
+                            alt="Practice Logo" 
+                            className="h-16 w-16 object-contain border rounded"
+                          />
+                        )}
+                        <div>
+                          <Input
+                            type="file"
+                            accept="image/*"
+                            onChange={(e) => {
+                              const file = e.target.files?.[0];
+                              if (file) handleImageUpload('logoUrl', file);
+                            }}
+                            className="hidden"
+                            id="logoUpload"
+                          />
+                          <Label htmlFor="logoUpload" className="cursor-pointer">
+                            <div className="inline-flex items-center px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50">
+                              <Upload className="h-4 w-4 mr-2" />
+                              Upload Logo
+                            </div>
+                          </Label>
+                          <p className="text-xs text-gray-500 mt-1">Max 5MB, JPEG/PNG/GIF/WebP</p>
+                        </div>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+
+                {/* Owner Information */}
+                <Card>
+                  <CardHeader>
+                    <CardTitle>Owner Information</CardTitle>
+                    <CardDescription>Customize owner/doctor information displayed in header</CardDescription>
+                  </CardHeader>
+                  <CardContent className="space-y-4">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div>
+                        <Label htmlFor="ownerName">Owner Name</Label>
+                        <Input
+                          id="ownerName"
+                          value={editingUser.ownerName || ''}
+                          onChange={(e) => handleInputChange('ownerName', e.target.value)}
+                          placeholder="e.g., Dr. Sarah Smith"
+                        />
+                      </div>
+                      <div>
+                        <Label htmlFor="ownerTitle">Owner Title</Label>
+                        <Input
+                          id="ownerTitle"
+                          value={editingUser.ownerTitle || ''}
+                          onChange={(e) => handleInputChange('ownerTitle', e.target.value)}
+                          placeholder="e.g., Medical Director"
+                        />
+                      </div>
+                    </div>
+                    
+                    <div>
+                      <Label>Owner Photo</Label>
+                      <div className="flex items-center space-x-4 mt-2">
+                        {editingUser.ownerPhotoUrl && (
+                          <img 
+                            src={editingUser.ownerPhotoUrl} 
+                            alt="Owner Photo" 
+                            className="h-16 w-16 object-cover border rounded-full"
+                          />
+                        )}
+                        <div>
+                          <Input
+                            type="file"
+                            accept="image/*"
+                            onChange={(e) => {
+                              const file = e.target.files?.[0];
+                              if (file) handleImageUpload('ownerPhotoUrl', file);
+                            }}
+                            className="hidden"
+                            id="photoUpload"
+                          />
+                          <Label htmlFor="photoUpload" className="cursor-pointer">
+                            <div className="inline-flex items-center px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50">
+                              <Upload className="h-4 w-4 mr-2" />
+                              Upload Photo
+                            </div>
+                          </Label>
+                          <p className="text-xs text-gray-500 mt-1">Max 5MB, JPEG/PNG/GIF/WebP</p>
+                        </div>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              </TabsContent>
+
+              {/* Widgets Tab */}
+              <TabsContent value="widgets" className="space-y-6">
+                <Card>
+                  <CardHeader>
+                    <CardTitle>Widget Titles</CardTitle>
+                    <CardDescription>Customize the titles shown on dashboard widgets</CardDescription>
+                  </CardHeader>
+                  <CardContent className="space-y-4">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div>
+                        <Label htmlFor="revenueTitle">Revenue Widget Title</Label>
+                        <Input
+                          id="revenueTitle"
+                          value={editingUser.revenueTitle}
+                          onChange={(e) => handleInputChange('revenueTitle', e.target.value)}
+                          placeholder="e.g., Income"
+                        />
+                      </div>
+                      <div>
+                        <Label htmlFor="expensesTitle">Expenses Widget Title</Label>
+                        <Input
+                          id="expensesTitle"
+                          value={editingUser.expensesTitle}
+                          onChange={(e) => handleInputChange('expensesTitle', e.target.value)}
+                          placeholder="e.g., Operating Costs"
+                        />
+                      </div>
+                      <div>
+                        <Label htmlFor="cashInTitle">Cash In Widget Title</Label>
+                        <Input
+                          id="cashInTitle"
+                          value={editingUser.cashInTitle}
+                          onChange={(e) => handleInputChange('cashInTitle', e.target.value)}
+                          placeholder="e.g., Money In"
+                        />
+                      </div>
+                      <div>
+                        <Label htmlFor="cashOutTitle">Cash Out Widget Title</Label>
+                        <Input
+                          id="cashOutTitle"
+                          value={editingUser.cashOutTitle}
+                          onChange={(e) => handleInputChange('cashOutTitle', e.target.value)}
+                          placeholder="e.g., Money Out"
+                        />
+                      </div>
+                      <div className="md:col-span-2">
+                        <Label htmlFor="topRevenueTitle">Top Revenue Procedures Title</Label>
+                        <Input
+                          id="topRevenueTitle"
+                          value={editingUser.topRevenueTitle}
+                          onChange={(e) => handleInputChange('topRevenueTitle', e.target.value)}
+                          placeholder="e.g., Top Earning Procedures"
+                        />
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              </TabsContent>
+
+              {/* Subheadings Tab */}
+              <TabsContent value="subheadings" className="space-y-6">
+                {/* Revenue Subheadings */}
+                <Card>
+                  <CardHeader>
+                    <CardTitle>Revenue Subheadings</CardTitle>
+                    <CardDescription>Customize revenue category names</CardDescription>
+                  </CardHeader>
+                  <CardContent className="space-y-3">
+                    {DEFAULT_REVENUE_KEYS.map((key) => (
+                      <div key={key}>
+                        <Label className="text-xs text-gray-500">{key}</Label>
+                        <Input
+                          value={editingUser.revenueSubheadings[key] || key}
+                          onChange={(e) => handleSubheadingChange('revenueSubheadings', key, e.target.value)}
+                          placeholder={key}
+                        />
+                      </div>
+                    ))}
+                  </CardContent>
+                </Card>
+
+                {/* Expenses Subheadings */}
+                <Card>
+                  <CardHeader>
+                    <CardTitle>Expenses Subheadings</CardTitle>
+                    <CardDescription>Customize expense category names</CardDescription>
+                  </CardHeader>
+                  <CardContent className="space-y-3">
+                    {DEFAULT_EXPENSES_KEYS.map((key) => (
+                      <div key={key}>
+                        <Label className="text-xs text-gray-500">{key}</Label>
+                        <Input
+                          value={editingUser.expensesSubheadings[key] || key}
+                          onChange={(e) => handleSubheadingChange('expensesSubheadings', key, e.target.value)}
+                          placeholder={key}
+                        />
+                      </div>
+                    ))}
+                  </CardContent>
+                </Card>
+
+                {/* Cash In Subheadings */}
+                <Card>
+                  <CardHeader>
+                    <CardTitle>Cash In Subheadings</CardTitle>
+                    <CardDescription>Customize cash inflow category names</CardDescription>
+                  </CardHeader>
+                  <CardContent className="space-y-3">
+                    {DEFAULT_CASH_IN_KEYS.map((key) => (
+                      <div key={key}>
+                        <Label className="text-xs text-gray-500">{key}</Label>
+                        <Input
+                          value={editingUser.cashInSubheadings[key] || key}
+                          onChange={(e) => handleSubheadingChange('cashInSubheadings', key, e.target.value)}
+                          placeholder={key}
+                        />
+                      </div>
+                    ))}
+                  </CardContent>
+                </Card>
+
+                {/* Cash Out Subheadings */}
+                <Card>
+                  <CardHeader>
+                    <CardTitle>Cash Out Subheadings</CardTitle>
+                    <CardDescription>Customize cash outflow category names</CardDescription>
+                  </CardHeader>
+                  <CardContent className="space-y-3">
+                    {DEFAULT_CASH_OUT_KEYS.map((key) => (
+                      <div key={key}>
+                        <Label className="text-xs text-gray-500">{key}</Label>
+                        <Input
+                          value={editingUser.cashOutSubheadings[key] || key}
+                          onChange={(e) => handleSubheadingChange('cashOutSubheadings', key, e.target.value)}
+                          placeholder={key}
+                        />
+                      </div>
+                    ))}
+                  </CardContent>
+                </Card>
+              </TabsContent>
+
+              {/* Providers Tab */}
+              <TabsContent value="providers" className="space-y-6">
+                <Card>
+                  <CardHeader>
+                    <CardTitle>Provider/Doctor Revenue Distribution</CardTitle>
+                    <CardDescription>
+                      Customize the list of providers and their revenue percentages for the Revenue Breakdown widget.
+                      Total percentage must equal 100%.
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent className="space-y-4">
+                    {editingUser.providers && editingUser.providers.map((provider, index) => (
+                      <div key={index} className="flex items-center gap-4 p-3 border rounded-lg">
+                        <div className="flex-1">
+                          <Label htmlFor={`provider-name-${index}`}>Provider Name</Label>
+                          <Input
+                            id={`provider-name-${index}`}
+                            value={provider.name}
+                            onChange={(e) => {
+                              const newProviders = [...editingUser.providers];
+                              newProviders[index].name = e.target.value;
+                              handleInputChange('providers', newProviders);
+                            }}
+                            placeholder="e.g., Dr. John Smith"
+                          />
+                        </div>
+                        <div className="w-32">
+                          <Label htmlFor={`provider-percentage-${index}`}>Percentage</Label>
+                          <div className="flex items-center gap-2">
+                            <Input
+                              id={`provider-percentage-${index}`}
+                              type="number"
+                              min="0"
+                              max="100"
+                              value={provider.percentage}
+                              onChange={(e) => {
+                                const newProviders = [...editingUser.providers];
+                                newProviders[index].percentage = parseFloat(e.target.value) || 0;
+                                handleInputChange('providers', newProviders);
+                              }}
+                            />
+                            <span className="text-sm text-gray-500">%</span>
+                          </div>
+                        </div>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => {
+                            const newProviders = editingUser.providers.filter((_, i) => i !== index);
+                            handleInputChange('providers', newProviders);
+                          }}
+                          className="mt-6"
+                        >
+                          <Trash2 className="h-4 w-4 text-red-500" />
+                        </Button>
+                      </div>
+                    ))}
+                    
+                    <div className="flex items-center justify-between pt-4 border-t">
+                      <div>
+                        <p className="text-sm font-medium">
+                          Total: {editingUser.providers?.reduce((sum, p) => sum + p.percentage, 0) || 0}%
+                        </p>
+                        {editingUser.providers && editingUser.providers.reduce((sum, p) => sum + p.percentage, 0) !== 100 && (
+                          <p className="text-xs text-red-500">Warning: Total should equal 100%</p>
+                        )}
+                      </div>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => {
+                          const newProviders = [...(editingUser.providers || []), { name: '', percentage: 0 }];
+                          handleInputChange('providers', newProviders);
+                        }}
+                      >
+                        <Plus className="h-4 w-4 mr-2" />
+                        Add Provider
+                      </Button>
+                    </div>
+                  </CardContent>
+                </Card>
+              </TabsContent>
+
+              {/* Locations Tab */}
+              <TabsContent value="locations" className="space-y-6">
+                <Card>
+                  <CardHeader>
+                    <CardTitle>Location Names</CardTitle>
+                    <CardDescription>Customize the display names for practice locations</CardDescription>
+                  </CardHeader>
+                  <CardContent className="space-y-4">
+                    {locations.map((location) => (
+                      <div key={location.id}>
+                        <Label htmlFor={`location-${location.id}`}>
+                          {location.name} ({location.city}, {location.state})
+                        </Label>
+                        <Input
+                          id={`location-${location.id}`}
+                          value={editingUser.locationNameOverrides[location.id] || ''}
+                          onChange={(e) => handleInputChange('locationNameOverrides', {
+                            ...editingUser.locationNameOverrides,
+                            [location.id]: e.target.value
+                          })}
+                          placeholder={`Custom name for ${location.name}`}
+                        />
+                        <p className="text-xs text-gray-500 mt-1">
+                          Leave blank to use default name: {location.name}
+                        </p>
+                      </div>
+                    ))}
+                  </CardContent>
+                </Card>
+              </TabsContent>
+            </Tabs>
+
+            {/* Save Button (Bottom) */}
+            <div className="flex justify-end mt-6">
+              <Button onClick={handleSave} disabled={saving} size="lg">
+                {saving ? (
+                  <>
+                    <RefreshCw className="h-4 w-4 mr-2 animate-spin" />
+                    Saving...
+                  </>
+                ) : (
+                  <>
+                    <Save className="h-4 w-4 mr-2" />
+                    Save Changes for {editingUser.username}
+                  </>
+                )}
+              </Button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}

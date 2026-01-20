@@ -28,13 +28,13 @@
  * - Modern React hooks (useQuery)
  */
 
+// React hooks
+import { useState, useEffect } from "react";
 // Shadcn UI components for consistent design system
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 // Lucide React icons for visual enhancement
 import { MapPin, TrendingUp } from "lucide-react";
-// Static data for practice locations
-import { getProcessedLocations } from "@/lib/staticData";
 
 /*
  * TYPESCRIPT INTERFACE DEFINITION
@@ -71,13 +71,29 @@ interface LocationSelectorProps {
 export default function LocationSelector({ selectedLocationId, onLocationChange }: LocationSelectorProps) {
   
   /*
-   * GET LOCATION DATA FROM STATIC DATA
+   * GET LOCATION DATA FROM API
    * ==================================
    * 
-   * Get practice location data from static data instead of API calls.
-   * This provides immediate data availability without loading states.
+   * Fetch practice location data from API which includes user-specific name overrides.
    */
-  const locations = getProcessedLocations();
+  const [locations, setLocations] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchLocations = async () => {
+      try {
+        const response = await fetch('/api/locations');
+        const data = await response.json();
+        setLocations(data);
+        setLoading(false);
+      } catch (error) {
+        console.error('Error fetching locations:', error);
+        setLoading(false);
+      }
+    };
+    
+    fetchLocations();
+  }, []);
 
   /*
    * LOCATION SELECTION HANDLER
@@ -103,6 +119,17 @@ export default function LocationSelector({ selectedLocationId, onLocationChange 
   /**
    * Render loading state while fetching location data
    */
+  if (loading) {
+    return (
+      <Card className="bg-white rounded-xl shadow-sm border border-gray-200">
+        <CardContent className="p-4 sm:p-6">
+          <div className="flex items-center justify-center h-20">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+          </div>
+        </CardContent>
+      </Card>
+    );
+  }
 
   return (
     <Card className="bg-white rounded-xl shadow-sm border border-gray-200">
@@ -157,7 +184,7 @@ export default function LocationSelector({ selectedLocationId, onLocationChange 
         </div>
 
         {/* Selected Location Summary */}
-        {selectedLocationId !== "all" && (
+        {/* {selectedLocationId !== "all" && (
           <div className="mt-4 p-4 bg-gray-50 rounded-lg">
             {(() => {
               const selectedLocation = locations.find(loc => loc.id === selectedLocationId);
@@ -182,7 +209,7 @@ export default function LocationSelector({ selectedLocationId, onLocationChange 
               return null;
             })()}
           </div>
-        )}
+        )} */}
 
       </CardContent>
     </Card>

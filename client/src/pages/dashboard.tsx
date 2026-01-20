@@ -29,7 +29,11 @@
  */
 
 // React hooks for state management
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { Link, useLocation } from "wouter";
+import { Settings as SettingsIcon, LogOut } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { useAuth } from "@/contexts/AuthContext";
 
 // Import all dashboard widget components
 // These are the major analytical components that make up our dashboard
@@ -48,10 +52,21 @@ import ProfitLossWidget from "@/components/ProfitLossWidget";
 import CashInWidget from "@/components/CashInWidget";
 import CashOutWidget from "@/components/CashOutWidget";
 import CashFlowWidget from "@/components/CashFlowWidget";
+import CollectionsBreakdownWidget from "@/components/CollectionsBreakdownWidget";
 
-// Import brand assets for professional appearance
+// Import brand assets for professional appearance (defaults)
 import mdsLogo from "@assets/MDS Logo_1754254040718.png";
 import drJohnJosephsonPhoto from "@assets/Dr. John Josephson_1757862871625.jpeg";
+
+// Dashboard customization interface
+interface DashboardCustomization {
+  logoUrl: string | null;
+  practiceName: string;
+  practiceSubtitle: string | null;
+  ownerName: string | null;
+  ownerTitle: string | null;
+  ownerPhotoUrl: string | null;
+}
 
 /*
  * MAIN DASHBOARD COMPONENT
@@ -98,7 +113,51 @@ export default function Dashboard() {
    * The dashboard maintains several pieces of filter state that affect
    * how data is displayed across multiple widgets.
    */
-  
+
+  // Get user configuration from auth context
+  const { user, isAdmin, logout } = useAuth();
+  const [, setLocation] = useLocation();
+
+  // Dashboard customization state
+  const [customization, setCustomization] = useState<DashboardCustomization>({
+    logoUrl: mdsLogo,
+    practiceName: "MDS AI Analytics",
+    practiceSubtitle: "Eye Specialists & Surgeons of Northern Virginia",
+    ownerName: "Dr. John Josephson",
+    ownerTitle: "Practice Owner",
+    ownerPhotoUrl: drJohnJosephsonPhoto
+  });
+
+  // Fetch customization on mount or when user changes
+  useEffect(() => {
+    if (user) {
+      // Use user configuration from auth context
+      setCustomization({
+        logoUrl: user.logoUrl || mdsLogo,
+        practiceName: user.practiceName || "MDS AI Analytics",
+        practiceSubtitle: user.practiceSubtitle || "Eye Specialists & Surgeons of Northern Virginia",
+        ownerName: user.ownerName || "Dr. John Josephson",
+        ownerTitle: user.ownerTitle || "Practice Owner",
+        ownerPhotoUrl: user.ownerPhotoUrl || drJohnJosephsonPhoto
+      });
+    } else {
+      // Fallback to API call if user not in context
+      fetch('/api/dashboard/customization')
+        .then(res => res.json())
+        .then(data => {
+          setCustomization({
+            logoUrl: data.logoUrl || mdsLogo,
+            practiceName: data.practiceName || "MDS AI Analytics",
+            practiceSubtitle: data.practiceSubtitle || "Eye Specialists & Surgeons of Northern Virginia",
+            ownerName: data.ownerName || "Dr. John Josephson",
+            ownerTitle: data.ownerTitle || "Practice Owner",
+            ownerPhotoUrl: data.ownerPhotoUrl || drJohnJosephsonPhoto
+          });
+        })
+        .catch(err => console.error('Error loading customization:', err));
+    }
+  }, [user]);
+
   /*
    * LOCATION FILTER STATE
    * =====================
@@ -118,7 +177,7 @@ export default function Dashboard() {
    * - Practice owners need to identify high/low performing locations
    */
   const [selectedLocationId, setSelectedLocationId] = useState("all");
-  
+
   /*
    * PROCEDURE CATEGORY FILTER STATE
    * ===============================
@@ -190,10 +249,10 @@ export default function Dashboard() {
    */
   const handleLocationChange = (locationId: string) => {
     setSelectedLocationId(locationId);
-    
+
     // Log the filter change for debugging and usage analytics
     console.log(`Dashboard filtered to location: ${locationId}`);
-    
+
     // TODO: Future enhancements could include:
     // - Update URL parameters for bookmarkable dashboard states
     // - Track filter usage for analytics and UX improvements
@@ -217,7 +276,7 @@ export default function Dashboard() {
   const handleProcedureCategoryChange = (category: string) => {
     setSelectedProcedureCategory(category);
     console.log(`Procedure filter changed to: ${category}`);
-    
+
     // TODO: Future enhancements:
     // - Update related widgets that show procedure-specific data
     // - Add smooth transitions when filter changes
@@ -250,26 +309,63 @@ export default function Dashboard() {
           <div className="flex justify-between items-center h-14 sm:h-16">
             {/* Brand and Logo Section - Mobile Optimized */}
             <div className="flex items-center space-x-2 sm:space-x-4 min-w-0 flex-1">
-              <img 
-                src={mdsLogo} 
-                alt="MDS Medical & Dental Solutions Logo" 
+              <img
+                src={customization.logoUrl || mdsLogo}
+                alt={`${customization.practiceName} Logo`}
                 className="w-8 h-8 sm:w-12 sm:h-12 object-contain flex-shrink-0"
               />
               <div className="min-w-0 flex-1">
-                <h1 className="text-sm sm:text-xl font-bold text-gray-900 truncate">MDS AI Analytics</h1>
-                <p className="text-xs sm:text-sm text-gray-600 hidden sm:block">Eye Specialists & Surgeons of Northern Virginia</p>
+                <h1 className="text-sm sm:text-xl font-bold text-gray-900 truncate">{customization.practiceName}</h1>
+                <p className="text-xs sm:text-sm text-gray-600 hidden sm:block">{customization.practiceSubtitle}</p>
               </div>
             </div>
-            
+
             {/* User Profile Section - Mobile Optimized */}
             <div className="flex items-center space-x-2 sm:space-x-4 flex-shrink-0">
+              {/* Settings button - only visible to admin */}
+              {isAdmin && (
+                <Link href="/settings">
+                  <Button variant="ghost" size="sm" className="hidden sm:flex">
+                    <SettingsIcon className="h-4 w-4 mr-2" />
+                    Settings
+                  </Button>
+                  <Button variant="ghost" size="sm" className="sm:hidden">
+                    <SettingsIcon className="h-4 w-4" />
+                  </Button>
+                </Link>
+              )}
+              
+              {/* Logout button */}
+              <Button 
+                variant="ghost" 
+                size="sm" 
+                onClick={async () => {
+                  await logout();
+                  setLocation('/login');
+                }}
+                className="hidden sm:flex"
+              >
+                <LogOut className="h-4 w-4 mr-2" />
+                Logout
+              </Button>
+              <Button 
+                variant="ghost" 
+                size="sm" 
+                onClick={async () => {
+                  await logout();
+                  setLocation('/login');
+                }}
+                className="sm:hidden"
+              >
+                <LogOut className="h-4 w-4" />
+              </Button>
               <div className="text-right hidden sm:block">
-                <p className="text-sm font-medium text-gray-900">Dr. John Josephson</p>
-                <p className="text-xs text-gray-600">Practice Owner</p>
+                <p className="text-sm font-medium text-gray-900">{customization.ownerName}</p>
+                <p className="text-xs text-gray-600">{customization.ownerTitle}</p>
               </div>
-              <img 
-                src={drJohnJosephsonPhoto} 
-                alt="Dr. John Josephson" 
+              <img
+                src={customization.ownerPhotoUrl || drJohnJosephsonPhoto}
+                alt={customization.ownerName || "Owner"}
                 className="w-8 h-8 sm:w-10 sm:h-10 rounded-full object-cover border-2 border-blue-100"
               />
             </div>
@@ -282,13 +378,13 @@ export default function Dashboard() {
         Organized in a responsive grid layout matching the design specifications
       */}
       <div className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 py-4 sm:py-6 space-y-4 sm:space-y-8">
-        
+
         {/* 
           Location Selector Component
           Allows users to filter analytics by practice location
           Supports all 5 demo practice locations plus "All Locations" option
         */}
-        <LocationSelector 
+        <LocationSelector
           selectedLocationId={selectedLocationId}
           onLocationChange={handleLocationChange}
         />
@@ -298,7 +394,7 @@ export default function Dashboard() {
           Main chat interface for natural language analytics queries
           Powered by OpenAI GPT-4o with ophthalmology practice context
         */}
-        <AIBusinessAssistant 
+        <AIBusinessAssistant
           selectedLocationId={selectedLocationId}
         />
 
@@ -313,22 +409,20 @@ export default function Dashboard() {
               <button
                 onClick={() => handleTabChange("financial")}
                 data-testid="tab-financial"
-                className={`py-4 px-1 border-b-2 font-medium text-sm transition-colors duration-200 ${
-                  activeTab === "financial"
+                className={`py-4 px-1 border-b-2 font-medium text-sm transition-colors duration-200 ${activeTab === "financial"
                     ? "border-blue-500 text-blue-600"
                     : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
-                }`}
+                  }`}
               >
                 Financial Analysis
               </button>
               <button
                 onClick={() => handleTabChange("clinical")}
                 data-testid="tab-clinical"
-                className={`py-4 px-1 border-b-2 font-medium text-sm transition-colors duration-200 ${
-                  activeTab === "clinical"
+                className={`py-4 px-1 border-b-2 font-medium text-sm transition-colors duration-200 ${activeTab === "clinical"
                     ? "border-blue-500 text-blue-600"
                     : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
-                }`}
+                  }`}
               >
                 Clinical Analysis
               </button>
@@ -341,7 +435,7 @@ export default function Dashboard() {
               <div className="space-y-6" data-testid="financial-analysis-content">
                 <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
                   <h3 className="text-lg font-semibold text-gray-900">Financial Analysis</h3>
-                  
+
                   {/* Consolidated Date Range Filter */}
                   <div className="flex items-center gap-2" data-testid="financial-date-filter">
                     <span className="text-sm font-medium text-gray-700">Time Period:</span>
@@ -356,11 +450,10 @@ export default function Dashboard() {
                           key={period.value}
                           onClick={() => setSelectedFinancialPeriod(period.value)}
                           data-testid={`period-${period.value.toLowerCase()}`}
-                          className={`px-3 py-1.5 text-sm font-medium rounded-md transition-colors ${
-                            selectedFinancialPeriod === period.value
+                          className={`px-3 py-1.5 text-sm font-medium rounded-md transition-colors ${selectedFinancialPeriod === period.value
                               ? 'bg-blue-600 text-white shadow-sm'
                               : 'text-gray-600 hover:text-gray-900 hover:bg-gray-200'
-                          }`}
+                            }`}
                         >
                           {period.label}
                         </button>
@@ -368,60 +461,70 @@ export default function Dashboard() {
                     </div>
                   </div>
                 </div>
-                
+
                 {/* Revenue and Expenses Widgets Row */}
                 <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
                   {/* Financial Revenue Widget */}
                   <div data-testid="widget-financial-revenue">
-                    <FinancialRevenueWidget 
+                    <FinancialRevenueWidget
                       selectedLocationId={selectedLocationId}
                       selectedPeriod={selectedFinancialPeriod}
+                      title={user?.revenueTitle || "Revenue"}
+                      subheadingOverrides={user?.revenueSubheadings || {}}
                     />
                   </div>
-                  
+
                   {/* Financial Expenses Widget */}
                   <div data-testid="widget-financial-expenses">
-                    <FinancialExpensesWidget 
+                    <FinancialExpensesWidget
                       selectedLocationId={selectedLocationId}
                       selectedPeriod={selectedFinancialPeriod}
+                      title={user?.expensesTitle || "Expenses"}
+                      subheadingOverrides={user?.expensesSubheadings || {}}
                     />
                   </div>
                 </div>
-                
+
                 {/* Additional Financial Widgets */}
                 <div className="space-y-6">
                   {/* P&L Statement Widget */}
                   <div data-testid="widget-profit-loss">
-                    <ProfitLossWidget 
+                    <ProfitLossWidget
                       selectedLocationId={selectedLocationId}
                       selectedPeriod={selectedFinancialPeriod}
                     />
                   </div>
-                  
+
                   {/* Cash In vs Cash Out Widgets Row */}
                   <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
                     {/* Cash In Widget */}
                     <div data-testid="widget-cash-in">
-                      <CashInWidget 
+                      <CashInWidget
                         selectedLocationId={selectedLocationId}
                         selectedPeriod={selectedFinancialPeriod}
+                        title={user?.cashInTitle || "Cash In"}
+                        subheadingOverrides={user?.cashInSubheadings || {}}
                       />
                     </div>
-                    
+
                     {/* Cash Out Widget */}
                     <div data-testid="widget-cash-out">
-                      <CashOutWidget 
+                      <CashOutWidget
                         selectedLocationId={selectedLocationId}
                         selectedPeriod={selectedFinancialPeriod}
+                        title={user?.cashOutTitle || "Cash Out"}
+                        subheadingOverrides={user?.cashOutSubheadings || {}}
                       />
                     </div>
                   </div>
-                  
+
                   {/* Cash Flow Statement Widget */}
                   <div data-testid="widget-cash-flow">
-                    <CashFlowWidget 
+                    <CashFlowWidget
                       selectedLocationId={selectedLocationId}
                       selectedPeriod={selectedFinancialPeriod}
+                      title="Cash Flow Statement"
+                      subheadingOverrides={user?.cashFlowSubheadings || {}}
                     />
                   </div>
                 </div>
@@ -431,22 +534,34 @@ export default function Dashboard() {
             {activeTab === "clinical" && (
               <div className="space-y-6" data-testid="clinical-analysis-content">
                 <h3 className="text-lg font-semibold text-gray-900 mb-4">Clinical Analysis</h3>
-                
+
+
+
                 {/* 
                   Key Metrics Trends Chart Component
                   Advanced charting with actual vs projected data
                   Modified: Default to 1 year, add EBITDA, replace AR Days with Write-Offs
                 */}
-                <KeyMetricsTrendsChart 
+                <KeyMetricsTrendsChart
                   selectedLocationId={selectedLocationId}
                   selectedTimePeriod={selectedFinancialPeriod}
                 />
-
+                {/* 
+                  Collections Breakdown Per Provider Widget
+                  Shows provider-level collection data with graph and list views
+                  Only visible if user has showCollectionsWidget enabled
+                */}
+                {user?.showCollectionsWidget && (
+                  <CollectionsBreakdownWidget
+                    selectedLocationId={selectedLocationId}
+                    selectedTimePeriod={selectedFinancialPeriod}
+                  />
+                )}
                 {/* 
                   Insurance Claims Tracker Component
                   Claims organized by status (Pending, Submitted, Denied) with provider breakdown
                 */}
-                <InsuranceClaimsTracker 
+                <InsuranceClaimsTracker
                   selectedLocationId={selectedLocationId}
                   selectedTimePeriod={selectedFinancialPeriod}
                 />
@@ -461,16 +576,18 @@ export default function Dashboard() {
                     Top Revenue Procedures Component
                     Modified: Remove category filter, show fixed procedure list
                   */}
-                  <TopRevenueProcedures 
+                  <TopRevenueProcedures
                     selectedLocationId={selectedLocationId}
                     selectedTimePeriod={selectedFinancialPeriod}
+                    title={user?.topRevenueTitle || "Top Revenue Procedures"}
+                    procedureNameOverrides={user?.procedureNameOverrides || {}}
                   />
 
                   {/* 
                     Practice Insights Component
                     Key performance indicators and insurance payer analytics
                   */}
-                  <PracticeInsights 
+                  <PracticeInsights
                     selectedLocationId={selectedLocationId}
                     selectedTimePeriod={selectedFinancialPeriod}
                   />
@@ -482,13 +599,13 @@ export default function Dashboard() {
                   Two-column responsive grid for billing analytics and AR aging
                 */}
                 <div className="grid grid-cols-1 gap-4 sm:gap-6 md:grid-cols-2 md:gap-8">
-                  
+
                   {/* 
                     Patient Billing Analytics Component
                     Half-width widget for patient payment insights
                     Tracks overdue balances, collection rates, and aging breakdown
                   */}
-                  <PatientBillingAnalytics 
+                  <PatientBillingAnalytics
                     selectedLocationId={selectedLocationId}
                     selectedTimePeriod={selectedFinancialPeriod}
                   />
@@ -498,7 +615,7 @@ export default function Dashboard() {
                     Half-width widget for accounts receivable aging analysis
                     Shows outstanding insurance claims by aging buckets (0-30, 31-60, 61-90, 90+ days)
                   */}
-                  <ARBucketsWidget 
+                  <ARBucketsWidget
                     selectedLocationId={selectedLocationId}
                     selectedTimePeriod={selectedFinancialPeriod}
                   />

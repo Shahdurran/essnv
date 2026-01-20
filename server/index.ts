@@ -25,6 +25,7 @@
 
 // Import Express framework for building the web server
 import express, { type Request, Response, NextFunction } from "express";
+import session from "express-session";
 import path from "path";
 import { fileURLToPath } from "url";
 // Import our custom API route definitions
@@ -97,6 +98,19 @@ if (process.env.NODE_ENV === 'production') {
 // Parse JSON request bodies (for POST/PUT requests with JSON data)
 // This lets us access req.body as a JavaScript object
 app.use(express.json());
+
+// Configure session middleware for authentication
+app.use(session({
+  secret: process.env.SESSION_SECRET || 'mds-ai-analytics-secret-key-change-in-production',
+  resave: false,
+  saveUninitialized: false,
+  cookie: {
+    secure: process.env.NODE_ENV === 'production', // HTTPS only in production
+    httpOnly: true,
+    maxAge: 24 * 60 * 60 * 1000, // 24 hours
+    sameSite: 'lax' // Allow cookies on same-site requests
+  }
+}));
 
 // Parse URL-encoded form data (for traditional HTML form submissions)
 // extended: false uses the 'querystring' library (simpler, faster)
@@ -370,6 +384,11 @@ app.use((req, res, next) => {
     
     if (staticPathExists) {
       app.use(express.static(staticPath));
+      
+      // Serve uploaded images from server/public/assets
+      const uploadsPath = path.join(__dirname, 'public', 'assets');
+      app.use('/assets', express.static(uploadsPath));
+      console.log(`📁 [STARTUP] Serving uploaded assets from: ${uploadsPath}`);
       
       // SPA fallback - serve index.html for all non-API routes
       app.get("*", (req, res) => {
