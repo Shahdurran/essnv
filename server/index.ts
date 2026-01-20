@@ -321,6 +321,11 @@ app.use((req, res, next) => {
     console.log(`🔥 [PROD STARTUP] Production mode detected: NODE_ENV=${process.env.NODE_ENV}`);
   }
 
+  // Serve uploaded images from server/public/assets (works in both dev and prod)
+  const uploadsPath = path.join(__dirname, 'public', 'assets');
+  app.use('/assets', express.static(uploadsPath));
+  console.log(`📁 [STARTUP] Serving uploaded assets from: ${uploadsPath}`);
+
   if (!isProduction) {
     // Development mode: dynamically import Vite
     try {
@@ -384,11 +389,6 @@ app.use((req, res, next) => {
     
     if (staticPathExists) {
       app.use(express.static(staticPath));
-      
-      // Serve uploaded images from server/public/assets
-      const uploadsPath = path.join(__dirname, 'public', 'assets');
-      app.use('/assets', express.static(uploadsPath));
-      console.log(`📁 [STARTUP] Serving uploaded assets from: ${uploadsPath}`);
       
       // SPA fallback - serve index.html for all non-API routes
       app.get("*", (req, res) => {
