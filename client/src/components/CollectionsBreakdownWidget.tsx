@@ -19,6 +19,7 @@ import {
   Tooltip,
   Legend
 } from 'chart.js';
+import { useAuth } from "@/contexts/AuthContext";
 
 ChartJS.register(
   CategoryScale,
@@ -52,10 +53,11 @@ export default function CollectionsBreakdownWidget({
   selectedLocationId,
   selectedTimePeriod = "1Y"
 }: CollectionsBreakdownProps) {
+  const { user } = useAuth();
   const [viewMode, setViewMode] = useState<'graph' | 'list'>('graph');
   const [providers, setProviders] = useState<ProviderData[]>([]);
   const [totalCollections, setTotalCollections] = useState(0);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false);
   const [localTimePeriod, setLocalTimePeriod] = useState(selectedTimePeriod);
 
   // Update local time period when prop changes
@@ -64,23 +66,42 @@ export default function CollectionsBreakdownWidget({
   }, [selectedTimePeriod]);
 
   useEffect(() => {
-    fetchCollectionsData();
-  }, [selectedLocationId, localTimePeriod]);
+    generateCollectionsData();
+  }, [selectedLocationId, localTimePeriod, user]);
 
-  const fetchCollectionsData = async () => {
-    try {
-      setLoading(true);
-      const response = await fetch(
-        `/api/analytics/collections-breakdown/${selectedLocationId}?timeRange=${localTimePeriod}`
-      );
-      const data = await response.json();
-      setProviders(data.providers || []);
-      setTotalCollections(data.totalCollections || 0);
-      setLoading(false);
-    } catch (error) {
-      console.error('Error fetching collections data:', error);
-      setLoading(false);
+  const generateCollectionsData = () => {
+    if (!user || !user.providers) {
+      setProviders([]);
+      setTotalCollections(0);
+      return;
     }
+
+    // Calculate base monthly collections from revenue
+    // Assuming 85% collection rate of total revenue
+    const practiceType = user.practiceName?.toLowerCase().includes('orthodontic') 
+      ? 'orthodontic' 
+      : 'ophthalmology';
+    
+    // Base monthly collections
+    const baseMonthlyCollections = practiceType === 'orthodontic' ? 815000 : 360000;
+    
+    // Scale by time period
+    const multiplier = localTimePeriod === '1M' ? 1 : 
+                      localTimePeriod === '3M' ? 3 : 
+                      localTimePeriod === '6M' ? 6 : 
+                      localTimePeriod === '1Y' ? 12 : 12;
+    
+    const totalColls = baseMonthlyCollections * multiplier;
+    setTotalCollections(totalColls);
+    
+    // Calculate provider amounts based on their percentages
+    const providerData = user.providers.map(provider => ({
+      name: provider.name,
+      amount: Math.round((totalColls * provider.percentage) / 100),
+      percentage: provider.percentage
+    }));
+    
+    setProviders(providerData);
   };
 
   const formatCurrency = (amount: number) => {
