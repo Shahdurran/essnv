@@ -46,7 +46,7 @@ const USERS = [
     logoUrl: '/assets/MDS Logo_1754254040718-Dv0l5qLn.png',
     ownerName: 'Dr. Ammar Al-Mahdi',
     ownerTitle: 'Orthodontist',
-    ownerPhotoUrl: '/assets/ammar.jpeg',
+    ownerPhotoUrl: '/assets/ammar-v2.jpeg',
     revenueTitle: 'Revenue',
     expensesTitle: 'Expenses',
     cashInTitle: 'Cash In',
