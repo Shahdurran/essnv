@@ -38,26 +38,30 @@ const DEFAULT_CONFIG = {
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   // Set CORS headers
   res.setHeader('Access-Control-Allow-Origin', '*');
-  res.setHeader('Access-Control-Allow-Methods', 'GET, PUT, OPTIONS');
+  res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, OPTIONS');
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
 
-  // Handle preflight requests
+  // Handle preflight
   if (req.method === 'OPTIONS') {
     return res.status(200).end();
   }
 
   try {
-    if (req.method === 'GET') {
-      // Return default configuration
-      console.log('[API] Fetching dashboard customization');
+    const url = new URL(req.url!, `http://${req.headers.host}`);
+    const pathname = url.pathname;
+
+    console.log('[DASHBOARD API] Request:', req.method, pathname);
+
+    // GET /api/dashboard/customization - Get customization
+    if ((req.method === 'GET' && pathname.includes('/customization')) ||
+        (req.method === 'GET' && pathname === '/api/dashboard')) {
       return res.status(200).json(DEFAULT_CONFIG);
     }
 
-    if (req.method === 'PUT') {
-      // In a real implementation, you'd save this to a database
-      // For now, just return the merged config
+    // PUT /api/dashboard/customization - Update customization
+    if ((req.method === 'PUT' && pathname.includes('/customization')) ||
+        (req.method === 'PUT' && pathname === '/api/dashboard')) {
       const updates = req.body;
-      console.log('[API] Updating dashboard customization:', Object.keys(updates));
       
       const updatedConfig = {
         ...DEFAULT_CONFIG,
@@ -67,12 +71,24 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       return res.status(200).json(updatedConfig);
     }
 
-    return res.status(405).json({ message: 'Method not allowed' });
+    // POST /api/dashboard/customization/upload-image - Image upload
+    if (req.method === 'POST' && pathname.includes('/upload-image')) {
+      // Not implemented - requires file upload handling
+      return res.status(501).json({ 
+        message: 'Image upload not implemented. Use direct asset URLs.',
+        note: 'For production, implement with Vercel Blob Storage.'
+      });
+    }
+
+    return res.status(404).json({ 
+      message: 'Dashboard endpoint not found',
+      hint: 'Use /api/dashboard/customization'
+    });
 
   } catch (error: any) {
-    console.error('[API] Customization error:', error);
+    console.error('[DASHBOARD API] Error:', error);
     return res.status(500).json({ 
-      message: 'Failed to handle customization request',
+      message: 'Dashboard error',
       error: error.message 
     });
   }
