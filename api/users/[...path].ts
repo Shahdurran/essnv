@@ -1,6 +1,6 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
 
-// Simple in-memory user store (sync with auth.ts in production use database)
+// Simple in-memory user store (sync with auth in production use database)
 const USERS = [
   {
     username: 'admin',
@@ -34,14 +34,11 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   }
 
   try {
-    const url = new URL(req.url!, `http://${req.headers.host}`);
-    const pathname = url.pathname;
-    const pathParts = pathname.split('/').filter(Boolean);
-    
-    // Extract username if present: /api/users/admin
-    const username = pathParts.length > 2 ? pathParts[2] : null;
+    // Get the path segments: /api/users or /api/users/admin → [] or ["admin"]
+    const { path } = req.query;
+    const username = Array.isArray(path) && path.length > 0 ? path[0] : null;
 
-    console.log('[USERS API] Request:', req.method, pathname, { username });
+    console.log('[USERS API] Request:', req.method, username || 'list', req.url);
 
     // GET /api/users - List all users
     if (req.method === 'GET' && !username) {

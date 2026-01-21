@@ -47,20 +47,20 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   }
 
   try {
-    const url = new URL(req.url!, `http://${req.headers.host}`);
-    const pathname = url.pathname;
+    // Get the path segments: /api/dashboard/customization → ["customization"]
+    const { path } = req.query;
+    const endpoint = Array.isArray(path) ? path.join('/') : path || '';
 
-    console.log('[DASHBOARD API] Request:', req.method, pathname);
+    console.log('[DASHBOARD API] Request:', req.method, endpoint, req.url);
 
     // GET /api/dashboard/customization - Get customization
-    if ((req.method === 'GET' && pathname.includes('/customization')) ||
-        (req.method === 'GET' && pathname === '/api/dashboard')) {
+    if ((req.method === 'GET' && endpoint === 'customization') ||
+        (req.method === 'GET' && !endpoint)) {
       return res.status(200).json(DEFAULT_CONFIG);
     }
 
     // PUT /api/dashboard/customization - Update customization
-    if ((req.method === 'PUT' && pathname.includes('/customization')) ||
-        (req.method === 'PUT' && pathname === '/api/dashboard')) {
+    if (req.method === 'PUT' && endpoint === 'customization') {
       const updates = req.body;
       
       const updatedConfig = {
@@ -72,7 +72,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     }
 
     // POST /api/dashboard/customization/upload-image - Image upload
-    if (req.method === 'POST' && pathname.includes('/upload-image')) {
+    if (req.method === 'POST' && endpoint.includes('upload-image')) {
       // Not implemented - requires file upload handling
       return res.status(501).json({ 
         message: 'Image upload not implemented. Use direct asset URLs.',
@@ -82,7 +82,8 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
     return res.status(404).json({ 
       message: 'Dashboard endpoint not found',
-      hint: 'Use /api/dashboard/customization'
+      hint: 'Use /api/dashboard/customization',
+      received: endpoint
     });
 
   } catch (error: any) {

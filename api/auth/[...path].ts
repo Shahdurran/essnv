@@ -52,15 +52,14 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   }
 
   try {
-    // Parse the route from the URL
-    const url = new URL(req.url!, `http://${req.headers.host}`);
-    const pathname = url.pathname;
+    // Get the path segments: /api/auth/login → ["login"]
+    const { path } = req.query;
+    const endpoint = Array.isArray(path) ? path[0] : path || '';
     
-    console.log('[AUTH API] Request:', req.method, pathname);
+    console.log('[AUTH API] Request:', req.method, endpoint, req.url);
 
-    // Route: POST /api/auth?action=login or POST /api/auth/login
-    if ((pathname === '/api/auth' && url.searchParams.get('action') === 'login') || 
-        pathname === '/api/auth/login') {
+    // Route: POST /api/auth/login
+    if (endpoint === 'login') {
       if (req.method !== 'POST') {
         return res.status(405).json({ message: 'Method not allowed. Use POST.' });
       }
@@ -74,38 +73,40 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       const user = USERS.find(u => u.username === username && u.password === password);
 
       if (!user) {
+        console.log('[AUTH API] Login failed for user:', username);
         return res.status(401).json({ message: 'Invalid username or password' });
       }
 
       const { password: _, ...userWithoutPassword } = user;
+      console.log('[AUTH API] Login successful for user:', username);
       return res.status(200).json(userWithoutPassword);
     }
 
-    // Route: POST /api/auth?action=logout or POST /api/auth/logout
-    if ((pathname === '/api/auth' && url.searchParams.get('action') === 'logout') || 
-        pathname === '/api/auth/logout') {
+    // Route: POST /api/auth/logout
+    if (endpoint === 'logout') {
       if (req.method !== 'POST') {
         return res.status(405).json({ message: 'Method not allowed. Use POST.' });
       }
 
+      console.log('[AUTH API] Logout successful');
       return res.status(200).json({ message: 'Logged out successfully' });
     }
 
-    // Route: GET /api/auth?action=me or GET /api/auth/me
-    if ((pathname === '/api/auth' && url.searchParams.get('action') === 'me') || 
-        pathname === '/api/auth/me') {
+    // Route: GET /api/auth/me
+    if (endpoint === 'me') {
       if (req.method !== 'GET') {
         return res.status(405).json({ message: 'Method not allowed. Use GET.' });
       }
 
-      // No real session management in this simple version
+      console.log('[AUTH API] Auth check - not authenticated');
       return res.status(401).json({ message: 'Not authenticated' });
     }
 
     // Default: route not found
     return res.status(404).json({ 
       message: 'Auth endpoint not found',
-      hint: 'Use /api/auth/login, /api/auth/logout, or /api/auth/me'
+      hint: 'Use /api/auth/login, /api/auth/logout, or /api/auth/me',
+      received: endpoint
     });
 
   } catch (error: any) {
