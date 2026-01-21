@@ -77,13 +77,14 @@ export default function CollectionsBreakdownWidget({
     }
 
     // Calculate base monthly collections from revenue
-    // Assuming 85% collection rate of total revenue
+    // Collections should match the revenue data from FinancialRevenueWidget
     const practiceType = user.practiceName?.toLowerCase().includes('orthodontic') 
       ? 'orthodontic' 
       : 'ophthalmology';
     
-    // Base monthly collections
-    const baseMonthlyCollections = practiceType === 'orthodontic' ? 815000 : 360000;
+    // Base monthly collections (should match revenue from staticData)
+    // Orthodontic: $959,510/month, Ophthalmology: ~$360,000/month
+    const baseMonthlyCollections = practiceType === 'orthodontic' ? 959510 : 360000;
     
     // Scale by time period
     const multiplier = localTimePeriod === '1M' ? 1 : 
