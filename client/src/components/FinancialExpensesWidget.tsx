@@ -4,6 +4,7 @@ import { Badge } from "@/components/ui/badge";
 import { TrendingDown, TrendingUp, Minus } from "lucide-react";
 import { useState } from "react";
 import { getFinancialExpensesFromPL } from "@/lib/staticData";
+import { useAuth } from "@/contexts/AuthContext";
 
 interface FinancialExpensesWidgetProps {
   selectedLocationId: string;
@@ -33,9 +34,16 @@ export default function FinancialExpensesWidget({
   title = "Expenses",
   subheadingOverrides = {}
 }: FinancialExpensesWidgetProps) {
+  // Get user context to determine practice type
+  const { user } = useAuth();
+  
+  // Determine practice type based on user's practice name
+  const practiceType = user?.practiceName?.toLowerCase().includes('orthodontic') 
+    ? 'orthodontic' 
+    : 'ophthalmology';
 
   // Get expense data from static data
-  const expenseData = getFinancialExpensesFromPL(selectedLocationId, selectedPeriod);
+  const expenseData = getFinancialExpensesFromPL(selectedLocationId, selectedPeriod, practiceType);
 
   // Use static data and apply subheading overrides
   const expenseCategories = expenseData.categories.map(cat => ({

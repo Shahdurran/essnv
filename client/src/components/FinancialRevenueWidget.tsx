@@ -33,6 +33,7 @@ import {
   Filter
 } from "lucide-react";
 import { getFinancialRevenueFromPL } from "@/lib/staticData";
+import { useAuth } from "@/contexts/AuthContext";
 
 /*
  * REVENUE CATEGORY DATA INTERFACE
@@ -80,9 +81,16 @@ export default function FinancialRevenueWidget({
   title = "Revenue",
   subheadingOverrides = {}
 }: FinancialRevenueWidgetProps) {
+  // Get user context to determine practice type
+  const { user } = useAuth();
+  
+  // Determine practice type based on user's practice name
+  const practiceType = user?.practiceName?.toLowerCase().includes('orthodontic') 
+    ? 'orthodontic' 
+    : 'ophthalmology';
 
   // Get revenue data from static data
-  const revenueData = getFinancialRevenueFromPL(selectedLocationId, selectedPeriod);
+  const revenueData = getFinancialRevenueFromPL(selectedLocationId, selectedPeriod, practiceType);
 
   // Convert static data to expected format with calculated percentages
   // Apply subheading overrides if provided

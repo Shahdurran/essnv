@@ -281,9 +281,51 @@ function filterDataByPeriod(data: RawPLItem[] | RawCashFlowItem[], period: strin
 }
 
 /**
+ * Orthodontic practice revenue data (for Elite Orthodontics)
+ */
+const ORTHODONTIC_REVENUE_DATA = {
+  monthly: {
+    'Comprehensive Orthodontic Treatment': 319000,
+    'Dental Implants': 179200,
+    'Crowns': 143750,
+    'Wisdom Tooth Extractions': 94500,
+    'Root Canal Therapy': 78200,
+    'Limited Orthodontic Treatment': 61600,
+    'Surgical Extractions': 48160,
+    'Teeth Whitening': 35100
+  }
+};
+
+/**
  * Get financial revenue data from P&L
  */
-export function getFinancialRevenueFromPL(locationId: string = 'all', period: string = '1Y') {
+export function getFinancialRevenueFromPL(locationId: string = 'all', period: string = '1Y', practiceType: string = 'ophthalmology') {
+  // Check if this is an orthodontic practice
+  if (practiceType === 'orthodontic') {
+    // Use orthodontic revenue data
+    const multiplier = period === '1M' ? 1 : 
+                      period === '3M' ? 3 : 
+                      period === '6M' ? 6 : 
+                      period === '1Y' ? 12 : 12;
+    
+    const categories = Object.entries(ORTHODONTIC_REVENUE_DATA.monthly).map(([name, baseAmount]) => ({
+      id: name.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, ''),
+      name: name,
+      amount: Math.round(baseAmount * multiplier),
+      change: Math.random() * 15 + 5, // 5-20% positive growth
+      trend: 'up' as const
+    }));
+    
+    const total = categories.reduce((sum, cat) => sum + cat.amount, 0);
+    
+    return {
+      categories,
+      total,
+      period
+    };
+  }
+  
+  // Otherwise use ophthalmology data from P&L
   // Ignore locationId - data remains the same for all locations
   let filteredData = rawPLData;
   
@@ -313,9 +355,51 @@ export function getFinancialRevenueFromPL(locationId: string = 'all', period: st
 }
 
 /**
+ * Orthodontic practice expense data (for Elite Orthodontics)
+ */
+const ORTHODONTIC_EXPENSE_DATA = {
+  monthly: {
+    'Salaries & Wages': 185000,
+    'Dental Supplies': 95000,
+    'Rent & Facilities': 42000,
+    'Equipment & Maintenance': 28000,
+    'Marketing & Advertising': 22000,
+    'Insurance': 18000,
+    'Utilities': 12000,
+    'Professional Services': 9000
+  }
+};
+
+/**
  * Get financial expenses data from P&L
  */
-export function getFinancialExpensesFromPL(locationId: string = 'all', period: string = '1Y') {
+export function getFinancialExpensesFromPL(locationId: string = 'all', period: string = '1Y', practiceType: string = 'ophthalmology') {
+  // Check if this is an orthodontic practice
+  if (practiceType === 'orthodontic') {
+    // Use orthodontic expense data
+    const multiplier = period === '1M' ? 1 : 
+                      period === '3M' ? 3 : 
+                      period === '6M' ? 6 : 
+                      period === '1Y' ? 12 : 12;
+    
+    const categories = Object.entries(ORTHODONTIC_EXPENSE_DATA.monthly).map(([name, baseAmount]) => ({
+      id: name.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, ''),
+      name: name,
+      amount: Math.round(baseAmount * multiplier),
+      change: Math.random() * 8 - 2, // -2 to +6% change
+      trend: Math.random() > 0.6 ? 'up' : 'down' as const
+    }));
+    
+    const total = categories.reduce((sum, cat) => sum + cat.amount, 0);
+    
+    return {
+      categories,
+      total,
+      period
+    };
+  }
+  
+  // Otherwise use ophthalmology data from P&L
   // Ignore locationId - data remains the same for all locations
   let filteredData = rawPLData;
   
