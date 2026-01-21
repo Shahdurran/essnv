@@ -14,7 +14,7 @@
 
 import { createContext, useContext, useState, useEffect, ReactNode } from "react";
 
-interface User {
+export interface User {
   username: string;
   role: 'admin' | 'user';
   practiceName: string;

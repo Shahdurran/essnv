@@ -57,6 +57,8 @@ import {
 } from "lucide-react";
 // TypeScript interface for financial data
 import type { FinancialRevenueCategory } from "../../../shared/schema";
+// Authentication context for user information
+import { useAuth } from "@/contexts/AuthContext";
 
 /*
  * TYPESCRIPT INTERFACE DEFINITION
@@ -99,6 +101,13 @@ export default function TopRevenueProcedures({
   selectedLocationId,
   selectedTimePeriod
 }: TopRevenueProceduresProps) {
+  // Get user context to determine practice type
+  const { user } = useAuth();
+  
+  // Determine practice type based on user's practice name
+  const practiceType = user?.practiceName?.toLowerCase().includes('orthodontic') 
+    ? 'orthodontic' 
+    : 'ophthalmology';
 
   // State for local time range filtering - Initialize with "last-month" preset
   const [localTimeRange, setLocalTimeRange] = useState("last-month");
@@ -126,7 +135,7 @@ export default function TopRevenueProcedures({
    * Uses local time range if set, otherwise uses global time period
    */
   const effectiveTimePeriod = getTimePeriodFromLocalRange(localTimeRange);
-  const procedures = generateTopRevenueProcedures(effectiveTimePeriod);
+  const procedures = generateTopRevenueProcedures(effectiveTimePeriod, practiceType);
   
   // Debug logging to check values
   console.log('TopRevenueProcedures Debug:', {

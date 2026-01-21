@@ -365,15 +365,173 @@ export const practiceLocations = [
   },
   {
     id: "gainesville",
-    name: "Gainesville",
+    name: "Falls Church",
     address: "7601 Heritage Dr, Suite 330",
-    city: "Gainesville",
+    city: "Falls Church",
     state: "VA",
     zipCode: "20155",
     phone: "571-445-0002",
     isActive: true,
     patientVolume: 350,
     monthlyRevenue: 857500
+  },
+  {
+    id: "manassas",
+    name: "Woodbridge",
+    address: "2700 Potomac Mills Circle",
+    city: "Woodbridge",
+    state: "VA",
+    zipCode: "22192",
+    phone: "571-445-0003",
+    isActive: true,
+    patientVolume: 420,
+    monthlyRevenue: 1050000
+  },
+  {
+    id: "leesburg",
+    name: "Stafford",
+    address: "2900 Gordon Shelton Blvd",
+    city: "Stafford",
+    state: "VA",
+    zipCode: "22554",
+    phone: "571-445-0004",
+    isActive: true,
+    patientVolume: 310,
+    monthlyRevenue: 775000
+  },
+  {
+    id: "reston",
+    name: "Lorton",
+    address: "9000 Lorton Station Blvd",
+    city: "Lorton",
+    state: "VA",
+    zipCode: "22079",
+    phone: "571-445-0005",
+    isActive: true,
+    patientVolume: 280,
+    monthlyRevenue: 700000
+  },
+  {
+    id: "bealeton",
+    name: "Bealeton",
+    address: "11445 Marsh Rd",
+    city: "Bealeton",
+    state: "VA",
+    zipCode: "22712",
+    phone: "571-445-0006",
+    isActive: true,
+    patientVolume: 190,
+    monthlyRevenue: 475000
+  }
+];
+
+/**
+ * Orthodontic procedures data (for Elite Orthodontics)
+ */
+const ORTHODONTIC_PROCEDURES = [
+  {
+    id: "D8080",
+    cptCode: "D8080",
+    name: "Comprehensive Orthodontic Treatment",
+    description: "Comprehensive orthodontic treatment",
+    category: "medical",
+    basePrice: 5500.00,
+    monthlyVolume: 58,
+    monthlyRevenue: 319000,
+    growth: "+12.5%",
+    icon: "activity",
+    rvuValue: 0.00
+  },
+  {
+    id: "D6010",
+    cptCode: "D6010",
+    name: "Dental Implants",
+    description: "Dental implants",
+    category: "medical",
+    basePrice: 3200.00,
+    monthlyVolume: 56,
+    monthlyRevenue: 179200,
+    growth: "+15.2%",
+    icon: "activity",
+    rvuValue: 0.00
+  },
+  {
+    id: "D2740",
+    cptCode: "D2740",
+    name: "Crowns",
+    description: "Crowns",
+    category: "medical",
+    basePrice: 1250.00,
+    monthlyVolume: 115,
+    monthlyRevenue: 143750,
+    growth: "+8.7%",
+    icon: "activity",
+    rvuValue: 0.00
+  },
+  {
+    id: "D7240",
+    cptCode: "D7240",
+    name: "Wisdom Tooth Extractions",
+    description: "Wisdom tooth extractions",
+    category: "medical",
+    basePrice: 450.00,
+    monthlyVolume: 210,
+    monthlyRevenue: 94500,
+    growth: "+6.3%",
+    icon: "activity",
+    rvuValue: 0.00
+  },
+  {
+    id: "D3310",
+    cptCode: "D3310",
+    name: "Root Canal Therapy",
+    description: "Root canal therapy",
+    category: "medical",
+    basePrice: 850.00,
+    monthlyVolume: 92,
+    monthlyRevenue: 78200,
+    growth: "+5.1%",
+    icon: "activity",
+    rvuValue: 0.00
+  },
+  {
+    id: "D8090",
+    cptCode: "D8090",
+    name: "Limited Orthodontic Treatment",
+    description: "Limited orthodontic treatment",
+    category: "medical",
+    basePrice: 2200.00,
+    monthlyVolume: 28,
+    monthlyRevenue: 61600,
+    growth: "+9.8%",
+    icon: "activity",
+    rvuValue: 0.00
+  },
+  {
+    id: "D7210",
+    cptCode: "D7210",
+    name: "Surgical and Simple Tooth Extractions",
+    description: "Surgical and simple tooth extractions",
+    category: "medical",
+    basePrice: 280.00,
+    monthlyVolume: 172,
+    monthlyRevenue: 48160,
+    growth: "+4.2%",
+    icon: "activity",
+    rvuValue: 0.00
+  },
+  {
+    id: "D9972",
+    cptCode: "D9972",
+    name: "Teeth Whitening",
+    description: "Teeth whitening (cosmetic)",
+    category: "cosmetic",
+    basePrice: 450.00,
+    monthlyVolume: 78,
+    monthlyRevenue: 35100,
+    growth: "+18.5%",
+    icon: "zap",
+    rvuValue: 0.00
   }
 ];
 
@@ -386,8 +544,38 @@ export const practiceLocations = [
  * 
  * This function generates top revenue procedures data scaled by time period.
  */
-export function generateTopRevenueProcedures(timeRange: string = '1Y') {
-  // Data remains the same for all locations
+export function generateTopRevenueProcedures(timeRange: string = '1Y', practiceType: string = 'ophthalmology') {
+  // Check practice type to determine which procedures to use
+  const isOrthodontic = practiceType === 'orthodontic';
+  
+  if (isOrthodontic) {
+    // Use orthodontic procedures
+    let multiplier = 1;
+    switch (timeRange) {
+      case '1M':
+        multiplier = 1;
+        break;
+      case '3M':
+        multiplier = 3;
+        break;
+      case '6M':
+        multiplier = 6;
+        break;
+      case '1Y':
+        multiplier = 12;
+        break;
+      default:
+        multiplier = 12;
+    }
+    
+    return ORTHODONTIC_PROCEDURES.map(proc => ({
+      ...proc,
+      monthlyVolume: Math.round(proc.monthlyVolume * multiplier),
+      monthlyRevenue: Math.round(proc.monthlyRevenue * multiplier)
+    }));
+  }
+  
+  // Otherwise use ophthalmology procedures (default)
   // Base monthly data
   const baseProcedures = [
   {

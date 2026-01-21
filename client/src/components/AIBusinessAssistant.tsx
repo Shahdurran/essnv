@@ -62,8 +62,11 @@ import {
   BarChart3, 
   Trophy,
   MessageSquare,
-  Loader2
+  Loader2,
+  User
 } from "lucide-react";
+// Authentication context for user information
+import { useAuth } from "@/contexts/AuthContext";
 // User avatar for chat interface
 import drJohnJosephsonPhoto from "@assets/Dr. John Josephson_1757862871625.jpeg";
 
@@ -111,6 +114,8 @@ interface ChatMessage {
  * @param {AIBusinessAssistantProps} props - Component properties
  */
 export default function AIBusinessAssistant({ selectedLocationId }: AIBusinessAssistantProps) {
+  // Get authenticated user information
+  const { user } = useAuth();
   
   /*
    * COMPONENT STATE MANAGEMENT
@@ -205,16 +210,21 @@ export default function AIBusinessAssistant({ selectedLocationId }: AIBusinessAs
    * This provides context and encourages user interaction.
    */
   useEffect(() => {
+    if (!user) return;
+    
+    // Determine number of locations based on practice
+    const locationCount = user.practiceName?.toLowerCase().includes('orthodontic') ? 6 : 2;
+    
     const welcomeMessage: ChatMessage = {
       id: "welcome",
       type: "ai",
-      content: "Hi Dr. John Josephson! I'm your AI business analytics assistant. Ask me anything about your practice performance, forecasts, or key metrics across your 2 locations.",
+      content: `Hi ${user.ownerName || 'Doctor'}! I'm your AI business analytics assistant. Ask me anything about your practice performance, forecasts, or key metrics across your ${locationCount} locations.`,
       timestamp: new Date().toISOString(),
       isWelcome: true
     };
     
     setMessages([welcomeMessage]);
-  }, []);
+  }, [user]);
 
   /**
    * Handle scrolling for non-streaming messages (user messages and completed AI responses)
@@ -557,7 +567,7 @@ export default function AIBusinessAssistant({ selectedLocationId }: AIBusinessAs
             <div className="min-w-0 flex-1">
               <h3 className="text-lg sm:text-xl font-bold truncate">AI Business Assistant</h3>
               <p className="text-xs sm:text-sm text-blue-100 hidden sm:block">
-                Ask anything about your practice performance across all 2 locations
+                Ask anything about your practice performance across all {user?.practiceName?.toLowerCase().includes('orthodontic') ? '6' : '2'} locations
               </p>
               <p className="text-xs text-blue-100 sm:hidden">
                 Ask about practice performance
@@ -617,12 +627,24 @@ export default function AIBusinessAssistant({ selectedLocationId }: AIBusinessAs
               </div>
               
               {message.type === 'user' && (
-                <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-lg overflow-hidden flex-shrink-0 ml-2 sm:ml-3">
-                  <img 
-                    src={drJohnJosephsonPhoto} 
-                    alt="Dr. John Josephson"
-                    className="w-full h-full object-cover"
-                  />
+                <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-lg overflow-hidden flex-shrink-0 ml-2 sm:ml-3 bg-gray-200 flex items-center justify-center">
+                  {user?.ownerPhotoUrl ? (
+                    <img 
+                      src={user.ownerPhotoUrl} 
+                      alt={user.ownerName || 'Doctor'}
+                      className="w-full h-full object-cover"
+                      onError={(e) => {
+                        // Fallback to icon if image fails to load
+                        e.currentTarget.style.display = 'none';
+                        const iconContainer = e.currentTarget.parentElement;
+                        if (iconContainer) {
+                          iconContainer.innerHTML = '<svg class="h-6 w-6 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 4-6 8-6s8 2 8 6"/></svg>';
+                        }
+                      }}
+                    />
+                  ) : (
+                    <User className="h-6 w-6 text-gray-500" />
+                  )}
                 </div>
               )}
             </div>

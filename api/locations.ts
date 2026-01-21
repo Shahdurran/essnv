@@ -21,33 +21,39 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     const locations = [
       {
         id: "fairfax",
-        name: "Fairfax Office",
-        address: "123 Main St, Fairfax, VA",
-        phone: "(555) 123-4567"
+        name: "Fairfax",
+        address: "10721 Main St, Suite 2200, Fairfax, VA 22030",
+        phone: "(571) 445-0001"
       },
       {
         id: "gainesville", 
-        name: "Gainesville Office",
-        address: "456 Oak Ave, Gainesville, VA",
-        phone: "(555) 987-6543"
+        name: "Falls Church",
+        address: "7601 Heritage Dr, Suite 330, Falls Church, VA 20155",
+        phone: "(571) 445-0002"
       },
       {
         id: "manassas",
-        name: "Manassas Office",
-        address: "789 Pine St, Manassas, VA",
-        phone: "(555) 456-7890"
+        name: "Woodbridge",
+        address: "2700 Potomac Mills Circle, Woodbridge, VA 22192",
+        phone: "(571) 445-0003"
       },
       {
         id: "leesburg",
-        name: "Leesburg Office",
-        address: "321 Elm St, Leesburg, VA",
-        phone: "(555) 234-5678"
+        name: "Stafford",
+        address: "2900 Gordon Shelton Blvd, Stafford, VA 22554",
+        phone: "(571) 445-0004"
       },
       {
         id: "reston",
-        name: "Reston Office",
-        address: "654 Maple Ave, Reston, VA",
-        phone: "(555) 345-6789"
+        name: "Lorton",
+        address: "9000 Lorton Station Blvd, Lorton, VA 22079",
+        phone: "(571) 445-0005"
+      },
+      {
+        id: "bealeton",
+        name: "Bealeton",
+        address: "11445 Marsh Rd, Bealeton, VA 22712",
+        phone: "(571) 445-0006"
       }
     ];
     
