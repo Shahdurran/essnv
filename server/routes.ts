@@ -631,6 +631,101 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  /**
+   * POST /api/locations - Create a new practice location
+   */
+  app.post("/api/locations", async (req, res) => {
+    try {
+      const locationData = req.body;
+
+      if (!locationData.name || !locationData.address) {
+        return res.status(400).json({ message: 'Name and address are required' });
+      }
+
+      // Generate ID from name if not provided
+      const generateId = (name: string) => {
+        return name.toLowerCase().replace(/[^a-z0-9]/g, '-').replace(/-+/g, '-').replace(/^-|-$/g, '');
+      };
+
+      const customId = locationData.id || generateId(locationData.name);
+      
+      // Create location using storage
+      const newLocation = await storage.createPracticeLocationWithId({
+        name: locationData.name,
+        address: locationData.address,
+        city: locationData.city || '',
+        state: locationData.state || '',
+        zipCode: locationData.zipCode || '',
+        phone: locationData.phone || null,
+        isActive: locationData.isActive !== undefined ? locationData.isActive : true
+      }, customId);
+
+      console.log('[LOCATIONS] Created location:', newLocation);
+      res.status(201).json(newLocation);
+    } catch (error: any) {
+      console.error('[LOCATIONS] Error creating location:', error);
+      res.status(500).json({ message: 'Failed to create location', error: error.message });
+    }
+  });
+
+  /**
+   * PUT /api/locations - Update an existing practice location
+   */
+  app.put("/api/locations", async (req, res) => {
+    try {
+      const updates = req.body;
+      const locationId = updates.id;
+
+      if (!locationId) {
+        return res.status(400).json({ message: 'Location ID is required in request body' });
+      }
+
+      // Update location using storage
+      const updatedLocation = await storage.updatePracticeLocation(locationId, updates);
+      
+      console.log('[LOCATIONS] Updated location:', updatedLocation);
+      res.status(200).json(updatedLocation);
+    } catch (error: any) {
+      console.error('[LOCATIONS] Error updating location:', error);
+      if (error.message.includes('not found')) {
+        return res.status(404).json({ message: 'Location not found' });
+      }
+      res.status(500).json({ message: 'Failed to update location', error: error.message });
+    }
+  });
+
+  /**
+   * DELETE /api/locations - Delete a practice location
+   */
+  app.delete("/api/locations", async (req, res) => {
+    try {
+      const { id: locationId } = req.body;
+
+      if (!locationId) {
+        return res.status(400).json({ message: 'Location ID is required in request body' });
+      }
+
+      // Debug: Check what locations exist
+      const allLocations = await storage.getAllPracticeLocations();
+      console.log('[LOCATIONS] All locations before delete:', allLocations.map(l => ({ id: l.id, name: l.name })));
+      console.log('[LOCATIONS] Attempting to delete ID:', locationId);
+
+      // Delete location using storage
+      const deleted = await storage.deletePracticeLocation(locationId);
+      
+      if (!deleted) {
+        console.log('[LOCATIONS] Location not found for deletion:', locationId);
+        return res.status(404).json({ message: 'Location not found' });
+      }
+      
+      console.log('[LOCATIONS] Successfully deleted location:', locationId);
+      res.status(200).json({ message: 'Location deleted successfully', id: locationId });
+    } catch (error: any) {
+      console.error('[LOCATIONS] Error deleting location:', error);
+      res.status(500).json({ message: 'Failed to delete location', error: error.message });
+    }
+  });
+
   // ============================================================================
   // ANALYTICS AND METRICS ROUTES
   // ============================================================================

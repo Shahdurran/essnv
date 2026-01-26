@@ -96,12 +96,13 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       return res.status(201).json(newLocation);
     }
 
-    // PUT /api/locations/:id - Update location
+    // PUT /api/locations - Update location
     if (req.method === 'PUT') {
-      const locationId = req.query.id as string;
+      const updates = req.body;
+      const locationId = updates.id;
       
       if (!locationId) {
-        return res.status(400).json({ message: 'Location ID is required' });
+        return res.status(400).json({ message: 'Location ID is required in request body' });
       }
 
       const locationIndex = LOCATIONS.findIndex(loc => loc.id === locationId);
@@ -110,7 +111,6 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         return res.status(404).json({ message: 'Location not found' });
       }
 
-      const updates = req.body;
       LOCATIONS[locationIndex] = {
         ...LOCATIONS[locationIndex],
         ...updates,
@@ -121,12 +121,12 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       return res.status(200).json(LOCATIONS[locationIndex]);
     }
 
-    // DELETE /api/locations/:id - Delete location
+    // DELETE /api/locations - Delete location (ID in body)
     if (req.method === 'DELETE') {
-      const locationId = req.query.id as string;
+      const { id: locationId } = req.body;
       
       if (!locationId) {
-        return res.status(400).json({ message: 'Location ID is required' });
+        return res.status(400).json({ message: 'Location ID is required in request body' });
       }
 
       const locationIndex = LOCATIONS.findIndex(loc => loc.id === locationId);

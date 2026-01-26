@@ -51,6 +51,8 @@ export interface IStorage {
   getAllPracticeLocations(): Promise<PracticeLocation[]>;
   getPracticeLocation(id: string): Promise<PracticeLocation | undefined>;
   createPracticeLocation(location: InsertPracticeLocation): Promise<PracticeLocation>;
+  updatePracticeLocation(id: string, updates: Partial<PracticeLocation>): Promise<PracticeLocation>;
+  deletePracticeLocation(id: string): Promise<boolean>;
 
   // Patient management
   getPatientsByLocation(locationId: string): Promise<Patient[]>;
@@ -331,6 +333,24 @@ export class MemStorage implements IStorage {
     };
     this.practiceLocations.set(customId, location);
     return location;
+  }
+
+  async updatePracticeLocation(id: string, updates: Partial<PracticeLocation>): Promise<PracticeLocation> {
+    const existing = this.practiceLocations.get(id);
+    if (!existing) {
+      throw new Error(`Location with id ${id} not found`);
+    }
+    const updated: PracticeLocation = {
+      ...existing,
+      ...updates,
+      id: existing.id // Don't allow ID changes
+    };
+    this.practiceLocations.set(id, updated);
+    return updated;
+  }
+
+  async deletePracticeLocation(id: string): Promise<boolean> {
+    return this.practiceLocations.delete(id);
   }
 
   // Patient management methods

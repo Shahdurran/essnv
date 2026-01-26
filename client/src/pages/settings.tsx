@@ -1057,9 +1057,11 @@ export default function Settings() {
                             }
                             
                             try {
-                              const response = await fetch(`/api/locations?id=${location.id}`, {
+                              const response = await fetch('/api/locations', {
                                 method: 'DELETE',
-                                credentials: 'include'
+                                headers: { 'Content-Type': 'application/json' },
+                                credentials: 'include',
+                                body: JSON.stringify({ id: location.id })
                               });
                               
                               if (!response.ok) {
@@ -1148,7 +1150,7 @@ export default function Settings() {
                                 }
                               } else {
                                 // Update existing location
-                                const response = await fetch(`/api/locations?id=${location.id}`, {
+                                const response = await fetch('/api/locations', {
                                   method: 'PUT',
                                   headers: { 'Content-Type': 'application/json' },
                                   credentials: 'include',
