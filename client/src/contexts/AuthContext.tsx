@@ -135,6 +135,19 @@ export function AuthProvider({ children }: AuthProviderProps) {
 export function useAuth() {
   const context = useContext(AuthContext);
   if (context === undefined) {
+    // During development with HMR, context might be temporarily undefined
+    // Return a safe default instead of throwing
+    if (import.meta.env.DEV) {
+      console.warn("useAuth called outside AuthProvider, returning default values");
+      return {
+        isAuthenticated: false,
+        user: null,
+        login: () => {},
+        logout: async () => {},
+        isLoading: true,
+        isAdmin: false
+      };
+    }
     throw new Error("useAuth must be used within an AuthProvider");
   }
   return context;
