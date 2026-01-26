@@ -36,6 +36,7 @@ export interface User {
   procedureNameOverrides: Record<string, string>;
   locationNameOverrides: Record<string, string>;
   showCollectionsWidget: boolean;
+  userLocations?: string[]; // Array of location IDs that this user has access to
 }
 
 interface AuthContextType {

@@ -2,6 +2,52 @@
   "version": 2,
   "buildCommand": "npm run build:client",
   "outputDirectory": "dist/public",
+  "rewrites": [
+    {
+      "source": "/api/auth/login",
+      "destination": "/api/auth/login.ts"
+    },
+    {
+      "source": "/api/auth/:path*",
+      "destination": "/api/auth/[...path].ts"
+    },
+    {
+      "source": "/api/users/:path*",
+      "destination": "/api/users/[...path].ts"
+    },
+    {
+      "source": "/api/users",
+      "destination": "/api/users/[...path].ts"
+    },
+    {
+      "source": "/api/dashboard/customization/:path*",
+      "destination": "/api/dashboard/[...path].ts"
+    },
+    {
+      "source": "/api/dashboard/:path*",
+      "destination": "/api/dashboard/[...path].ts"
+    },
+    {
+      "source": "/api/locations",
+      "destination": "/api/locations.ts"
+    },
+    {
+      "source": "/api/analytics/:path*",
+      "destination": "/api/analytics.ts"
+    },
+    {
+      "source": "/api/financial/:path*",
+      "destination": "/api/financial.ts"
+    },
+    {
+      "source": "/api/ai/:path*",
+      "destination": "/api/ai/query.ts"
+    },
+    {
+      "source": "/api/health",
+      "destination": "/api/health.ts"
+    }
+  ],
   "routes": [
     {
       "src": "/assets/(.*)",

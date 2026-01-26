@@ -18,7 +18,26 @@ const USERS = [
     cashOutTitle: 'Cash Out',
     topRevenueTitle: 'Top Revenue Procedures',
     showCollectionsWidget: true,
-    providers: []
+    revenueSubheadings: {},
+    expensesSubheadings: {},
+    cashInSubheadings: {},
+    cashOutSubheadings: {},
+    cashFlowSubheadings: {},
+    procedureNameOverrides: {},
+    locationNameOverrides: {},
+    providers: [
+      { name: 'Dr. John Josephson', percentage: 19 },
+      { name: 'Dr. Meghan G. Moroux', percentage: 14 },
+      { name: 'Dr. Hubert H. Pham', percentage: 13 },
+      { name: 'Dr. Sabita Ittoop', percentage: 10 },
+      { name: 'Dr. Kristen E. Dunbar', percentage: 9 },
+      { name: 'Dr. Erin Ong', percentage: 9 },
+      { name: 'Dr. Prema Modak', percentage: 8 },
+      { name: 'Dr. Julia Pierce', percentage: 7 },
+      { name: 'Dr. Heloi Stark', percentage: 6 },
+      { name: 'Dr. Noushin Sahraei', percentage: 5 }
+    ],
+    userLocations: [] // Empty array means access to all locations
   }
 ];
 
@@ -86,7 +105,26 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         cashOutTitle: userData.cashOutTitle || 'Cash Out',
         topRevenueTitle: userData.topRevenueTitle || 'Top Revenue Procedures',
         showCollectionsWidget: userData.showCollectionsWidget !== undefined ? userData.showCollectionsWidget : true,
-        providers: userData.providers || []
+        revenueSubheadings: userData.revenueSubheadings || {},
+        expensesSubheadings: userData.expensesSubheadings || {},
+        cashInSubheadings: userData.cashInSubheadings || {},
+        cashOutSubheadings: userData.cashOutSubheadings || {},
+        cashFlowSubheadings: userData.cashFlowSubheadings || {},
+        procedureNameOverrides: userData.procedureNameOverrides || {},
+        locationNameOverrides: userData.locationNameOverrides || {},
+        providers: userData.providers || [
+          { name: 'Dr. John Josephson', percentage: 19 },
+          { name: 'Dr. Meghan G. Moroux', percentage: 14 },
+          { name: 'Dr. Hubert H. Pham', percentage: 13 },
+          { name: 'Dr. Sabita Ittoop', percentage: 10 },
+          { name: 'Dr. Kristen E. Dunbar', percentage: 9 },
+          { name: 'Dr. Erin Ong', percentage: 9 },
+          { name: 'Dr. Prema Modak', percentage: 8 },
+          { name: 'Dr. Julia Pierce', percentage: 7 },
+          { name: 'Dr. Heloi Stark', percentage: 6 },
+          { name: 'Dr. Noushin Sahraei', percentage: 5 }
+        ],
+        userLocations: userData.userLocations || [] // Empty array means access to all locations
       };
 
       USERS.push(newUser);

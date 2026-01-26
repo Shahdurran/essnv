@@ -74,17 +74,18 @@ interface UserConfig {
     name: string;
     percentage: number;
   }>;
+  userLocations?: string[]; // Array of location IDs that this user has access to
 }
 
 interface PracticeLocation {
   id: string;
   name: string;
   address: string;
-  city: string;
-  state: string;
-  zipCode: string;
+  city?: string;
+  state?: string;
+  zipCode?: string;
   phone: string | null;
-  isActive: boolean | null;
+  isActive?: boolean | null;
 }
 
 export default function Settings() {
@@ -127,7 +128,7 @@ export default function Settings() {
       });
       const usersData = await usersRes.json();
       
-      // Initialize providers for users that don't have them
+      // Initialize providers and locations for users that don't have them
       const usersWithProviders = usersData.map((user: UserConfig) => {
         if (!user.providers || user.providers.length === 0) {
           user.providers = [
@@ -142,6 +143,10 @@ export default function Settings() {
             { name: 'Dr. Heloi Stark', percentage: 6 },
             { name: 'Dr. Noushin Sahraei', percentage: 5 }
           ];
+        }
+        // Initialize userLocations if not present - default to all locations
+        if (!user.userLocations) {
+          user.userLocations = [];
         }
         return user;
       });
@@ -189,6 +194,10 @@ export default function Settings() {
           { name: 'Dr. Heloi Stark', percentage: 6 },
           { name: 'Dr. Noushin Sahraei', percentage: 5 }
         ];
+      }
+      // Initialize userLocations if not present
+      if (!user.userLocations) {
+        user.userLocations = [];
       }
       setEditingUser(user);
     }
@@ -538,11 +547,12 @@ export default function Settings() {
           {/* Settings Panel */}
           <div className="lg:col-span-3">
             <Tabs defaultValue="branding" className="space-y-6">
-              <TabsList className="grid w-full grid-cols-5">
+              <TabsList className="grid w-full grid-cols-6">
                 <TabsTrigger value="branding">Branding</TabsTrigger>
                 <TabsTrigger value="widgets">Widgets</TabsTrigger>
                 <TabsTrigger value="subheadings">Subheadings</TabsTrigger>
                 <TabsTrigger value="providers">Providers</TabsTrigger>
+                <TabsTrigger value="user-locations">User Access</TabsTrigger>
                 <TabsTrigger value="locations">Locations</TabsTrigger>
               </TabsList>
 
@@ -898,33 +908,280 @@ export default function Settings() {
                 </Card>
               </TabsContent>
 
-              {/* Locations Tab */}
+              {/* User Locations Tab */}
+              <TabsContent value="user-locations" className="space-y-6">
+                <Card>
+                  <CardHeader>
+                    <CardTitle>User Location Access</CardTitle>
+                    <CardDescription>
+                      Select which locations this user can access. If no locations are selected, the user will have access to all locations.
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent className="space-y-4">
+                    {locations.length === 0 ? (
+                      <p className="text-sm text-gray-500">No locations available</p>
+                    ) : (
+                      <div className="space-y-3">
+                        {locations.map((location) => {
+                          const isSelected = editingUser.userLocations && editingUser.userLocations.includes(location.id);
+                          return (
+                            <div 
+                              key={location.id} 
+                              className="flex items-center justify-between p-4 border rounded-lg hover:bg-gray-50"
+                            >
+                              <div className="flex-1">
+                                <p className="font-medium text-sm">{location.name}</p>
+                                <p className="text-xs text-gray-500">
+                                  {location.address}
+                                </p>
+                              </div>
+                              <Button
+                                variant={isSelected ? "default" : "outline"}
+                                size="sm"
+                                onClick={() => {
+                                  const currentLocations = editingUser.userLocations || [];
+                                  if (isSelected) {
+                                    // Remove location access
+                                    handleInputChange('userLocations', currentLocations.filter(id => id !== location.id));
+                                  } else {
+                                    // Grant location access
+                                    handleInputChange('userLocations', [...currentLocations, location.id]);
+                                  }
+                                }}
+                              >
+                                {isSelected ? 'Remove Access' : 'Grant Access'}
+                              </Button>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    )}
+                    
+                    <div className="pt-4 border-t">
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <p className="text-sm font-medium">
+                            Selected Locations: {editingUser.userLocations?.length || 0} / {locations.length}
+                          </p>
+                          <p className="text-xs text-gray-500">
+                            {(!editingUser.userLocations || editingUser.userLocations.length === 0) 
+                              ? 'User has access to all locations' 
+                              : 'User has limited access'}
+                          </p>
+                        </div>
+                        <div className="space-x-2">
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => {
+                              handleInputChange('userLocations', locations.map(l => l.id));
+                            }}
+                          >
+                            Select All
+                          </Button>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => {
+                              handleInputChange('userLocations', []);
+                            }}
+                          >
+                            Clear All
+                          </Button>
+                        </div>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              </TabsContent>
+
+              {/* Locations Management Tab */}
               <TabsContent value="locations" className="space-y-6">
                 <Card>
                   <CardHeader>
-                    <CardTitle>Location Names</CardTitle>
-                    <CardDescription>Customize the display names for practice locations</CardDescription>
+                    <CardTitle>Practice Locations</CardTitle>
+                    <CardDescription>
+                      Manage practice locations. Add, edit, or remove locations for your practice.
+                    </CardDescription>
                   </CardHeader>
                   <CardContent className="space-y-4">
-                    {locations.map((location) => (
-                      <div key={location.id}>
-                        <Label htmlFor={`location-${location.id}`}>
-                          {location.name} ({location.city}, {location.state})
-                        </Label>
-                        <Input
-                          id={`location-${location.id}`}
-                          value={editingUser.locationNameOverrides[location.id] || ''}
-                          onChange={(e) => handleInputChange('locationNameOverrides', {
-                            ...editingUser.locationNameOverrides,
-                            [location.id]: e.target.value
-                          })}
-                          placeholder={`Custom name for ${location.name}`}
-                        />
-                        <p className="text-xs text-gray-500 mt-1">
-                          Leave blank to use default name: {location.name}
-                        </p>
+                    {locations.map((location, index) => (
+                      <div key={location.id} className="flex items-start gap-4 p-3 border rounded-lg">
+                        <div className="flex-1 space-y-3">
+                          <div>
+                            <Label htmlFor={`location-name-${index}`}>Location Name</Label>
+                            <Input
+                              id={`location-name-${index}`}
+                              value={location.name}
+                              onChange={(e) => {
+                                const newLocations = [...locations];
+                                newLocations[index].name = e.target.value;
+                                setLocations(newLocations);
+                              }}
+                              placeholder="e.g., Fairfax Office"
+                            />
+                          </div>
+                          <div>
+                            <Label htmlFor={`location-address-${index}`}>Address</Label>
+                            <Input
+                              id={`location-address-${index}`}
+                              value={location.address}
+                              onChange={(e) => {
+                                const newLocations = [...locations];
+                                newLocations[index].address = e.target.value;
+                                setLocations(newLocations);
+                              }}
+                              placeholder="e.g., 123 Main St, City, State ZIP"
+                            />
+                          </div>
+                          <div>
+                            <Label htmlFor={`location-phone-${index}`}>Phone</Label>
+                            <Input
+                              id={`location-phone-${index}`}
+                              value={location.phone || ''}
+                              onChange={(e) => {
+                                const newLocations = [...locations];
+                                newLocations[index].phone = e.target.value;
+                                setLocations(newLocations);
+                              }}
+                              placeholder="e.g., (555) 123-4567"
+                            />
+                          </div>
+                        </div>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={async () => {
+                            if (!confirm(`Are you sure you want to delete ${location.name}?`)) {
+                              return;
+                            }
+                            
+                            try {
+                              const response = await fetch(`/api/locations?id=${location.id}`, {
+                                method: 'DELETE',
+                                credentials: 'include'
+                              });
+                              
+                              if (!response.ok) {
+                                throw new Error('Failed to delete location');
+                              }
+                              
+                              setLocations(locations.filter(loc => loc.id !== location.id));
+                              
+                              toast({
+                                title: "Success",
+                                description: `Location ${location.name} deleted successfully`
+                              });
+                            } catch (error) {
+                              console.error('Error deleting location:', error);
+                              toast({
+                                title: "Error",
+                                description: "Failed to delete location",
+                                variant: "destructive"
+                              });
+                            }
+                          }}
+                          className="mt-6"
+                        >
+                          <Trash2 className="h-4 w-4 text-red-500" />
+                        </Button>
                       </div>
                     ))}
+                    
+                    <div className="flex items-center justify-between pt-4 border-t">
+                      <p className="text-sm text-gray-500">
+                        Total Locations: {locations.length}
+                      </p>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => {
+                          const newLocation = {
+                            id: `location-${Date.now()}`,
+                            name: '',
+                            address: '',
+                            phone: null,
+                            isActive: true
+                          };
+                          setLocations([...locations, newLocation]);
+                        }}
+                      >
+                        <Plus className="h-4 w-4 mr-2" />
+                        Add Location
+                      </Button>
+                    </div>
+                    
+                    <div className="pt-4 border-t">
+                      <Button
+                        onClick={async () => {
+                          try {
+                            // Save all locations
+                            for (const location of locations) {
+                              if (!location.name || !location.address) {
+                                toast({
+                                  title: "Error",
+                                  description: "All locations must have a name and address",
+                                  variant: "destructive"
+                                });
+                                return;
+                              }
+                              
+                              // Check if it's a new location (temporary ID)
+                              if (location.id.startsWith('location-')) {
+                                // Create new location
+                                const response = await fetch('/api/locations', {
+                                  method: 'POST',
+                                  headers: { 'Content-Type': 'application/json' },
+                                  credentials: 'include',
+                                  body: JSON.stringify(location)
+                                });
+                                
+                                if (!response.ok) {
+                                  throw new Error('Failed to create location');
+                                }
+                                
+                                const newLocation = await response.json();
+                                // Update the location with the real ID
+                                const index = locations.findIndex(loc => loc.id === location.id);
+                                if (index !== -1) {
+                                  locations[index] = newLocation;
+                                }
+                              } else {
+                                // Update existing location
+                                const response = await fetch(`/api/locations?id=${location.id}`, {
+                                  method: 'PUT',
+                                  headers: { 'Content-Type': 'application/json' },
+                                  credentials: 'include',
+                                  body: JSON.stringify(location)
+                                });
+                                
+                                if (!response.ok) {
+                                  throw new Error('Failed to update location');
+                                }
+                              }
+                            }
+                            
+                            // Refresh locations list
+                            await fetchData();
+                            
+                            toast({
+                              title: "Success",
+                              description: "Locations saved successfully"
+                            });
+                          } catch (error) {
+                            console.error('Error saving locations:', error);
+                            toast({
+                              title: "Error",
+                              description: "Failed to save locations",
+                              variant: "destructive"
+                            });
+                          }
+                        }}
+                      >
+                        <Save className="h-4 w-4 mr-2" />
+                        Save All Locations
+                      </Button>
+                    </div>
                   </CardContent>
                 </Card>
               </TabsContent>

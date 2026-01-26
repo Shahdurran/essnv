@@ -35,6 +35,8 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 // Lucide React icons for visual enhancement
 import { MapPin, TrendingUp } from "lucide-react";
+// Auth context for user access control
+import { useAuth } from "@/contexts/AuthContext";
 
 /*
  * TYPESCRIPT INTERFACE DEFINITION
@@ -71,11 +73,13 @@ interface LocationSelectorProps {
 export default function LocationSelector({ selectedLocationId, onLocationChange }: LocationSelectorProps) {
   
   /*
-   * GET LOCATION DATA FROM API
-   * ==================================
+   * GET LOCATION DATA FROM API AND USER ACCESS
+   * ==========================================
    * 
    * Fetch practice location data from API which includes user-specific name overrides.
+   * Filter locations based on user's access permissions.
    */
+  const { user } = useAuth();
   const [locations, setLocations] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -84,7 +88,15 @@ export default function LocationSelector({ selectedLocationId, onLocationChange 
       try {
         const response = await fetch('/api/locations');
         const data = await response.json();
-        setLocations(data);
+        
+        // Filter locations based on user access
+        // If userLocations is empty or undefined, user has access to all locations
+        let filteredLocations = data;
+        if (user?.userLocations && user.userLocations.length > 0) {
+          filteredLocations = data.filter((loc: any) => user.userLocations?.includes(loc.id));
+        }
+        
+        setLocations(filteredLocations);
         setLoading(false);
       } catch (error) {
         console.error('Error fetching locations:', error);
@@ -93,7 +105,7 @@ export default function LocationSelector({ selectedLocationId, onLocationChange 
     };
     
     fetchLocations();
-  }, []);
+  }, [user]);
 
   /*
    * LOCATION SELECTION HANDLER
