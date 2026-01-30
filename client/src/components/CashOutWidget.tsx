@@ -55,7 +55,7 @@ export default function CashOutWidget({
   const cashFlowData = getCashFlowDataForLocation(selectedLocationId, selectedPeriod);
 
   // Filter operating activities for negative cash flows (Cash Out), excluding summary items, and convert to positive amounts for display
-  // Apply subheading overrides
+  // Apply subheading overrides: key by default name (item.name); empty override falls back to default. Amounts unchanged.
   const cashOutCategories = cashFlowData?.operating
     .filter(item => 
       item.amount < 0 && 
@@ -64,7 +64,7 @@ export default function CashOutWidget({
     )
     .map(item => ({
       ...item,
-      name: subheadingOverrides[item.name] || item.name,
+      name: subheadingOverrides[item.name]?.trim() ? subheadingOverrides[item.name] : item.name,
       amount: Math.abs(item.amount) // Convert to positive for display
     })) || [];
   

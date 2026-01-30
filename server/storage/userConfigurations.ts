@@ -44,6 +44,7 @@ export interface UserConfiguration {
   cashInSubheadings: Record<string, string>;
   cashOutSubheadings: Record<string, string>;
   cashFlowSubheadings: Record<string, string>;
+  arSubheadings: Record<string, string>;
   
   // Top Revenue Procedures customization
   procedureNameOverrides: Record<string, string>;
@@ -93,6 +94,7 @@ function getDefaultAdminConfig(): UserConfiguration {
     cashInSubheadings: defaultSubheadings.DEFAULT_CASH_IN_SUBHEADINGS,
     cashOutSubheadings: defaultSubheadings.DEFAULT_CASH_OUT_SUBHEADINGS,
     cashFlowSubheadings: defaultSubheadings.DEFAULT_CASH_FLOW_SUBHEADINGS,
+    arSubheadings: defaultSubheadings.DEFAULT_AR_SUBHEADINGS ?? {},
     procedureNameOverrides: {},
     locationNameOverrides: {},
     showCollectionsWidget: true,
@@ -197,11 +199,24 @@ export async function getAllUsers(): Promise<UserConfiguration[]> {
 }
 
 /**
+ * Normalize user config for legacy users missing new fields (e.g. arSubheadings)
+ */
+function normalizeUserConfig(config: UserConfiguration): UserConfiguration {
+  return {
+    ...config,
+    arSubheadings: config.arSubheadings && Object.keys(config.arSubheadings).length > 0
+      ? config.arSubheadings
+      : (defaultSubheadings.DEFAULT_AR_SUBHEADINGS ?? { '0-30': '0-30 days', '31-60': '31-60 days', '61-90': '61-90 days', '90+': '90+ days' }),
+  };
+}
+
+/**
  * Get user configuration by username
  */
 export async function getUserByUsername(username: string): Promise<UserConfiguration | null> {
   const configs = await readUserConfigurations();
-  return configs.find(config => config.username === username) || null;
+  const config = configs.find(c => c.username === username) || null;
+  return config ? normalizeUserConfig(config) : null;
 }
 
 /**

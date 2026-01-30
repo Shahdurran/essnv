@@ -65,11 +65,12 @@ import { useAuth } from "@/contexts/AuthContext";
  * ===============================
  * 
  * Define the component props interface for type safety and clear API documentation.
- * This component only needs location context for display purposes.
  */
 interface TopRevenueProceduresProps {
   selectedLocationId: string;                           // Location filter for display context
   selectedTimePeriod: string;                           // Time period filter for data
+  title?: string;                                       // Widget title from user preset
+  procedureNameOverrides?: Record<string, string>;       // Custom labels: key = description or CPT code
 }
 
 /*
@@ -99,7 +100,9 @@ interface TopRevenueProceduresProps {
  */
 export default function TopRevenueProcedures({ 
   selectedLocationId,
-  selectedTimePeriod
+  selectedTimePeriod,
+  title = "Top Revenue Procedures",
+  procedureNameOverrides = {}
 }: TopRevenueProceduresProps) {
   // Get user context to determine practice type
   const { user } = useAuth();
@@ -137,13 +140,14 @@ export default function TopRevenueProcedures({
   const effectiveTimePeriod = getTimePeriodFromLocalRange(localTimeRange);
   const procedures = generateTopRevenueProcedures(effectiveTimePeriod, practiceType);
   
-  // Debug logging to check values
-  console.log('TopRevenueProcedures Debug:', {
-    selectedTimePeriod,
-    proceduresCount: procedures.length,
-    firstProcedure: procedures[0],
-    totalRevenue: procedures.reduce((sum, proc) => sum + proc.monthlyRevenue, 0)
-  });
+  /** Resolve display name: override by description or CPT code, else default. Revenue amounts unchanged. */
+  const getProcedureDisplayName = (proc: { description?: string; cptCode?: string }) => {
+    const d = proc.description ?? '';
+    const c = proc.cptCode ?? '';
+    if (procedureNameOverrides[d]?.trim()) return procedureNameOverrides[d];
+    if (procedureNameOverrides[c]?.trim()) return procedureNameOverrides[c];
+    return d || 'Procedure';
+  };
   
   const revenueData = {
     categories: procedures.map(proc => ({
@@ -257,11 +261,11 @@ export default function TopRevenueProcedures({
     <Card className="bg-white rounded-xl shadow-sm border border-gray-200">
       <CardContent className="p-6">
         
-        {/* Header */}
+        {/* Header - title from user preset */}
         <div className="mb-4">
           <h3 className="text-lg font-semibold text-gray-900 flex items-center">
             <DollarSign className="h-5 w-5 mr-2 text-primary flex-shrink-0" />
-            <span className="truncate">Top Revenue Procedures</span>
+            <span className="truncate">{title}</span>
           </h3>
         </div>
 
@@ -320,10 +324,10 @@ export default function TopRevenueProcedures({
                         <IconComponent className="h-4 w-4 sm:h-5 sm:w-5 text-white" />
                       </div>
                       
-                      {/* Procedure Details */}
+                      {/* Procedure Details - label from procedureNameOverrides or default */}
                       <div className="min-w-0 flex-1">
                         <h4 className="font-medium text-gray-900 text-sm sm:text-base truncate">
-                          {procedure.description || 'Procedure'}
+                          {getProcedureDisplayName(procedure)}
                         </h4>
                       </div>
                     </div>

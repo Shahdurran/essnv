@@ -55,14 +55,14 @@ export default function CashInWidget({
   const cashFlowData = getCashFlowDataForLocation(selectedLocationId, selectedPeriod);
 
   // Filter operating activities for positive cash flows (Cash In), excluding summary items
-  // Apply subheading overrides
+  // Apply subheading overrides: key by default name (item.name); empty override falls back to default. Amounts unchanged.
   const cashInCategories = (cashFlowData?.operating.filter(item => 
     item.amount > 0 && 
     !item.name.includes('Net Cash') && 
     !item.name.includes('Total')
   ) || []).map(item => ({
     ...item,
-    name: subheadingOverrides[item.name] || item.name
+    name: subheadingOverrides[item.name]?.trim() ? subheadingOverrides[item.name] : item.name
   }));
   
   // Calculate total cash in

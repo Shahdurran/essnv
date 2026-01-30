@@ -58,16 +58,6 @@ import CollectionsBreakdownWidget from "@/components/CollectionsBreakdownWidget"
 import mdsLogo from "@assets/MDS Logo_1754254040718.png";
 import drJohnJosephsonPhoto from "@assets/Dr. John Josephson_1757862871625.jpeg";
 
-// Dashboard customization interface
-interface DashboardCustomization {
-  logoUrl: string | null;
-  practiceName: string;
-  practiceSubtitle: string | null;
-  ownerName: string | null;
-  ownerTitle: string | null;
-  ownerPhotoUrl: string | null;
-}
-
 /*
  * MAIN DASHBOARD COMPONENT
  * ========================
@@ -114,49 +104,9 @@ export default function Dashboard() {
    * how data is displayed across multiple widgets.
    */
 
-  // Get user configuration from auth context
+  // Get user configuration from auth context (dynamic identity / preset)
   const { user, isAdmin, logout } = useAuth();
   const [, setLocation] = useLocation();
-
-  // Dashboard customization state
-  const [customization, setCustomization] = useState<DashboardCustomization>({
-    logoUrl: mdsLogo,
-    practiceName: "MDS AI Analytics",
-    practiceSubtitle: "Eye Specialists & Surgeons of Northern Virginia",
-    ownerName: "Dr. John Josephson",
-    ownerTitle: "Practice Owner",
-    ownerPhotoUrl: drJohnJosephsonPhoto
-  });
-
-  // Fetch customization on mount or when user changes
-  useEffect(() => {
-    if (user) {
-      // Use user configuration from auth context
-      setCustomization({
-        logoUrl: user.logoUrl || mdsLogo,
-        practiceName: user.practiceName || "MDS AI Analytics",
-        practiceSubtitle: user.practiceSubtitle || "Eye Specialists & Surgeons of Northern Virginia",
-        ownerName: user.ownerName || "Dr. John Josephson",
-        ownerTitle: user.ownerTitle || "Practice Owner",
-        ownerPhotoUrl: user.ownerPhotoUrl || drJohnJosephsonPhoto
-      });
-    } else {
-      // Fallback to API call if user not in context
-      fetch('/api/dashboard/customization')
-        .then(res => res.json())
-        .then(data => {
-          setCustomization({
-            logoUrl: data.logoUrl || mdsLogo,
-            practiceName: data.practiceName || "MDS AI Analytics",
-            practiceSubtitle: data.practiceSubtitle || "Eye Specialists & Surgeons of Northern Virginia",
-            ownerName: data.ownerName || "Dr. John Josephson",
-            ownerTitle: data.ownerTitle || "Practice Owner",
-            ownerPhotoUrl: data.ownerPhotoUrl || drJohnJosephsonPhoto
-          });
-        })
-        .catch(err => console.error('Error loading customization:', err));
-    }
-  }, [user]);
 
   /*
    * LOCATION FILTER STATE
@@ -307,16 +257,16 @@ export default function Dashboard() {
       <header className="bg-white border-b border-gray-200 sticky top-0 z-40">
         <div className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center h-14 sm:h-16">
-            {/* Brand and Logo Section - Mobile Optimized */}
+            {/* Brand and Logo Section - Mobile Optimized (bound to user preset) */}
             <div className="flex items-center space-x-2 sm:space-x-4 min-w-0 flex-1">
               <img
-                src={customization.logoUrl || mdsLogo}
-                alt={`${customization.practiceName} Logo`}
+                src={user?.logoUrl ?? mdsLogo}
+                alt={`${user?.practiceName ?? "MDS AI Analytics"} Logo`}
                 className="w-8 h-8 sm:w-12 sm:h-12 object-contain flex-shrink-0"
               />
               <div className="min-w-0 flex-1">
-                <h1 className="text-sm sm:text-xl font-bold text-gray-900 truncate">{customization.practiceName}</h1>
-                <p className="text-xs sm:text-sm text-gray-600 hidden sm:block">{customization.practiceSubtitle}</p>
+                <h1 className="text-sm sm:text-xl font-bold text-gray-900 truncate">{user?.practiceName ?? "MDS AI Analytics"}</h1>
+                <p className="text-xs sm:text-sm text-gray-600 hidden sm:block">{user?.practiceSubtitle ?? "Eye Specialists & Surgeons of Northern Virginia"}</p>
               </div>
             </div>
 
@@ -360,12 +310,12 @@ export default function Dashboard() {
                 <LogOut className="h-4 w-4" />
               </Button>
               <div className="text-right hidden sm:block">
-                <p className="text-sm font-medium text-gray-900">{customization.ownerName}</p>
-                <p className="text-xs text-gray-600">{customization.ownerTitle}</p>
+                <p className="text-sm font-medium text-gray-900">{user?.ownerName ?? "Dr. John Josephson"}</p>
+                <p className="text-xs text-gray-600">{user?.ownerTitle ?? "Practice Owner"}</p>
               </div>
               <img
-                src={customization.ownerPhotoUrl || drJohnJosephsonPhoto}
-                alt={customization.ownerName || "Owner"}
+                src={user?.ownerPhotoUrl ?? drJohnJosephsonPhoto}
+                alt={user?.ownerName ?? "Owner"}
                 className="w-8 h-8 sm:w-10 sm:h-10 rounded-full object-cover border-2 border-blue-100"
               />
             </div>
@@ -618,6 +568,7 @@ export default function Dashboard() {
                   <ARBucketsWidget
                     selectedLocationId={selectedLocationId}
                     selectedTimePeriod={selectedFinancialPeriod}
+                    subheadingOverrides={user?.arSubheadings ?? {}}
                   />
 
                 </div>

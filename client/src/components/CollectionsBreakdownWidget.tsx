@@ -70,7 +70,8 @@ export default function CollectionsBreakdownWidget({
   }, [selectedLocationId, localTimePeriod, user]);
 
   const generateCollectionsData = () => {
-    if (!user || !user.providers) {
+    const providerList = user?.providers ?? [];
+    if (providerList.length === 0) {
       setProviders([]);
       setTotalCollections(0);
       return;
@@ -88,8 +89,8 @@ export default function CollectionsBreakdownWidget({
     const totalColls = baseMonthlyCollections * multiplier;
     setTotalCollections(totalColls);
     
-    // Calculate provider amounts based on their percentages
-    const providerData = user.providers.map(provider => ({
+    // Map through user.providers (5+ doctors supported) for chart and list
+    const providerData = providerList.map(provider => ({
       name: provider.name,
       amount: Math.round((totalColls * provider.percentage) / 100),
       percentage: provider.percentage

@@ -493,6 +493,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         cashInSubheadings: userData.cashInSubheadings || { ...defaultSubheadings.DEFAULT_CASH_IN_SUBHEADINGS },
         cashOutSubheadings: userData.cashOutSubheadings || { ...defaultSubheadings.DEFAULT_CASH_OUT_SUBHEADINGS },
         cashFlowSubheadings: userData.cashFlowSubheadings || { ...defaultSubheadings.DEFAULT_CASH_FLOW_SUBHEADINGS },
+        arSubheadings: userData.arSubheadings || { '0-30': '0-30 days', '31-60': '31-60 days', '61-90': '61-90 days', '90+': '90+ days' },
         procedureNameOverrides: userData.procedureNameOverrides || {},
         locationNameOverrides: userData.locationNameOverrides || {},
         showCollectionsWidget: userData.showCollectionsWidget !== undefined ? userData.showCollectionsWidget : true,
@@ -525,8 +526,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   /**
    * PUT /api/users/:username - Update user configuration (admin only)
+   * Preset persistence: saves branding and widget titles back to database.
    */
-  app.put("/api/users/:username", requireAdmin, async (req, res) => {
+  const handleUpdateUser = async (req: Request, res: Response) => {
     try {
       const { username } = req.params;
       const updates = req.body;
@@ -547,7 +549,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
       res.status(500).json({ message: "Failed to update user" });
     }
-  });
+  };
+
+  app.put("/api/users/:username", requireAdmin, handleUpdateUser);
+  app.patch("/api/users/:username", requireAdmin, handleUpdateUser);
 
   /**
    * DELETE /api/users/:username - Delete user (admin only)

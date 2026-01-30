@@ -43,6 +43,13 @@ export const DEFAULT_CASH_FLOW_SUBHEADINGS = {
   'Financing Activities': 'Financing Activities'
 };
 
+export const DEFAULT_AR_SUBHEADINGS = {
+  '0-30': '0-30 days',
+  '31-60': '31-60 days',
+  '61-90': '61-90 days',
+  '90+': '90+ days'
+};
+
 /**
  * Get all default subheadings for a widget type
  */
@@ -58,6 +65,8 @@ export function getDefaultSubheadings(widgetType: string): Record<string, string
       return { ...DEFAULT_CASH_OUT_SUBHEADINGS };
     case 'cashFlow':
       return { ...DEFAULT_CASH_FLOW_SUBHEADINGS };
+    case 'ar':
+      return { ...DEFAULT_AR_SUBHEADINGS };
     default:
       return {};
   }

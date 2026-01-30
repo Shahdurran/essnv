@@ -85,15 +85,18 @@ export default function FinancialRevenueWidget({
   const revenueData = getFinancialRevenueFromPL(selectedLocationId, selectedPeriod);
 
   // Convert static data to expected format with calculated percentages
-  // Apply subheading overrides if provided
+  // Apply subheading overrides: key by default name (cat.name) then id; fallback to default name. Amounts unchanged.
   const revenueCategories: RevenueCategory[] = revenueData.categories.map(cat => {
     const totalRevenue = revenueData.total;
     const percentage = totalRevenue > 0 ? (cat.amount / totalRevenue) * 100 : 0;
     const previousAmount = cat.amount / (1 + (cat.change / 100)); // Reverse calculate previous amount
+    const displayName = (subheadingOverrides[cat.name]?.trim() || subheadingOverrides[cat.id]?.trim()) 
+      ? (subheadingOverrides[cat.name] || subheadingOverrides[cat.id]) 
+      : cat.name;
     
     return {
       id: cat.id,
-      name: subheadingOverrides[cat.id] || cat.name,
+      name: displayName,
       amount: cat.amount,
       previousAmount: Math.round(previousAmount),
       percentage: percentage,

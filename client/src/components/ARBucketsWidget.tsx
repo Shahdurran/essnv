@@ -75,6 +75,7 @@ interface ARBucket {
 interface ARBucketsWidgetProps {
   selectedLocationId: string;  // Location filter for AR analysis
   selectedTimePeriod: string;  // Time period filter for data
+  subheadingOverrides?: Record<string, string>;  // Custom labels for bucket ranges (e.g. '0-30', '31-60', '61-90', '90+')
 }
 
 /*
@@ -101,7 +102,7 @@ interface ARBucketsWidgetProps {
  * 
  * @param {ARBucketsWidgetProps} props - Component properties
  */
-export default function ARBucketsWidget({ selectedLocationId, selectedTimePeriod }: ARBucketsWidgetProps) {
+export default function ARBucketsWidget({ selectedLocationId, selectedTimePeriod, subheadingOverrides = {} }: ARBucketsWidgetProps) {
 
   /**
    * Get AR buckets data from mock data
@@ -221,7 +222,7 @@ export default function ARBucketsWidget({ selectedLocationId, selectedTimePeriod
                 <div className="flex items-center">
                   <div className={`w-3 h-3 rounded-full ${colors.bar} mr-3`}></div>
                   <h3 className={`font-medium ${colors.text}`}>
-                    {bucket.ageRange} days
+                    {subheadingOverrides[bucket.ageRange] ?? `${bucket.ageRange} days`}
                   </h3>
                 </div>
                 <div className="text-right">

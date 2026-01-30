@@ -33,9 +33,11 @@ export interface User {
   cashInSubheadings: Record<string, string>;
   cashOutSubheadings: Record<string, string>;
   cashFlowSubheadings: Record<string, string>;
+  arSubheadings?: Record<string, string>;
   procedureNameOverrides: Record<string, string>;
   locationNameOverrides: Record<string, string>;
   showCollectionsWidget: boolean;
+  providers?: Array<{ name: string; percentage: number }>;
   userLocations?: string[]; // Array of location IDs that this user has access to
 }
 

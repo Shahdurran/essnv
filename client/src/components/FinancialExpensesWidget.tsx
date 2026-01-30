@@ -37,11 +37,13 @@ export default function FinancialExpensesWidget({
   // Get expense data from static data
   const expenseData = getFinancialExpensesFromPL(selectedLocationId, selectedPeriod);
 
-  // Use static data and apply subheading overrides
-  const expenseCategories = expenseData.categories.map(cat => ({
-    ...cat,
-    name: subheadingOverrides[cat.id] || cat.name
-  }));
+  // Use static data and apply subheading overrides: key by default name then id; fallback to default. Amounts unchanged.
+  const expenseCategories = expenseData.categories.map(cat => {
+    const displayName = (subheadingOverrides[cat.name]?.trim() || subheadingOverrides[cat.id]?.trim())
+      ? (subheadingOverrides[cat.name] || subheadingOverrides[cat.id])
+      : cat.name;
+    return { ...cat, name: displayName };
+  });
   
   // Calculate total expenses from static data
   const totalExpenses = expenseData.total;

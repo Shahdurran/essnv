@@ -10,11 +10,11 @@
     "ownerName": "Dr. John Josephson",
     "ownerTitle": "Practice Owner",
     "ownerPhotoUrl": "/assets/Dr. John Josephson_1757862871625-B4_CVazU.jpeg",
-    "revenueTitle": "Revenue",
-    "expensesTitle": "Expenses",
-    "cashInTitle": "Cash In",
-    "cashOutTitle": "Cash Out",
-    "topRevenueTitle": "Top Revenue Procedures",
+    "revenueTitle": "Total Practiced Incomecwc",
+    "expensesTitle": "Expensescsckhc",
+    "cashInTitle": "hi",
+    "cashOutTitle": "hi",
+    "topRevenueTitle": "Top Revenue Procedures ",
     "revenueSubheadings": {
       "Office Visits": "Office Visits",
       "Drug Acquisition (injections)": "Drug Acquisition (injections)",
@@ -47,11 +47,13 @@
       "Investing Activities": "Investing Activities",
       "Financing Activities": "Financing Activities"
     },
-    "procedureNameOverrides": {},
+    "procedureNameOverrides": {
+      "With IOL insertion": "cataract with iol"
+    },
     "locationNameOverrides": {},
     "showCollectionsWidget": true,
     "createdAt": "2026-01-19T18:28:02.436Z",
-    "updatedAt": "2026-01-26T18:55:57.965Z",
+    "updatedAt": "2026-01-29T18:47:25.015Z",
     "providers": [
       {
         "name": "Dr. John Josephson",
@@ -94,7 +96,13 @@
         "percentage": 5
       }
     ],
-    "userLocations": []
+    "userLocations": [],
+    "arSubheadings": {
+      "0-30": "current billing",
+      "31-60": "31-60 days",
+      "61-90": "61-90 days",
+      "90+": "90+ days"
+    }
   },
   {
     "username": "shahdurran",
@@ -192,5 +200,91 @@
     "createdAt": "2026-01-26T18:52:16.777Z",
     "updatedAt": "2026-01-26T19:06:30.750Z",
     "userLocations": []
+  },
+  {
+    "username": "dr_amar",
+    "password": "password123",
+    "role": "admin",
+    "logoUrl": "/assets/MDS Logo_1754254040718-Dv0l5qLn.png",
+    "practiceName": "Elite Orthodontics",
+    "practiceSubtitle": null,
+    "ownerName": "Dr. Amar Al-Mahdi",
+    "ownerTitle": null,
+    "ownerPhotoUrl": "/assets/Dr. John Josephson_1757862871625-B4_CVazU.jpeg",
+    "revenueTitle": "total earned revenue",
+    "expensesTitle": "Expenses in total",
+    "cashInTitle": "Cash In test",
+    "cashOutTitle": "Cash Out test",
+    "topRevenueTitle": "Top Revenue Procedures hi",
+    "revenueSubheadings": {
+      "Office Visits": "Clinical Visits",
+      "Drug Acquisition (injections)": "Drug Acquisition (injections)",
+      "Procedures": "Procedures",
+      "Other Revenue": "Other Revenue"
+    },
+    "expensesSubheadings": {
+      "Salaries & Wages": "Salaries & Wages",
+      "Rent & Utilities": "Rent & Utilities",
+      "Medical Supplies": "Medical Supplies",
+      "Insurance": "Insurance",
+      "Marketing": "Marketing",
+      "Equipment": "Equipment",
+      "Other Expenses": "Other Expenses"
+    },
+    "cashInSubheadings": {
+      "Patient Payments": "Patient Payments",
+      "Insurance Payments": "Insurance Payments",
+      "Other Income": "Other Income"
+    },
+    "cashOutSubheadings": {
+      "Payroll": "Payroll",
+      "Rent": "Rent",
+      "Supplies": "Supplies",
+      "Utilities": "Utilities",
+      "Other Payments": "Other Payments"
+    },
+    "cashFlowSubheadings": {
+      "Operating Activities": "Operating Activities",
+      "Investing Activities": "Investing Activities",
+      "Financing Activities": "Financing Activities"
+    },
+    "procedureNameOverrides": {
+      "With IOL insertion": "cataracts with iol",
+      "Laser glaucoma treatment": "hi"
+    },
+    "locationNameOverrides": {},
+    "showCollectionsWidget": true,
+    "providers": [
+      {
+        "name": "Dr. Amar Al-Mahdi",
+        "percentage": 30
+      },
+      {
+        "name": "Dr. Smith",
+        "percentage": 20
+      },
+      {
+        "name": "Dr. Khan",
+        "percentage": 20
+      },
+      {
+        "name": "Dr. Taylor",
+        "percentage": 15
+      },
+      {
+        "name": "Dr. White",
+        "percentage": 15
+      }
+    ],
+    "id": "user-1769642401175-9345sqida",
+    "createdAt": "2026-01-28T23:20:01.175Z",
+    "updatedAt": "2026-01-29T18:50:28.955Z",
+    "userLocations": [],
+    "arSubheadings": {
+      "0-30": "current billing",
+      "31-60": "next billings",
+      "61-90": "61-90 days",
+      "90+": "90+ days"
+    }
   }
 ]

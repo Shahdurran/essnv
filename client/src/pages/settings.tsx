@@ -34,6 +34,9 @@ const DEFAULT_EXPENSES_KEYS = ['Salaries & Wages', 'Rent & Utilities', 'Medical 
 const DEFAULT_CASH_IN_KEYS = ['Patient Payments', 'Insurance Payments', 'Other Income'];
 const DEFAULT_CASH_OUT_KEYS = ['Payroll', 'Rent', 'Supplies', 'Utilities', 'Other Payments'];
 const DEFAULT_CASH_FLOW_KEYS = ['Operating Activities', 'Investing Activities', 'Financing Activities'];
+const DEFAULT_AR_KEYS = ['0-30', '31-60', '61-90', '90+'];
+// Procedure descriptions from Top Revenue Procedures (ophthalmology) - keys for procedureNameOverrides
+const DEFAULT_PROCEDURE_KEYS = ['With IOL insertion', 'Medication injection', 'Refractive surgery', 'Upper eyelid surgery', 'Retinal imaging', 'Laser glaucoma treatment', 'New patient exam', '45-59 minutes'];
 import {
   Tabs,
   TabsContent,
@@ -67,6 +70,7 @@ interface UserConfig {
   cashInSubheadings: Record<string, string>;
   cashOutSubheadings: Record<string, string>;
   cashFlowSubheadings: Record<string, string>;
+  arSubheadings: Record<string, string>;
   procedureNameOverrides: Record<string, string>;
   locationNameOverrides: Record<string, string>;
   showCollectionsWidget: boolean;
@@ -148,6 +152,10 @@ export default function Settings() {
         if (!user.userLocations) {
           user.userLocations = [];
         }
+        // Initialize arSubheadings if not present
+        if (!user.arSubheadings) {
+          user.arSubheadings = { '0-30': '0-30 days', '31-60': '31-60 days', '61-90': '61-90 days', '90+': '90+ days' };
+        }
         return user;
       });
       
@@ -199,6 +207,10 @@ export default function Settings() {
       if (!user.userLocations) {
         user.userLocations = [];
       }
+      // Initialize arSubheadings if not present
+      if (!user.arSubheadings) {
+        user.arSubheadings = { '0-30': '0-30 days', '31-60': '31-60 days', '61-90': '61-90 days', '90+': '90+ days' };
+      }
       setEditingUser(user);
     }
   };
@@ -212,7 +224,7 @@ export default function Settings() {
     }
   };
 
-  const handleSubheadingChange = (category: 'revenueSubheadings' | 'expensesSubheadings' | 'cashInSubheadings' | 'cashOutSubheadings' | 'cashFlowSubheadings', key: string, value: string) => {
+  const handleSubheadingChange = (category: 'revenueSubheadings' | 'expensesSubheadings' | 'cashInSubheadings' | 'cashOutSubheadings' | 'cashFlowSubheadings' | 'arSubheadings', key: string, value: string) => {
     if (editingUser) {
       setEditingUser({
         ...editingUser,
@@ -740,6 +752,29 @@ export default function Settings() {
                     </div>
                   </CardContent>
                 </Card>
+
+                {/* Procedure Name Overrides - custom labels for procedure list items */}
+                <Card>
+                  <CardHeader>
+                    <CardTitle>Procedure Name Overrides</CardTitle>
+                    <CardDescription>Customize procedure labels in Top Revenue Procedures. Key = procedure description (or CPT code). Only labels change; dollar amounts stay the same.</CardDescription>
+                  </CardHeader>
+                  <CardContent className="space-y-4">
+                    {DEFAULT_PROCEDURE_KEYS.map((key) => (
+                      <div key={key}>
+                        <Label className="text-xs text-gray-500">{key}</Label>
+                        <Input
+                          value={editingUser.procedureNameOverrides?.[key] ?? ''}
+                          onChange={(e) => {
+                            const next = { ...(editingUser.procedureNameOverrides || {}), [key]: e.target.value };
+                            handleInputChange('procedureNameOverrides', next);
+                          }}
+                          placeholder={key}
+                        />
+                      </div>
+                    ))}
+                  </CardContent>
+                </Card>
               </TabsContent>
 
               {/* Subheadings Tab */}
@@ -818,6 +853,26 @@ export default function Settings() {
                           value={editingUser.cashOutSubheadings[key] || key}
                           onChange={(e) => handleSubheadingChange('cashOutSubheadings', key, e.target.value)}
                           placeholder={key}
+                        />
+                      </div>
+                    ))}
+                  </CardContent>
+                </Card>
+
+                {/* AR Buckets Subheadings */}
+                <Card>
+                  <CardHeader>
+                    <CardTitle>AR Buckets Subheadings</CardTitle>
+                    <CardDescription>Customize AR aging bucket labels (0-30, 31-60, 61-90, 90+ days)</CardDescription>
+                  </CardHeader>
+                  <CardContent className="space-y-3">
+                    {DEFAULT_AR_KEYS.map((key) => (
+                      <div key={key}>
+                        <Label className="text-xs text-gray-500">{key} days</Label>
+                        <Input
+                          value={editingUser.arSubheadings?.[key] ?? `${key} days`}
+                          onChange={(e) => handleSubheadingChange('arSubheadings', key, e.target.value)}
+                          placeholder={`${key} days`}
                         />
                       </div>
                     ))}
