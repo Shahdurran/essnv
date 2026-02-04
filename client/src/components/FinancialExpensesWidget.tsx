@@ -4,6 +4,7 @@ import { Badge } from "@/components/ui/badge";
 import { TrendingDown, TrendingUp, Minus } from "lucide-react";
 import { useState } from "react";
 import { getFinancialExpensesFromPL } from "@/lib/staticData";
+import { getDynamicLabel } from "@/lib/utils";
 
 interface FinancialExpensesWidgetProps {
   selectedLocationId: string;
@@ -39,9 +40,7 @@ export default function FinancialExpensesWidget({
 
   // Use static data and apply subheading overrides: key by default name then id; fallback to default. Amounts unchanged.
   const expenseCategories = expenseData.categories.map(cat => {
-    const displayName = (subheadingOverrides[cat.name]?.trim() || subheadingOverrides[cat.id]?.trim())
-      ? (subheadingOverrides[cat.name] || subheadingOverrides[cat.id])
-      : cat.name;
+    const displayName = getDynamicLabel(cat.name, cat.name, subheadingOverrides);
     return { ...cat, name: displayName };
   });
   

@@ -44,10 +44,11 @@ export interface User {
 interface AuthContextType {
   isAuthenticated: boolean;
   user: User | null;
-  login: (userData: User) => void;
+  login: (userData: User, token?: string) => void;
   logout: () => void;
   isLoading: boolean;
   isAdmin: boolean;
+  refreshUser: () => Promise<void>; // New function to refresh user data
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -68,9 +69,16 @@ export function AuthProvider({ children }: AuthProviderProps) {
         const authStatus = localStorage.getItem("isAuthenticated");
         
         if (authStatus === "true") {
-          // Fetch current user from API
+          // Fetch current user from API with token
+          const token = localStorage.getItem("authToken");
+          const headers: Record<string, string> = {};
+          if (token) {
+            headers['Authorization'] = `Bearer ${token}`;
+          }
+          
           const response = await fetch('/api/auth/me', {
-            credentials: 'include'
+            credentials: 'include',
+            headers
           });
           
           if (response.ok) {
@@ -80,6 +88,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
           } else {
             // Clear invalid auth
             localStorage.removeItem("isAuthenticated");
+            localStorage.removeItem("authToken");
           }
         }
       } catch (error) {
@@ -93,9 +102,12 @@ export function AuthProvider({ children }: AuthProviderProps) {
     checkAuthStatus();
   }, []);
 
-  const login = (userData: User) => {
+  const login = (userData: User, token?: string) => {
     try {
       localStorage.setItem("isAuthenticated", "true");
+      if (token) {
+        localStorage.setItem("authToken", token);
+      }
       setIsAuthenticated(true);
       setUser(userData);
     } catch (error) {
@@ -105,16 +117,49 @@ export function AuthProvider({ children }: AuthProviderProps) {
 
   const logout = async () => {
     try {
-      await fetch('/api/auth/logout', {
-        method: 'POST',
-        credentials: 'include'
-      });
+      const token = localStorage.getItem("authToken");
+      if (token) {
+        await fetch('/api/auth/logout', {
+          method: 'POST',
+          credentials: 'include',
+          headers: {
+            'Authorization': `Bearer ${token}`
+          }
+        });
+      }
       
       localStorage.removeItem("isAuthenticated");
+      localStorage.removeItem("authToken");
       setIsAuthenticated(false);
       setUser(null);
     } catch (error) {
       console.error("Error during logout:", error);
+    }
+  };
+
+  // Refresh user data from the server (useful after saving settings)
+  const refreshUser = async () => {
+    try {
+      const token = localStorage.getItem("authToken");
+      const headers: Record<string, string> = {};
+      if (token) {
+        headers['Authorization'] = `Bearer ${token}`;
+      }
+      
+      const response = await fetch('/api/auth/me', {
+        credentials: 'include',
+        headers
+      });
+      
+      if (response.ok) {
+        const userData = await response.json();
+        setUser(userData);
+        console.log("[AuthContext] User data refreshed successfully");
+      } else {
+        console.error("[AuthContext] Failed to refresh user data:", response.status);
+      }
+    } catch (error) {
+      console.error("[AuthContext] Error refreshing user data:", error);
     }
   };
 
@@ -124,7 +169,8 @@ export function AuthProvider({ children }: AuthProviderProps) {
     login,
     logout,
     isLoading,
-    isAdmin: user?.role === 'admin'
+    isAdmin: user?.role === 'admin',
+    refreshUser
   };
 
   return (
@@ -147,7 +193,8 @@ export function useAuth() {
         login: () => {},
         logout: async () => {},
         isLoading: true,
-        isAdmin: false
+        isAdmin: false,
+        refreshUser: async () => {}
       };
     }
     throw new Error("useAuth must be used within an AuthProvider");

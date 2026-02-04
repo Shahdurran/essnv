@@ -33,6 +33,7 @@ import {
   Filter
 } from "lucide-react";
 import { getFinancialRevenueFromPL } from "@/lib/staticData";
+import { getDynamicLabel } from "@/lib/utils";
 
 /*
  * REVENUE CATEGORY DATA INTERFACE
@@ -90,9 +91,7 @@ export default function FinancialRevenueWidget({
     const totalRevenue = revenueData.total;
     const percentage = totalRevenue > 0 ? (cat.amount / totalRevenue) * 100 : 0;
     const previousAmount = cat.amount / (1 + (cat.change / 100)); // Reverse calculate previous amount
-    const displayName = (subheadingOverrides[cat.name]?.trim() || subheadingOverrides[cat.id]?.trim()) 
-      ? (subheadingOverrides[cat.name] || subheadingOverrides[cat.id]) 
-      : cat.name;
+    const displayName = getDynamicLabel(cat.name, cat.name, subheadingOverrides);
     
     return {
       id: cat.id,

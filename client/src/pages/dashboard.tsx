@@ -266,7 +266,7 @@ export default function Dashboard() {
               />
               <div className="min-w-0 flex-1">
                 <h1 className="text-sm sm:text-xl font-bold text-gray-900 truncate">{user?.practiceName ?? "MDS AI Analytics"}</h1>
-                <p className="text-xs sm:text-sm text-gray-600 hidden sm:block">{user?.practiceSubtitle ?? "Eye Specialists & Surgeons of Northern Virginia"}</p>
+                <p className="text-xs sm:text-sm text-gray-600 hidden sm:block">{user?.practiceSubtitle || "Eye Specialists & Surgeons of Northern Virginia"}</p>
               </div>
             </div>
 
@@ -442,6 +442,8 @@ export default function Dashboard() {
                     <ProfitLossWidget
                       selectedLocationId={selectedLocationId}
                       selectedPeriod={selectedFinancialPeriod}
+                      revenueSubheadings={user?.revenueSubheadings || {}}
+                      expensesSubheadings={user?.expensesSubheadings || {}}
                     />
                   </div>
 
@@ -568,6 +570,7 @@ export default function Dashboard() {
                   <ARBucketsWidget
                     selectedLocationId={selectedLocationId}
                     selectedTimePeriod={selectedFinancialPeriod}
+                    title="AR Buckets (Outstanding Claims)"
                     subheadingOverrides={user?.arSubheadings ?? {}}
                   />
 

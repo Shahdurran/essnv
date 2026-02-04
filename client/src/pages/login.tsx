@@ -2,18 +2,17 @@
  * LOGIN PAGE COMPONENT
  * ====================
  * 
- * This component provides user authentication for the Eye Specialists & Surgeons
- * of Northern Virginia analytics platform. It implements a clean, professional
- * login form with validation and error handling.
+ * This component provides user authentication for the analytics platform.
+ * It implements a clean, professional login form with validation and error handling.
  * 
  * AUTHENTICATION CREDENTIALS:
- * - Username: essnv
- * - Password: essnv
+ * - Username: admin / Password: admin123 (for MDS AI Analytics)
+ * - Username: drammar / Password: elite2024 (for Elite Orthodontics)
  * 
  * FEATURES:
  * - Responsive design that works on all devices
  * - Form validation with user feedback
- * - Professional medical practice branding
+ * - Dynamic branding based on selected practice
  * - Forgot password link (placeholder for future functionality)
  */
 
@@ -63,11 +62,16 @@ export default function Login() {
         return;
       }
 
-      const userData = await response.json();
-      console.log('[LOGIN] Received user data:', userData);
+      const data = await response.json();
+      console.log('[LOGIN] Received response:', data);
       
-      // Use auth context to store user data
-      login(userData);
+      // Extract user and token from response
+      const { user: userData, token } = data;
+      console.log('[LOGIN] User data:', userData);
+      console.log('[LOGIN] Token:', token);
+      
+      // Use auth context to store user data and token
+      login(userData, token);
       console.log('[LOGIN] Login function completed');
       
       // Show success message
@@ -96,10 +100,10 @@ export default function Login() {
               <Eye className="h-8 w-8 text-white" />
             </div>
             <CardTitle className="text-2xl font-bold text-gray-900 dark:text-gray-100">
-              MDS AI Intelligence
+              MDS Analytics
             </CardTitle>
             <CardDescription className="text-gray-600 dark:text-gray-400">
-              Eye Specialists & Surgeons of Northern Virginia
+              Sign in to access your practice dashboard
             </CardDescription>
           </CardHeader>
           
@@ -184,7 +188,7 @@ export default function Login() {
         
         <div className="text-center mt-6">
           <p className="text-xs text-gray-500 dark:text-gray-400">
-            © 2024 Eye Specialists & Surgeons of Northern Virginia
+            © 2024 MDS Analytics
           </p>
         </div>
       </div>

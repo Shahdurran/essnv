@@ -1,6 +1,95 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
 
-// Simple in-memory user store (sync with auth in production use database)
+// Default subheading keys that match actual data line_item values
+const DEFAULT_REVENUE_KEYS = [
+  'Office Visits',
+  'Intravitreal Injections',
+  'Cataract Surgeries',
+  'Diagnostics & Minor Procedures',
+  'Oculoplastics',
+  'Corneal Procedures',
+  'Refractive Cash',
+  'Optical / Contact Lens Sales'
+];
+
+const DEFAULT_EXPENSES_KEYS = [
+  'Drug Acquisition (injections)',
+  'Surgical Supplies & IOLs',
+  'Optical Cost of Goods',
+  'Staff Wages & Benefits',
+  'Rent & Utilities',
+  'Insurance',
+  'Billing & Coding Vendors',
+  'Bad Debt Expense',
+  'Marketing & Outreach',
+  'Technology',
+  'Equipment Service & Leases',
+  'Office & Miscellaneous'
+];
+
+const DEFAULT_CASH_IN_KEYS = [
+  'Patient Payments',
+  'Insurance Reimbursements'
+];
+
+const DEFAULT_CASH_OUT_KEYS = [
+  'Staff Wages & Benefits',
+  'Drug Purchases',
+  'Optical Goods',
+  'Rent & Utilities',
+  'Insurance',
+  'Billing & Coding Vendors',
+  'Marketing & Outreach',
+  'Technology',
+  'Equipment Service & Leases',
+  'Office & Miscellaneous'
+];
+
+const DEFAULT_CASH_FLOW_KEYS = [
+  'Net Cash from Operating',
+  'Net Cash from Investing',
+  'Net Cash from Financing'
+];
+
+const DEFAULT_AR_KEYS = ['0-30', '31-60', '61-90', '90+'];
+
+const DEFAULT_PROCEDURE_KEYS = [
+  'With IOL insertion',
+  'Medication injection',
+  'Refractive surgery',
+  'Upper eyelid surgery',
+  'Retinal imaging',
+  'Laser glaucoma treatment',
+  'New patient exam',
+  '45-59 minutes'
+];
+
+// Helper function to initialize subheading records with default keys
+function initializeSubheadings(
+  existing: Record<string, string> | undefined,
+  defaultKeys: string[]
+): Record<string, string> {
+  const result = { ...(existing || {}) };
+  defaultKeys.forEach(key => {
+    if (!result.hasOwnProperty(key)) {
+      result[key] = '';
+    }
+  });
+  return result;
+}
+
+// Helper to initialize AR subheadings with default values
+function initializeARSubheadings(existing?: Record<string, string>): Record<string, string> {
+  const result = { ...(existing || {}) };
+  DEFAULT_AR_KEYS.forEach(key => {
+    if (!result.hasOwnProperty(key)) {
+      result[key] = `${key} days`;
+    }
+  });
+  return result;
+}
+
+// In-memory user store - must match auth API for consistency
 const USERS = [
   {
     username: 'admin',
@@ -18,13 +107,6 @@ const USERS = [
     cashOutTitle: 'Cash Out',
     topRevenueTitle: 'Top Revenue Procedures',
     showCollectionsWidget: true,
-    revenueSubheadings: {},
-    expensesSubheadings: {},
-    cashInSubheadings: {},
-    cashOutSubheadings: {},
-    cashFlowSubheadings: {},
-    procedureNameOverrides: {},
-    locationNameOverrides: {},
     providers: [
       { name: 'Dr. John Josephson', percentage: 19 },
       { name: 'Dr. Meghan G. Moroux', percentage: 14 },
@@ -37,7 +119,50 @@ const USERS = [
       { name: 'Dr. Heloi Stark', percentage: 6 },
       { name: 'Dr. Noushin Sahraei', percentage: 5 }
     ],
-    userLocations: [] // Empty array means access to all locations
+    revenueSubheadings: {},
+    expensesSubheadings: {},
+    cashInSubheadings: {},
+    cashOutSubheadings: {},
+    cashFlowSubheadings: {},
+    arSubheadings: {},
+    procedureNameOverrides: {},
+    locationNameOverrides: {},
+    userLocations: []
+  },
+  {
+    username: 'drammar',
+    password: 'elite2024',
+    role: 'user',
+    practiceName: 'Elite Orthodontics',
+    practiceSubtitle: 'Northern Virginia',
+    logoUrl: '/assets/MDS Logo_1754254040718-Dv0l5qLn.png',
+    ownerName: 'Dr. Ammar Al-Mahdi',
+    ownerTitle: 'Orthodontist',
+    ownerPhotoUrl: '/assets/ammar-v2.jpeg',
+    revenueTitle: 'Revenue',
+    expensesTitle: 'Expenses',
+    cashInTitle: 'Cash In',
+    cashOutTitle: 'Cash Out',
+    topRevenueTitle: 'Top Revenue Procedures',
+    showCollectionsWidget: true,
+    providers: [
+      { name: 'Dr. Ammar Al-Mahdi', percentage: 100 }
+    ],
+    revenueSubheadings: {},
+    expensesSubheadings: {},
+    cashInSubheadings: {},
+    cashOutSubheadings: {},
+    cashFlowSubheadings: {},
+    arSubheadings: {},
+    procedureNameOverrides: {},
+    locationNameOverrides: {
+      'fairfax': 'Fairfax',
+      'gainesville': 'Falls Church',
+      'manassas': 'Woodbridge',
+      'leesburg': 'Stafford',
+      'reston': 'Lorton'
+    },
+    userLocations: []
   }
 ];
 
@@ -105,12 +230,13 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         cashOutTitle: userData.cashOutTitle || 'Cash Out',
         topRevenueTitle: userData.topRevenueTitle || 'Top Revenue Procedures',
         showCollectionsWidget: userData.showCollectionsWidget !== undefined ? userData.showCollectionsWidget : true,
-        revenueSubheadings: userData.revenueSubheadings || {},
-        expensesSubheadings: userData.expensesSubheadings || {},
-        cashInSubheadings: userData.cashInSubheadings || {},
-        cashOutSubheadings: userData.cashOutSubheadings || {},
-        cashFlowSubheadings: userData.cashFlowSubheadings || {},
-        procedureNameOverrides: userData.procedureNameOverrides || {},
+        revenueSubheadings: initializeSubheadings(userData.revenueSubheadings, DEFAULT_REVENUE_KEYS),
+        expensesSubheadings: initializeSubheadings(userData.expensesSubheadings, DEFAULT_EXPENSES_KEYS),
+        cashInSubheadings: initializeSubheadings(userData.cashInSubheadings, DEFAULT_CASH_IN_KEYS),
+        cashOutSubheadings: initializeSubheadings(userData.cashOutSubheadings, DEFAULT_CASH_OUT_KEYS),
+        cashFlowSubheadings: initializeSubheadings(userData.cashFlowSubheadings, DEFAULT_CASH_FLOW_KEYS),
+        arSubheadings: initializeARSubheadings(userData.arSubheadings),
+        procedureNameOverrides: initializeSubheadings(userData.procedureNameOverrides, DEFAULT_PROCEDURE_KEYS),
         locationNameOverrides: userData.locationNameOverrides || {},
         providers: userData.providers || [
           { name: 'Dr. John Josephson', percentage: 19 },
@@ -124,7 +250,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
           { name: 'Dr. Heloi Stark', percentage: 6 },
           { name: 'Dr. Noushin Sahraei', percentage: 5 }
         ],
-        userLocations: userData.userLocations || [] // Empty array means access to all locations
+        userLocations: userData.userLocations || []
       };
 
       USERS.push(newUser);
@@ -144,12 +270,30 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       const updates = req.body;
       delete updates.username; // Don't allow username changes
       
+      // Preserve password if not being updated
+      const currentPassword = USERS[userIndex].password;
+      
       USERS[userIndex] = {
         ...USERS[userIndex],
-        ...updates
+        ...updates,
+        password: currentPassword,
+        // Ensure subheading records are properly initialized
+        revenueSubheadings: initializeSubheadings(updates.revenueSubheadings, DEFAULT_REVENUE_KEYS),
+        expensesSubheadings: initializeSubheadings(updates.expensesSubheadings, DEFAULT_EXPENSES_KEYS),
+        cashInSubheadings: initializeSubheadings(updates.cashInSubheadings, DEFAULT_CASH_IN_KEYS),
+        cashOutSubheadings: initializeSubheadings(updates.cashOutSubheadings, DEFAULT_CASH_OUT_KEYS),
+        cashFlowSubheadings: initializeSubheadings(updates.cashFlowSubheadings, DEFAULT_CASH_FLOW_KEYS),
+        arSubheadings: initializeARSubheadings(updates.arSubheadings),
+        procedureNameOverrides: initializeSubheadings(updates.procedureNameOverrides, DEFAULT_PROCEDURE_KEYS),
       };
 
       const { password, ...userWithoutPassword } = USERS[userIndex];
+      
+      // Update session in auth API if available (via global variable)
+      if (typeof global !== 'undefined' && (global as any).UPDATE_AUTH_SESSIONS) {
+        (global as any).UPDATE_AUTH_SESSIONS(username, userWithoutPassword);
+      }
+      
       return res.status(200).json(userWithoutPassword);
     }
 

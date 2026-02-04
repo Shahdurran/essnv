@@ -30,6 +30,8 @@ ChartJS.register(
 interface ProfitLossWidgetProps {
   selectedLocationId: string;
   selectedPeriod: string;
+  revenueSubheadings?: Record<string, string>;
+  expensesSubheadings?: Record<string, string>;
 }
 
 // Interface for P&L API response
@@ -101,7 +103,7 @@ const chartOptions = {
   }
 };
 
-export default function ProfitLossWidget({ selectedLocationId, selectedPeriod }: ProfitLossWidgetProps) {
+export default function ProfitLossWidget({ selectedLocationId, selectedPeriod, revenueSubheadings = {}, expensesSubheadings = {} }: ProfitLossWidgetProps) {
   const [viewMode, setViewMode] = useState<"list" | "graph">("list");
   const [revenueCollapsed, setRevenueCollapsed] = useState(true);
   const [expensesCollapsed, setExpensesCollapsed] = useState(true);
@@ -189,7 +191,7 @@ export default function ProfitLossWidget({ selectedLocationId, selectedPeriod }:
                   Object.entries(profitLossData.revenue).map(([key, value]) => (
                     <div key={key} className="flex justify-between items-center py-1" data-testid={`pl-revenue-${key.toLowerCase().replace(/\s+/g, '-')}`}>
                       <span className="text-gray-700 text-sm">
-                        {key}
+                        {revenueSubheadings[key]?.trim() || key}
                       </span>
                       <span className="text-green-600 font-medium">{formatCurrency(value)}</span>
                     </div>
@@ -224,7 +226,7 @@ export default function ProfitLossWidget({ selectedLocationId, selectedPeriod }:
                   Object.entries(profitLossData.expenses).map(([key, value]) => (
                     <div key={key} className="flex justify-between items-center py-1" data-testid={`pl-expense-${key.toLowerCase().replace(/\s+/g, '-')}`}>
                       <span className="text-gray-700 text-sm">
-                        {key}
+                        {expensesSubheadings[key]?.trim() || key}
                       </span>
                       <span className="text-red-600 font-medium">({formatCurrency(value)})</span>
                     </div>

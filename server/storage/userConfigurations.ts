@@ -201,12 +201,26 @@ export async function getAllUsers(): Promise<UserConfiguration[]> {
 /**
  * Normalize user config for legacy users missing new fields (e.g. arSubheadings)
  */
+const DEFAULT_PROVIDERS = [
+  { name: 'Dr. John Josephson', percentage: 19 },
+  { name: 'Dr. Meghan G. Moroux', percentage: 14 },
+  { name: 'Dr. Hubert H. Pham', percentage: 13 },
+  { name: 'Dr. Sabita Ittoop', percentage: 10 },
+  { name: 'Dr. Kristen E. Dunbar', percentage: 9 },
+  { name: 'Dr. Erin Ong', percentage: 9 },
+  { name: 'Dr. Prema Modak', percentage: 8 },
+  { name: 'Dr. Julia Pierce', percentage: 7 },
+  { name: 'Dr. Heloi Stark', percentage: 6 },
+  { name: 'Dr. Noushin Sahraei', percentage: 5 }
+];
+
 function normalizeUserConfig(config: UserConfiguration): UserConfiguration {
   return {
     ...config,
     arSubheadings: config.arSubheadings && Object.keys(config.arSubheadings).length > 0
       ? config.arSubheadings
       : (defaultSubheadings.DEFAULT_AR_SUBHEADINGS ?? { '0-30': '0-30 days', '31-60': '31-60 days', '61-90': '61-90 days', '90+': '90+ days' }),
+    providers: config.providers && config.providers.length > 0 ? config.providers : DEFAULT_PROVIDERS,
   };
 }
 

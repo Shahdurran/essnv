@@ -1,5 +1,108 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
 
+// Default subheading keys that match actual data line_item values
+const DEFAULT_REVENUE_KEYS = [
+  'Office Visits',
+  'Intravitreal Injections',
+  'Cataract Surgeries',
+  'Diagnostics & Minor Procedures',
+  'Oculoplastics',
+  'Corneal Procedures',
+  'Refractive Cash',
+  'Optical / Contact Lens Sales'
+];
+
+const DEFAULT_EXPENSES_KEYS = [
+  'Drug Acquisition (injections)',
+  'Surgical Supplies & IOLs',
+  'Optical Cost of Goods',
+  'Staff Wages & Benefits',
+  'Rent & Utilities',
+  'Insurance',
+  'Billing & Coding Vendors',
+  'Bad Debt Expense',
+  'Marketing & Outreach',
+  'Technology',
+  'Equipment Service & Leases',
+  'Office & Miscellaneous'
+];
+
+const DEFAULT_CASH_IN_KEYS = [
+  'Patient Payments',
+  'Insurance Reimbursements'
+];
+
+const DEFAULT_CASH_OUT_KEYS = [
+  'Staff Wages & Benefits',
+  'Drug Purchases',
+  'Optical Goods',
+  'Rent & Utilities',
+  'Insurance',
+  'Billing & Coding Vendors',
+  'Marketing & Outreach',
+  'Technology',
+  'Equipment Service & Leases',
+  'Office & Miscellaneous'
+];
+
+const DEFAULT_CASH_FLOW_KEYS = [
+  'Net Cash from Operating',
+  'Net Cash from Investing',
+  'Net Cash from Financing'
+];
+
+const DEFAULT_AR_KEYS = ['0-30', '31-60', '61-90', '90+'];
+
+const DEFAULT_PROCEDURE_KEYS = [
+  'With IOL insertion',
+  'Medication injection',
+  'Refractive surgery',
+  'Upper eyelid surgery',
+  'Retinal imaging',
+  'Laser glaucoma treatment',
+  'New patient exam',
+  '45-59 minutes'
+];
+
+// Helper function to initialize subheading records with default keys
+function initializeSubheadings(
+  existing: Record<string, string> | undefined,
+  defaultKeys: string[]
+): Record<string, string> {
+  const result = { ...(existing || {}) };
+  defaultKeys.forEach(key => {
+    if (!result.hasOwnProperty(key)) {
+      result[key] = '';
+    }
+  });
+  return result;
+}
+
+// Helper to initialize AR subheadings with default values
+function initializeARSubheadings(existing?: Record<string, string>): Record<string, string> {
+  const result = { ...(existing || {}) };
+  DEFAULT_AR_KEYS.forEach(key => {
+    if (!result.hasOwnProperty(key)) {
+      result[key] = `${key} days`;
+    }
+  });
+  return result;
+}
+
+// Helper to initialize procedure name overrides
+function initializeProcedureOverrides(
+  existing: Record<string, string> | undefined,
+  defaultKeys: string[]
+): Record<string, string> {
+  const result = { ...(existing || {}) };
+  defaultKeys.forEach(key => {
+    if (!result.hasOwnProperty(key)) {
+      result[key] = '';
+    }
+  });
+  return result;
+}
+
 // Simple in-memory user store (use database in production)
 const USERS = [
   {
@@ -33,7 +136,9 @@ const USERS = [
     revenueSubheadings: {},
     expensesSubheadings: {},
     cashInSubheadings: {},
+    cashOutSubheadings: {},
     cashFlowSubheadings: {},
+    arSubheadings: {},
     procedureNameOverrides: {},
     locationNameOverrides: {}
   },
@@ -105,6 +210,16 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     }
 
     const { password: _, ...userWithoutPassword } = user;
+    
+    // Initialize subheading records with default keys so they can be customized
+    userWithoutPassword.revenueSubheadings = initializeSubheadings(user.revenueSubheadings, DEFAULT_REVENUE_KEYS);
+    userWithoutPassword.expensesSubheadings = initializeSubheadings(user.expensesSubheadings, DEFAULT_EXPENSES_KEYS);
+    userWithoutPassword.cashInSubheadings = initializeSubheadings(user.cashInSubheadings, DEFAULT_CASH_IN_KEYS);
+    userWithoutPassword.cashOutSubheadings = initializeSubheadings(user.cashOutSubheadings, DEFAULT_CASH_OUT_KEYS);
+    userWithoutPassword.cashFlowSubheadings = initializeSubheadings(user.cashFlowSubheadings, DEFAULT_CASH_FLOW_KEYS);
+    userWithoutPassword.arSubheadings = initializeARSubheadings(user.arSubheadings);
+    userWithoutPassword.procedureNameOverrides = initializeProcedureOverrides(user.procedureNameOverrides, DEFAULT_PROCEDURE_KEYS);
+    
     console.log('[AUTH/LOGIN] Login successful for user:', username);
     return res.status(200).json(userWithoutPassword);
 

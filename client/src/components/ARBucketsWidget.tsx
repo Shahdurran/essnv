@@ -75,6 +75,7 @@ interface ARBucket {
 interface ARBucketsWidgetProps {
   selectedLocationId: string;  // Location filter for AR analysis
   selectedTimePeriod: string;  // Time period filter for data
+  title?: string;  // Widget title (e.g. "AR Buckets (Outstanding Claims)")
   subheadingOverrides?: Record<string, string>;  // Custom labels for bucket ranges (e.g. '0-30', '31-60', '61-90', '90+')
 }
 
@@ -102,7 +103,7 @@ interface ARBucketsWidgetProps {
  * 
  * @param {ARBucketsWidgetProps} props - Component properties
  */
-export default function ARBucketsWidget({ selectedLocationId, selectedTimePeriod, subheadingOverrides = {} }: ARBucketsWidgetProps) {
+export default function ARBucketsWidget({ selectedLocationId, selectedTimePeriod, title = "AR Buckets (Outstanding Claims)", subheadingOverrides = {} }: ARBucketsWidgetProps) {
 
   /**
    * Get AR buckets data from mock data
@@ -190,7 +191,7 @@ export default function ARBucketsWidget({ selectedLocationId, selectedTimePeriod
         <div>
           <h2 className="text-xl font-semibold text-gray-900 flex items-center">
             <Clock className="w-6 h-6 mr-2 text-blue-600" />
-            AR Buckets (Outstanding Claims)
+            {title}
           </h2>
           <p className="text-sm text-gray-600 mt-1">
             Aging analysis of unpaid insurance claims

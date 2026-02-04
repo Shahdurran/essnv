@@ -8,7 +8,6 @@
  * - Configure widget titles and subheadings
  * - Upload branding images
  */
-
 import { useState, useEffect } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -27,16 +26,53 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
-
-// Default subheadings - these will be used as keys to display all available fields
-const DEFAULT_REVENUE_KEYS = ['Office Visits', 'Drug Acquisition (injections)', 'Procedures', 'Other Revenue'];
-const DEFAULT_EXPENSES_KEYS = ['Salaries & Wages', 'Rent & Utilities', 'Medical Supplies', 'Insurance', 'Marketing', 'Equipment', 'Other Expenses'];
-const DEFAULT_CASH_IN_KEYS = ['Patient Payments', 'Insurance Payments', 'Other Income'];
-const DEFAULT_CASH_OUT_KEYS = ['Payroll', 'Rent', 'Supplies', 'Utilities', 'Other Payments'];
-const DEFAULT_CASH_FLOW_KEYS = ['Operating Activities', 'Investing Activities', 'Financing Activities'];
+// Default subheadings - these must match the actual line_item values from raw data
+const DEFAULT_REVENUE_KEYS = [
+  'Office Visits',
+  'Intravitreal Injections',
+  'Cataract Surgeries',
+  'Diagnostics & Minor Procedures',
+  'Oculoplastics',
+  'Corneal Procedures',
+  'Refractive Cash',
+  'Optical / Contact Lens Sales'
+];
+const DEFAULT_EXPENSES_KEYS = [
+  'Drug Acquisition (injections)',
+  'Surgical Supplies & IOLs',
+  'Optical Cost of Goods',
+  'Staff Wages & Benefits',
+  'Rent & Utilities',
+  'Insurance',
+  'Billing & Coding Vendors',
+  'Bad Debt Expense',
+  'Marketing & Outreach',
+  'Technology',
+  'Equipment Service & Leases',
+  'Office & Miscellaneous'
+];
+const DEFAULT_CASH_IN_KEYS = [
+  'Patient Payments',
+  'Insurance Reimbursements'
+];
+const DEFAULT_CASH_OUT_KEYS = [
+  'Staff Wages & Benefits',
+  'Drug Purchases',
+  'Optical Goods',
+  'Rent & Utilities',
+  'Insurance',
+  'Billing & Coding Vendors',
+  'Marketing & Outreach',
+  'Technology',
+  'Equipment Service & Leases',
+  'Office & Miscellaneous'
+];
+const DEFAULT_CASH_FLOW_KEYS = [
+  'Net Cash from Operating',
+  'Net Cash from Investing',
+  'Net Cash from Financing'
+];
 const DEFAULT_AR_KEYS = ['0-30', '31-60', '61-90', '90+'];
-// Procedure descriptions from Top Revenue Procedures (ophthalmology) - keys for procedureNameOverrides
-const DEFAULT_PROCEDURE_KEYS = ['With IOL insertion', 'Medication injection', 'Refractive surgery', 'Upper eyelid surgery', 'Retinal imaging', 'Laser glaucoma treatment', 'New patient exam', '45-59 minutes'];
 import {
   Tabs,
   TabsContent,
@@ -50,7 +86,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-
 interface UserConfig {
   username: string;
   role: 'admin' | 'user';
@@ -80,7 +115,6 @@ interface UserConfig {
   }>;
   userLocations?: string[]; // Array of location IDs that this user has access to
 }
-
 interface PracticeLocation {
   id: string;
   name: string;
@@ -91,10 +125,9 @@ interface PracticeLocation {
   phone: string | null;
   isActive?: boolean | null;
 }
-
 export default function Settings() {
   const { toast } = useToast();
-  const { user: currentUser, isAdmin } = useAuth();
+  const { user: currentUser, isAdmin, refreshUser } = useAuth();
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [users, setUsers] = useState<UserConfig[]>([]);
@@ -107,21 +140,18 @@ export default function Settings() {
     password: '',
     role: 'user' as 'admin' | 'user'
   });
-
   // Redirect if not admin
   useEffect(() => {
     if (!isAdmin) {
       window.location.href = '/';
     }
   }, [isAdmin]);
-
   // Fetch users and locations
   useEffect(() => {
     if (isAdmin) {
       fetchData();
     }
   }, [isAdmin]);
-
   const fetchData = async () => {
     try {
       setLoading(true);
@@ -156,6 +186,76 @@ export default function Settings() {
         if (!user.arSubheadings) {
           user.arSubheadings = { '0-30': '0-30 days', '31-60': '31-60 days', '61-90': '61-90 days', '90+': '90+ days' };
         }
+        // Initialize revenueSubheadings with empty strings for all default keys if not present
+        if (!user.revenueSubheadings) {
+          user.revenueSubheadings = {};
+          DEFAULT_REVENUE_KEYS.forEach(key => {
+            user.revenueSubheadings[key] = '';
+          });
+        } else {
+          // Add missing keys to existing record
+          DEFAULT_REVENUE_KEYS.forEach(key => {
+            if (!user.revenueSubheadings.hasOwnProperty(key)) {
+              user.revenueSubheadings[key] = '';
+            }
+          });
+        }
+        // Initialize expensesSubheadings with empty strings for all default keys if not present
+        if (!user.expensesSubheadings) {
+          user.expensesSubheadings = {};
+          DEFAULT_EXPENSES_KEYS.forEach(key => {
+            user.expensesSubheadings[key] = '';
+          });
+        } else {
+          // Add missing keys to existing record
+          DEFAULT_EXPENSES_KEYS.forEach(key => {
+            if (!user.expensesSubheadings.hasOwnProperty(key)) {
+              user.expensesSubheadings[key] = '';
+            }
+          });
+        }
+        // Initialize cashInSubheadings with empty strings for all default keys if not present
+        if (!user.cashInSubheadings) {
+          user.cashInSubheadings = {};
+          DEFAULT_CASH_IN_KEYS.forEach(key => {
+            user.cashInSubheadings[key] = '';
+          });
+        } else {
+          // Add missing keys to existing record
+          DEFAULT_CASH_IN_KEYS.forEach(key => {
+            if (!user.cashInSubheadings.hasOwnProperty(key)) {
+              user.cashInSubheadings[key] = '';
+            }
+          });
+        }
+        // Initialize cashOutSubheadings with empty strings for all default keys if not present
+        if (!user.cashOutSubheadings) {
+          user.cashOutSubheadings = {};
+          DEFAULT_CASH_OUT_KEYS.forEach(key => {
+            user.cashOutSubheadings[key] = '';
+          });
+        } else {
+          // Add missing keys to existing record
+          DEFAULT_CASH_OUT_KEYS.forEach(key => {
+            if (!user.cashOutSubheadings.hasOwnProperty(key)) {
+              user.cashOutSubheadings[key] = '';
+            }
+          });
+        }
+        // Initialize cashFlowSubheadings with empty strings for all default keys if not present
+        if (!user.cashFlowSubheadings) {
+          user.cashFlowSubheadings = {};
+          DEFAULT_CASH_FLOW_KEYS.forEach(key => {
+            user.cashFlowSubheadings[key] = '';
+          });
+        } else {
+          // Add missing keys to existing record
+          DEFAULT_CASH_FLOW_KEYS.forEach(key => {
+            if (!user.cashFlowSubheadings.hasOwnProperty(key)) {
+              user.cashFlowSubheadings[key] = '';
+            }
+          });
+        }
         return user;
       });
       
@@ -183,7 +283,6 @@ export default function Settings() {
       setLoading(false);
     }
   };
-
   const handleUserSelect = (username: string) => {
     setSelectedUser(username);
     const user = users.find(u => u.username === username);
@@ -211,10 +310,79 @@ export default function Settings() {
       if (!user.arSubheadings) {
         user.arSubheadings = { '0-30': '0-30 days', '31-60': '31-60 days', '61-90': '61-90 days', '90+': '90+ days' };
       }
+      // Initialize revenueSubheadings with empty strings for all default keys if not present
+      if (!user.revenueSubheadings) {
+        user.revenueSubheadings = {};
+        DEFAULT_REVENUE_KEYS.forEach(key => {
+          user.revenueSubheadings[key] = '';
+        });
+      } else {
+        // Add missing keys to existing record
+        DEFAULT_REVENUE_KEYS.forEach(key => {
+          if (!user.revenueSubheadings.hasOwnProperty(key)) {
+            user.revenueSubheadings[key] = '';
+          }
+        });
+      }
+      // Initialize expensesSubheadings with empty strings for all default keys if not present
+      if (!user.expensesSubheadings) {
+        user.expensesSubheadings = {};
+        DEFAULT_EXPENSES_KEYS.forEach(key => {
+          user.expensesSubheadings[key] = '';
+        });
+      } else {
+        // Add missing keys to existing record
+        DEFAULT_EXPENSES_KEYS.forEach(key => {
+          if (!user.expensesSubheadings.hasOwnProperty(key)) {
+            user.expensesSubheadings[key] = '';
+          }
+        });
+      }
+      // Initialize cashInSubheadings with empty strings for all default keys if not present
+      if (!user.cashInSubheadings) {
+        user.cashInSubheadings = {};
+        DEFAULT_CASH_IN_KEYS.forEach(key => {
+          user.cashInSubheadings[key] = '';
+        });
+      } else {
+        // Add missing keys to existing record
+        DEFAULT_CASH_IN_KEYS.forEach(key => {
+          if (!user.cashInSubheadings.hasOwnProperty(key)) {
+            user.cashInSubheadings[key] = '';
+          }
+        });
+      }
+      // Initialize cashOutSubheadings with empty strings for all default keys if not present
+      if (!user.cashOutSubheadings) {
+        user.cashOutSubheadings = {};
+        DEFAULT_CASH_OUT_KEYS.forEach(key => {
+          user.cashOutSubheadings[key] = '';
+        });
+      } else {
+        // Add missing keys to existing record
+        DEFAULT_CASH_OUT_KEYS.forEach(key => {
+          if (!user.cashOutSubheadings.hasOwnProperty(key)) {
+            user.cashOutSubheadings[key] = '';
+          }
+        });
+      }
+      // Initialize cashFlowSubheadings with empty strings for all default keys if not present
+      if (!user.cashFlowSubheadings) {
+        user.cashFlowSubheadings = {};
+        DEFAULT_CASH_FLOW_KEYS.forEach(key => {
+          user.cashFlowSubheadings[key] = '';
+        });
+      } else {
+        // Add missing keys to existing record
+        DEFAULT_CASH_FLOW_KEYS.forEach(key => {
+          if (!user.cashFlowSubheadings.hasOwnProperty(key)) {
+            user.cashFlowSubheadings[key] = '';
+          }
+        });
+      }
       setEditingUser(user);
     }
   };
-
   const handleInputChange = (field: keyof UserConfig, value: any) => {
     if (editingUser) {
       setEditingUser({
@@ -223,7 +391,6 @@ export default function Settings() {
       });
     }
   };
-
   const handleSubheadingChange = (category: 'revenueSubheadings' | 'expensesSubheadings' | 'cashInSubheadings' | 'cashOutSubheadings' | 'cashFlowSubheadings' | 'arSubheadings', key: string, value: string) => {
     if (editingUser) {
       setEditingUser({
@@ -235,7 +402,6 @@ export default function Settings() {
       });
     }
   };
-
   const handleImageUpload = async (field: 'logoUrl' | 'ownerPhotoUrl', file: File) => {
     try {
       const formData = new FormData();
@@ -267,7 +433,6 @@ export default function Settings() {
       });
     }
   };
-
   const handleSave = async () => {
     if (!editingUser) return;
     
@@ -293,6 +458,9 @@ export default function Settings() {
       setUsers(users.map(u => u.username === updatedUser.username ? updatedUser : u));
       setEditingUser(updatedUser);
       
+      // Refresh the current user's data in AuthContext so widgets update immediately
+      await refreshUser();
+      
       toast({
         title: "Success",
         description: `Settings saved for ${editingUser.username}`
@@ -309,7 +477,6 @@ export default function Settings() {
       setSaving(false);
     }
   };
-
   const handleCreateUser = async () => {
     if (!newUserData.username || !newUserData.password) {
       toast({
@@ -319,7 +486,6 @@ export default function Settings() {
       });
       return;
     }
-
     try {
       const response = await fetch('/api/users', {
         method: 'POST',
@@ -352,7 +518,6 @@ export default function Settings() {
       });
     }
   };
-
   const handleDeleteUser = async (username: string) => {
     if (username === 'admin') {
       toast({
@@ -362,11 +527,9 @@ export default function Settings() {
       });
       return;
     }
-
     if (!confirm(`Are you sure you want to delete user ${username}?`)) {
       return;
     }
-
     try {
       const response = await fetch(`/api/users/${username}`, {
         method: 'DELETE',
@@ -402,7 +565,6 @@ export default function Settings() {
       });
     }
   };
-
   if (loading) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
@@ -413,7 +575,6 @@ export default function Settings() {
       </div>
     );
   }
-
   if (!editingUser) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
@@ -421,7 +582,6 @@ export default function Settings() {
       </div>
     );
   }
-
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Header */}
@@ -453,7 +613,6 @@ export default function Settings() {
           </div>
         </div>
       </header>
-
       {/* Main Content */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
@@ -555,19 +714,15 @@ export default function Settings() {
               </CardContent>
             </Card>
           </div>
-
           {/* Settings Panel */}
           <div className="lg:col-span-3">
             <Tabs defaultValue="branding" className="space-y-6">
-              <TabsList className="grid w-full grid-cols-6">
+              <TabsList className="grid w-full grid-cols-4">
                 <TabsTrigger value="branding">Branding</TabsTrigger>
-                <TabsTrigger value="widgets">Widgets</TabsTrigger>
+                <TabsTrigger value="locations">Locations</TabsTrigger>
                 <TabsTrigger value="subheadings">Subheadings</TabsTrigger>
                 <TabsTrigger value="providers">Providers</TabsTrigger>
-                <TabsTrigger value="user-locations">User Access</TabsTrigger>
-                <TabsTrigger value="locations">Locations</TabsTrigger>
               </TabsList>
-
               {/* Branding Tab */}
               <TabsContent value="branding" className="space-y-6">
                 {/* Practice Branding */}
@@ -631,7 +786,6 @@ export default function Settings() {
                     </div>
                   </CardContent>
                 </Card>
-
                 {/* Owner Information */}
                 <Card>
                   <CardHeader>
@@ -693,10 +847,7 @@ export default function Settings() {
                     </div>
                   </CardContent>
                 </Card>
-              </TabsContent>
-
-              {/* Widgets Tab */}
-              <TabsContent value="widgets" className="space-y-6">
+                {/* Widget Titles */}
                 <Card>
                   <CardHeader>
                     <CardTitle>Widget Titles</CardTitle>
@@ -708,75 +859,51 @@ export default function Settings() {
                         <Label htmlFor="revenueTitle">Revenue Widget Title</Label>
                         <Input
                           id="revenueTitle"
-                          value={editingUser.revenueTitle}
+                          value={editingUser.revenueTitle || 'Revenue'}
                           onChange={(e) => handleInputChange('revenueTitle', e.target.value)}
-                          placeholder="e.g., Income"
+                          placeholder="Revenue"
                         />
                       </div>
                       <div>
                         <Label htmlFor="expensesTitle">Expenses Widget Title</Label>
                         <Input
                           id="expensesTitle"
-                          value={editingUser.expensesTitle}
+                          value={editingUser.expensesTitle || 'Expenses'}
                           onChange={(e) => handleInputChange('expensesTitle', e.target.value)}
-                          placeholder="e.g., Operating Costs"
+                          placeholder="Expenses"
                         />
                       </div>
                       <div>
                         <Label htmlFor="cashInTitle">Cash In Widget Title</Label>
                         <Input
                           id="cashInTitle"
-                          value={editingUser.cashInTitle}
+                          value={editingUser.cashInTitle || 'Cash In'}
                           onChange={(e) => handleInputChange('cashInTitle', e.target.value)}
-                          placeholder="e.g., Money In"
+                          placeholder="Cash In"
                         />
                       </div>
                       <div>
                         <Label htmlFor="cashOutTitle">Cash Out Widget Title</Label>
                         <Input
                           id="cashOutTitle"
-                          value={editingUser.cashOutTitle}
+                          value={editingUser.cashOutTitle || 'Cash Out'}
                           onChange={(e) => handleInputChange('cashOutTitle', e.target.value)}
-                          placeholder="e.g., Money Out"
+                          placeholder="Cash Out"
                         />
                       </div>
                       <div className="md:col-span-2">
                         <Label htmlFor="topRevenueTitle">Top Revenue Procedures Title</Label>
                         <Input
                           id="topRevenueTitle"
-                          value={editingUser.topRevenueTitle}
+                          value={editingUser.topRevenueTitle || 'Top Revenue Procedures'}
                           onChange={(e) => handleInputChange('topRevenueTitle', e.target.value)}
-                          placeholder="e.g., Top Earning Procedures"
+                          placeholder="Top Revenue Procedures"
                         />
                       </div>
                     </div>
                   </CardContent>
                 </Card>
-
-                {/* Procedure Name Overrides - custom labels for procedure list items */}
-                <Card>
-                  <CardHeader>
-                    <CardTitle>Procedure Name Overrides</CardTitle>
-                    <CardDescription>Customize procedure labels in Top Revenue Procedures. Key = procedure description (or CPT code). Only labels change; dollar amounts stay the same.</CardDescription>
-                  </CardHeader>
-                  <CardContent className="space-y-4">
-                    {DEFAULT_PROCEDURE_KEYS.map((key) => (
-                      <div key={key}>
-                        <Label className="text-xs text-gray-500">{key}</Label>
-                        <Input
-                          value={editingUser.procedureNameOverrides?.[key] ?? ''}
-                          onChange={(e) => {
-                            const next = { ...(editingUser.procedureNameOverrides || {}), [key]: e.target.value };
-                            handleInputChange('procedureNameOverrides', next);
-                          }}
-                          placeholder={key}
-                        />
-                      </div>
-                    ))}
-                  </CardContent>
-                </Card>
               </TabsContent>
-
               {/* Subheadings Tab */}
               <TabsContent value="subheadings" className="space-y-6">
                 {/* Revenue Subheadings */}
@@ -798,7 +925,6 @@ export default function Settings() {
                     ))}
                   </CardContent>
                 </Card>
-
                 {/* Expenses Subheadings */}
                 <Card>
                   <CardHeader>
@@ -818,7 +944,6 @@ export default function Settings() {
                     ))}
                   </CardContent>
                 </Card>
-
                 {/* Cash In Subheadings */}
                 <Card>
                   <CardHeader>
@@ -838,7 +963,6 @@ export default function Settings() {
                     ))}
                   </CardContent>
                 </Card>
-
                 {/* Cash Out Subheadings */}
                 <Card>
                   <CardHeader>
@@ -858,7 +982,6 @@ export default function Settings() {
                     ))}
                   </CardContent>
                 </Card>
-
                 {/* AR Buckets Subheadings */}
                 <Card>
                   <CardHeader>
@@ -879,7 +1002,104 @@ export default function Settings() {
                   </CardContent>
                 </Card>
               </TabsContent>
-
+              {/* Subheadings Tab */}
+              <TabsContent value="subheadings" className="space-y-6">
+                {/* Revenue Subheadings */}
+                <Card>
+                  <CardHeader>
+                    <CardTitle>Revenue Subheadings</CardTitle>
+                    <CardDescription>Customize revenue category names</CardDescription>
+                  </CardHeader>
+                  <CardContent className="space-y-3">
+                    {DEFAULT_REVENUE_KEYS.map((key) => (
+                      <div key={key}>
+                        <Label className="text-xs text-gray-500">{key}</Label>
+                        <Input
+                          value={editingUser.revenueSubheadings[key] || key}
+                          onChange={(e) => handleSubheadingChange('revenueSubheadings', key, e.target.value)}
+                          placeholder={key}
+                        />
+                      </div>
+                    ))}
+                  </CardContent>
+                </Card>
+                {/* Expenses Subheadings */}
+                <Card>
+                  <CardHeader>
+                    <CardTitle>Expenses Subheadings</CardTitle>
+                    <CardDescription>Customize expense category names</CardDescription>
+                  </CardHeader>
+                  <CardContent className="space-y-3">
+                    {DEFAULT_EXPENSES_KEYS.map((key) => (
+                      <div key={key}>
+                        <Label className="text-xs text-gray-500">{key}</Label>
+                        <Input
+                          value={editingUser.expensesSubheadings[key] || key}
+                          onChange={(e) => handleSubheadingChange('expensesSubheadings', key, e.target.value)}
+                          placeholder={key}
+                        />
+                      </div>
+                    ))}
+                  </CardContent>
+                </Card>
+                {/* Cash In Subheadings */}
+                <Card>
+                  <CardHeader>
+                    <CardTitle>Cash In Subheadings</CardTitle>
+                    <CardDescription>Customize cash inflow category names</CardDescription>
+                  </CardHeader>
+                  <CardContent className="space-y-3">
+                    {DEFAULT_CASH_IN_KEYS.map((key) => (
+                      <div key={key}>
+                        <Label className="text-xs text-gray-500">{key}</Label>
+                        <Input
+                          value={editingUser.cashInSubheadings[key] || key}
+                          onChange={(e) => handleSubheadingChange('cashInSubheadings', key, e.target.value)}
+                          placeholder={key}
+                        />
+                      </div>
+                    ))}
+                  </CardContent>
+                </Card>
+                {/* Cash Out Subheadings */}
+                <Card>
+                  <CardHeader>
+                    <CardTitle>Cash Out Subheadings</CardTitle>
+                    <CardDescription>Customize cash outflow category names</CardDescription>
+                  </CardHeader>
+                  <CardContent className="space-y-3">
+                    {DEFAULT_CASH_OUT_KEYS.map((key) => (
+                      <div key={key}>
+                        <Label className="text-xs text-gray-500">{key}</Label>
+                        <Input
+                          value={editingUser.cashOutSubheadings[key] || key}
+                          onChange={(e) => handleSubheadingChange('cashOutSubheadings', key, e.target.value)}
+                          placeholder={key}
+                        />
+                      </div>
+                    ))}
+                  </CardContent>
+                </Card>
+                {/* AR Buckets Subheadings */}
+                <Card>
+                  <CardHeader>
+                    <CardTitle>AR Buckets Subheadings</CardTitle>
+                    <CardDescription>Customize AR aging bucket labels (0-30, 31-60, 61-90, 90+ days)</CardDescription>
+                  </CardHeader>
+                  <CardContent className="space-y-3">
+                    {DEFAULT_AR_KEYS.map((key) => (
+                      <div key={key}>
+                        <Label className="text-xs text-gray-500">{key} days</Label>
+                        <Input
+                          value={editingUser.arSubheadings?.[key] ?? `${key} days`}
+                          onChange={(e) => handleSubheadingChange('arSubheadings', key, e.target.value)}
+                          placeholder={`${key} days`}
+                        />
+                      </div>
+                    ))}
+                  </CardContent>
+                </Card>
+              </TabsContent>
               {/* Providers Tab */}
               <TabsContent value="providers" className="space-y-6">
                 <Card>
@@ -962,94 +1182,6 @@ export default function Settings() {
                   </CardContent>
                 </Card>
               </TabsContent>
-
-              {/* User Locations Tab */}
-              <TabsContent value="user-locations" className="space-y-6">
-                <Card>
-                  <CardHeader>
-                    <CardTitle>User Location Access</CardTitle>
-                    <CardDescription>
-                      Select which locations this user can access. If no locations are selected, the user will have access to all locations.
-                    </CardDescription>
-                  </CardHeader>
-                  <CardContent className="space-y-4">
-                    {locations.length === 0 ? (
-                      <p className="text-sm text-gray-500">No locations available</p>
-                    ) : (
-                      <div className="space-y-3">
-                        {locations.map((location) => {
-                          const isSelected = editingUser.userLocations && editingUser.userLocations.includes(location.id);
-                          return (
-                            <div 
-                              key={location.id} 
-                              className="flex items-center justify-between p-4 border rounded-lg hover:bg-gray-50"
-                            >
-                              <div className="flex-1">
-                                <p className="font-medium text-sm">{location.name}</p>
-                                <p className="text-xs text-gray-500">
-                                  {location.address}
-                                </p>
-                              </div>
-                              <Button
-                                variant={isSelected ? "default" : "outline"}
-                                size="sm"
-                                onClick={() => {
-                                  const currentLocations = editingUser.userLocations || [];
-                                  if (isSelected) {
-                                    // Remove location access
-                                    handleInputChange('userLocations', currentLocations.filter(id => id !== location.id));
-                                  } else {
-                                    // Grant location access
-                                    handleInputChange('userLocations', [...currentLocations, location.id]);
-                                  }
-                                }}
-                              >
-                                {isSelected ? 'Remove Access' : 'Grant Access'}
-                              </Button>
-                            </div>
-                          );
-                        })}
-                      </div>
-                    )}
-                    
-                    <div className="pt-4 border-t">
-                      <div className="flex items-center justify-between">
-                        <div>
-                          <p className="text-sm font-medium">
-                            Selected Locations: {editingUser.userLocations?.length || 0} / {locations.length}
-                          </p>
-                          <p className="text-xs text-gray-500">
-                            {(!editingUser.userLocations || editingUser.userLocations.length === 0) 
-                              ? 'User has access to all locations' 
-                              : 'User has limited access'}
-                          </p>
-                        </div>
-                        <div className="space-x-2">
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => {
-                              handleInputChange('userLocations', locations.map(l => l.id));
-                            }}
-                          >
-                            Select All
-                          </Button>
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => {
-                              handleInputChange('userLocations', []);
-                            }}
-                          >
-                            Clear All
-                          </Button>
-                        </div>
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
-              </TabsContent>
-
               {/* Locations Management Tab */}
               <TabsContent value="locations" className="space-y-6">
                 <Card>
@@ -1243,7 +1375,6 @@ export default function Settings() {
                 </Card>
               </TabsContent>
             </Tabs>
-
             {/* Save Button (Bottom) */}
             <div className="flex justify-end mt-6">
               <Button onClick={handleSave} disabled={saving} size="lg">

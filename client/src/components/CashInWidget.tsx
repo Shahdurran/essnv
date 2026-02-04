@@ -4,6 +4,7 @@ import { Badge } from "@/components/ui/badge";
 import { TrendingDown, TrendingUp, Minus, Loader2 } from "lucide-react";
 import { useState } from "react";
 import { getCashFlowDataForLocation } from "@/lib/staticData";
+import { getDynamicLabel } from "@/lib/utils";
 
 interface CashInWidgetProps {
   selectedLocationId: string;
@@ -62,7 +63,7 @@ export default function CashInWidget({
     !item.name.includes('Total')
   ) || []).map(item => ({
     ...item,
-    name: subheadingOverrides[item.name]?.trim() ? subheadingOverrides[item.name] : item.name
+    name: getDynamicLabel(item.name, item.name, subheadingOverrides)
   }));
   
   // Calculate total cash in

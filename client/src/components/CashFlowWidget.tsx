@@ -5,6 +5,7 @@ import { BarChart3, List, TrendingUp, TrendingDown, ChevronDown, ChevronUp } fro
 import { useState } from "react";
 import { Line } from "react-chartjs-2";
 import { getCashFlowDataForLocation } from "@/lib/staticData";
+import { getDynamicLabel } from "@/lib/utils";
 import {
   Chart as ChartJS,
   CategoryScale,
@@ -131,17 +132,23 @@ export default function CashFlowWidget({
     ...rawCashFlowData,
     operating: rawCashFlowData.operating.map(item => ({
       ...item,
-      name: subheadingOverrides[item.name] || item.name
+      name: getDynamicLabel(item.name, item.name, subheadingOverrides)
     })),
     investing: rawCashFlowData.investing.map(item => ({
       ...item,
-      name: subheadingOverrides[item.name] || item.name
+      name: getDynamicLabel(item.name, item.name, subheadingOverrides)
     })),
     financing: rawCashFlowData.financing.map(item => ({
       ...item,
-      name: subheadingOverrides[item.name] || item.name
+      name: getDynamicLabel(item.name, item.name, subheadingOverrides)
     }))
   };
+
+  // Section header labels from cashFlowSubheadings
+  // Use the calculated totals keys from the raw data
+  const operatingSectionLabel = getDynamicLabel("Net Cash from Operating", "Operating Activities", subheadingOverrides);
+  const investingSectionLabel = getDynamicLabel("Net Cash from Investing", "Investing Activities", subheadingOverrides);
+  const financingSectionLabel = getDynamicLabel("Net Cash from Financing", "Financing Activities", subheadingOverrides);
 
   // Calculate totals from static data
   const operatingCashFlow = cashFlowData.operatingCashFlow;
@@ -159,7 +166,8 @@ export default function CashFlowWidget({
   };
 
   const formatCashFlowItem = (key: string, value: number) => {
-    const label = key.replace(/([A-Z])/g, ' $1').replace(/^./, str => str.toUpperCase());
+    // Use the override if available, otherwise format the key
+    const label = getDynamicLabel(key, key, subheadingOverrides);
     return (
       <div key={key} className="flex justify-between items-center py-1" data-testid={`cf-item-${key}`}>
         <span className="text-gray-700 text-sm">{label}</span>
@@ -213,7 +221,7 @@ export default function CashFlowWidget({
                 onClick={() => setOperatingCollapsed(!operatingCollapsed)}
               >
                 <h4 className="font-semibold text-green-700 text-sm uppercase tracking-wide flex items-center">
-                  Cash Flow from Operating Activities
+                  Cash Flow from {operatingSectionLabel}
                   <span className={`ml-2 text-lg font-bold ${operatingCashFlow >= 0 ? 'text-green-600' : 'text-red-600'}`}>
                     {operatingCashFlow >= 0 ? '' : '('}{formatCurrency(Math.abs(operatingCashFlow))}{operatingCashFlow < 0 ? ')' : ''}
                   </span>
@@ -241,7 +249,7 @@ export default function CashFlowWidget({
                 onClick={() => setInvestingCollapsed(!investingCollapsed)}
               >
                 <h4 className="font-semibold text-red-700 text-sm uppercase tracking-wide flex items-center">
-                  Cash Flow from Investing Activities
+                  Cash Flow from {investingSectionLabel}
                   <span className={`ml-2 text-lg font-bold ${investingCashFlow >= 0 ? 'text-green-600' : 'text-red-600'}`}>
                     {investingCashFlow >= 0 ? '' : '('}{formatCurrency(Math.abs(investingCashFlow))}{investingCashFlow < 0 ? ')' : ''}
                   </span>
@@ -273,7 +281,7 @@ export default function CashFlowWidget({
                 onClick={() => setFinancingCollapsed(!financingCollapsed)}
               >
                 <h4 className="font-semibold text-purple-700 text-sm uppercase tracking-wide flex items-center">
-                  Cash Flow from Financing Activities
+                  Cash Flow from {financingSectionLabel}
                   <span className={`ml-2 text-lg font-bold ${financingCashFlow >= 0 ? 'text-green-600' : 'text-red-600'}`}>
                     {financingCashFlow >= 0 ? '' : '('}{formatCurrency(Math.abs(financingCashFlow))}{financingCashFlow < 0 ? ')' : ''}
                   </span>

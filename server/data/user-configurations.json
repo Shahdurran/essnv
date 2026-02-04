@@ -10,11 +10,11 @@
     "ownerName": "Dr. John Josephson",
     "ownerTitle": "Practice Owner",
     "ownerPhotoUrl": "/assets/Dr. John Josephson_1757862871625-B4_CVazU.jpeg",
-    "revenueTitle": "Total Practiced Incomecwc",
-    "expensesTitle": "Expensescsckhc",
-    "cashInTitle": "hi",
-    "cashOutTitle": "hi",
-    "topRevenueTitle": "Top Revenue Procedures ",
+    "revenueTitle": "Revenue",
+    "expensesTitle": "Expenses",
+    "cashInTitle": "Cash In",
+    "cashOutTitle": "Cash Out",
+    "topRevenueTitle": "Top Revenue Procedures",
     "revenueSubheadings": {
       "Office Visits": "Office Visits",
       "Drug Acquisition (injections)": "Drug Acquisition (injections)",
@@ -31,7 +31,7 @@
       "Other Expenses": "Other Expenses"
     },
     "cashInSubheadings": {
-      "Patient Payments": "Patient Payments",
+      "Patient Payments": "Patient Payments test",
       "Insurance Payments": "Insurance Payments",
       "Other Income": "Other Income"
     },
@@ -47,13 +47,11 @@
       "Investing Activities": "Investing Activities",
       "Financing Activities": "Financing Activities"
     },
-    "procedureNameOverrides": {
-      "With IOL insertion": "cataract with iol"
-    },
+    "procedureNameOverrides": {},
     "locationNameOverrides": {},
     "showCollectionsWidget": true,
     "createdAt": "2026-01-19T18:28:02.436Z",
-    "updatedAt": "2026-01-29T18:47:25.015Z",
+    "updatedAt": "2026-02-03T21:30:42.961Z",
     "providers": [
       {
         "name": "Dr. John Josephson",
@@ -96,9 +94,12 @@
         "percentage": 5
       }
     ],
-    "userLocations": [],
+    "userLocations": [
+      "fairfax",
+      "gainesville"
+    ],
     "arSubheadings": {
-      "0-30": "current billing",
+      "0-30": "0-30 days",
       "31-60": "31-60 days",
       "61-90": "61-90 days",
       "90+": "90+ days"
@@ -207,17 +208,131 @@
     "role": "admin",
     "logoUrl": "/assets/MDS Logo_1754254040718-Dv0l5qLn.png",
     "practiceName": "Elite Orthodontics",
-    "practiceSubtitle": null,
-    "ownerName": "Dr. Amar Al-Mahdi",
+    "practiceSubtitle": "Northern Virginia",
+    "ownerName": "Dr. Ammar Al-Mahdi",
+    "ownerTitle": "Orthodontist",
+    "ownerPhotoUrl": "/assets/Dr. John Josephson_1757862871625-B4_CVazU.jpeg",
+    "revenueTitle": "Revenue",
+    "expensesTitle": "Expenses",
+    "cashInTitle": "Cash In",
+    "cashOutTitle": "Cash Out",
+    "topRevenueTitle": "Top Revenue Procedures",
+    "revenueSubheadings": {
+      "Office Visits": "Office Visits test",
+      "Drug Acquisition (injections)": "Drug Acquisition (injections) test",
+      "Procedures": "Procedures test",
+      "Other Revenue": "Other Revenue test",
+      "Intravitreal Injections": "Intravitreal Injections test",
+      "Cataract Surgeries": "Cataract Surgeries test",
+      "Diagnostics & Minor Procedures": "Diagnostics & Minor Procedures tets",
+      "Oculoplastics": "Oculoplastics test",
+      "Corneal Procedures": "Corneal Procedures test",
+      "Refractive Cash": "Refractive Cash test",
+      "Optical / Contact Lens Sales": "Optical / Contact Lens Sales test"
+    },
+    "expensesSubheadings": {
+      "Salaries & Wages": "Salaries & Wages test",
+      "Rent & Utilities": "Rent & Utilities test",
+      "Medical Supplies": "Medical Supplies test",
+      "Insurance": "Insurance test",
+      "Marketing": "Marketing test",
+      "Equipment": "Equipment test",
+      "Other Expenses": "Other Expenses test",
+      "Drug Acquisition (injections)": "Drug Acquisition (injections) test",
+      "Surgical Supplies & IOLs": "Surgical Supplies & IOLs test",
+      "Optical Cost of Goods": "Optical Cost of Goods test",
+      "Staff Wages & Benefits": "Staff Wages & Benefits test",
+      "Billing & Coding Vendors": "Billing & Coding Vendors test",
+      "Bad Debt Expense": "Bad Debt Expense test",
+      "Marketing & Outreach": "Marketing & Outreach test",
+      "Technology": "Technology test",
+      "Equipment Service & Leases": "Equipment Service & Leases test",
+      "Office & Miscellaneous": "Office & Miscellaneous test"
+    },
+    "cashInSubheadings": {
+      "Patient Payments": "Patient Payments test",
+      "Insurance Payments": "Insurance Payments test",
+      "Other Income": "Other Income test",
+      "Insurance Reimbursements": "Insurance Reimbursements test"
+    },
+    "cashOutSubheadings": {
+      "Payroll": "Payroll test",
+      "Rent": "Rent test",
+      "Supplies": "Supplies test",
+      "Utilities": "Utilities test",
+      "Other Payments": "Other Payments test",
+      "Staff Wages & Benefits": "Staff Wages & Benefits test",
+      "Drug Purchases": "Drug Purchases test",
+      "Optical Goods": "Optical Goods test",
+      "Rent & Utilities": "Rent & Utilities test",
+      "Insurance": "Insurance test",
+      "Billing & Coding Vendors": "Billing & Coding Vendors test",
+      "Marketing & Outreach": "Marketing & Outreach test",
+      "Technology": "Technology test",
+      "Equipment Service & Leases": "Equipment Service & Leases test",
+      "Office & Miscellaneous": "Office & Miscellaneous test"
+    },
+    "cashFlowSubheadings": {
+      "Operating Activities": "Operating Activities",
+      "Investing Activities": "Investing Activities",
+      "Financing Activities": "Financing Activities",
+      "Net Cash from Operating": "",
+      "Net Cash from Investing": "",
+      "Net Cash from Financing": ""
+    },
+    "procedureNameOverrides": {},
+    "locationNameOverrides": {},
+    "showCollectionsWidget": true,
+    "providers": [
+      {
+        "name": "Dr. Ammar Al-Mahdi",
+        "percentage": 30
+      },
+      {
+        "name": "Dr. Smith",
+        "percentage": 20
+      },
+      {
+        "name": "Dr. Khan",
+        "percentage": 20
+      },
+      {
+        "name": "Dr. Taylor",
+        "percentage": 15
+      },
+      {
+        "name": "Dr. White",
+        "percentage": 15
+      }
+    ],
+    "id": "user-1769642401175-9345sqida",
+    "createdAt": "2026-01-28T23:20:01.175Z",
+    "updatedAt": "2026-02-04T19:10:37.191Z",
+    "userLocations": [],
+    "arSubheadings": {
+      "0-30": "0-30 days test",
+      "31-60": "31-60 days test",
+      "61-90": "61-90 days test",
+      "90+": "90+ days test"
+    }
+  },
+  {
+    "username": "tayyab",
+    "password": "tayyab123",
+    "role": "admin",
+    "logoUrl": "/assets/MDS Logo_1754254040718-Dv0l5qLn.png",
+    "practiceName": "MDS AI Analytics",
+    "practiceSubtitle": "Eye Specialists & Surgeons of Northern Virginia",
+    "ownerName": null,
     "ownerTitle": null,
     "ownerPhotoUrl": "/assets/Dr. John Josephson_1757862871625-B4_CVazU.jpeg",
-    "revenueTitle": "total earned revenue",
-    "expensesTitle": "Expenses in total",
-    "cashInTitle": "Cash In test",
-    "cashOutTitle": "Cash Out test",
-    "topRevenueTitle": "Top Revenue Procedures hi",
+    "revenueTitle": "Revenue",
+    "expensesTitle": "Expenses",
+    "cashInTitle": "Cash In",
+    "cashOutTitle": "Cash Out",
+    "topRevenueTitle": "Top Revenue Procedures",
     "revenueSubheadings": {
-      "Office Visits": "Clinical Visits",
+      "Office Visits": "Office Visits",
       "Drug Acquisition (injections)": "Drug Acquisition (injections)",
       "Procedures": "Procedures",
       "Other Revenue": "Other Revenue"
@@ -248,43 +363,162 @@
       "Investing Activities": "Investing Activities",
       "Financing Activities": "Financing Activities"
     },
-    "procedureNameOverrides": {
-      "With IOL insertion": "cataracts with iol",
-      "Laser glaucoma treatment": "hi"
+    "arSubheadings": {
+      "0-30": "0-30 days",
+      "31-60": "31-60 days",
+      "61-90": "61-90 days",
+      "90+": "90+ days"
     },
+    "procedureNameOverrides": {},
     "locationNameOverrides": {},
     "showCollectionsWidget": true,
     "providers": [
       {
-        "name": "Dr. Amar Al-Mahdi",
-        "percentage": 30
+        "name": "Dr. John Josephson",
+        "percentage": 19
       },
       {
-        "name": "Dr. Smith",
-        "percentage": 20
+        "name": "Dr. Meghan G. Moroux",
+        "percentage": 14
       },
       {
-        "name": "Dr. Khan",
-        "percentage": 20
+        "name": "Dr. Hubert H. Pham",
+        "percentage": 13
       },
       {
-        "name": "Dr. Taylor",
-        "percentage": 15
+        "name": "Dr. Sabita Ittoop",
+        "percentage": 10
       },
       {
-        "name": "Dr. White",
-        "percentage": 15
+        "name": "Dr. Kristen E. Dunbar",
+        "percentage": 9
+      },
+      {
+        "name": "Dr. Erin Ong",
+        "percentage": 9
+      },
+      {
+        "name": "Dr. Prema Modak",
+        "percentage": 8
+      },
+      {
+        "name": "Dr. Julia Pierce",
+        "percentage": 7
+      },
+      {
+        "name": "Dr. Heloi Stark",
+        "percentage": 6
+      },
+      {
+        "name": "Dr. Noushin Sahraei",
+        "percentage": 5
       }
     ],
-    "id": "user-1769642401175-9345sqida",
-    "createdAt": "2026-01-28T23:20:01.175Z",
-    "updatedAt": "2026-01-29T18:50:28.955Z",
-    "userLocations": [],
+    "id": "user-1770050757336-txdl0eqvc",
+    "createdAt": "2026-02-02T16:45:57.336Z",
+    "updatedAt": "2026-02-04T00:00:00.000Z",
+    "userLocations": []
+  },
+  {
+    "username": "test",
+    "password": "123",
+    "role": "user",
+    "logoUrl": "/assets/MDS Logo_1754254040718-Dv0l5qLn.png",
+    "practiceName": "MDS AI Analytics",
+    "practiceSubtitle": null,
+    "ownerName": null,
+    "ownerTitle": null,
+    "ownerPhotoUrl": "/assets/Dr. John Josephson_1757862871625-B4_CVazU.jpeg",
+    "revenueTitle": "Revenue",
+    "expensesTitle": "Expenses",
+    "cashInTitle": "Cash In",
+    "cashOutTitle": "Cash Out",
+    "topRevenueTitle": "Top Revenue Procedures",
+    "revenueSubheadings": {
+      "Office Visits": "Office Visits",
+      "Drug Acquisition (injections)": "Drug Acquisition (injections)",
+      "Procedures": "Procedures",
+      "Other Revenue": "Other Revenue"
+    },
+    "expensesSubheadings": {
+      "Salaries & Wages": "Salaries & Wages",
+      "Rent & Utilities": "Rent & Utilities",
+      "Medical Supplies": "Medical Supplies",
+      "Insurance": "Insurance",
+      "Marketing": "Marketing",
+      "Equipment": "Equipment",
+      "Other Expenses": "Other Expenses"
+    },
+    "cashInSubheadings": {
+      "Patient Payments": "Patient Payments",
+      "Insurance Payments": "Insurance Payments",
+      "Other Income": "Other Income"
+    },
+    "cashOutSubheadings": {
+      "Payroll": "Payroll",
+      "Rent": "Rent",
+      "Supplies": "Supplies",
+      "Utilities": "Utilities",
+      "Other Payments": "Other Payments"
+    },
+    "cashFlowSubheadings": {
+      "Operating Activities": "Operating Activities",
+      "Investing Activities": "Investing Activities",
+      "Financing Activities": "Financing Activities"
+    },
     "arSubheadings": {
-      "0-30": "current billing",
-      "31-60": "next billings",
+      "0-30": "0-30 days",
+      "31-60": "31-60 days",
       "61-90": "61-90 days",
       "90+": "90+ days"
-    }
+    },
+    "procedureNameOverrides": {},
+    "locationNameOverrides": {},
+    "showCollectionsWidget": true,
+    "providers": [
+      {
+        "name": "Dr. John Josephson",
+        "percentage": 19
+      },
+      {
+        "name": "Dr. Meghan G. Moroux",
+        "percentage": 14
+      },
+      {
+        "name": "Dr. Hubert H. Pham",
+        "percentage": 13
+      },
+      {
+        "name": "Dr. Sabita Ittoop",
+        "percentage": 10
+      },
+      {
+        "name": "Dr. Kristen E. Dunbar",
+        "percentage": 9
+      },
+      {
+        "name": "Dr. Erin Ong",
+        "percentage": 9
+      },
+      {
+        "name": "Dr. Prema Modak",
+        "percentage": 8
+      },
+      {
+        "name": "Dr. Julia Pierce",
+        "percentage": 7
+      },
+      {
+        "name": "Dr. Heloi Stark",
+        "percentage": 6
+      },
+      {
+        "name": "Dr. Noushin Sahraei",
+        "percentage": 5
+      }
+    ],
+    "id": "user-1770227642590-bczp48rua",
+    "createdAt": "2026-02-04T17:54:02.590Z",
+    "updatedAt": "2026-02-04T17:54:02.590Z"
   }
 ]
