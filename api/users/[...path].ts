@@ -103,6 +103,7 @@ const USERS = [
     ownerPhotoUrl: '/assets/Dr. John Josephson_1757862871625-B4_CVazU.jpeg',
     revenueTitle: 'Revenue',
     expensesTitle: 'Expenses',
+    profitLossTitle: 'Profit & Loss',
     cashInTitle: 'Cash In',
     cashOutTitle: 'Cash Out',
     topRevenueTitle: 'Top Revenue Procedures',
@@ -141,6 +142,7 @@ const USERS = [
     ownerPhotoUrl: '/assets/ammar-v2.jpeg',
     revenueTitle: 'Revenue',
     expensesTitle: 'Expenses',
+    profitLossTitle: 'Profit & Loss',
     cashInTitle: 'Cash In',
     cashOutTitle: 'Cash Out',
     topRevenueTitle: 'Top Revenue Procedures',
@@ -226,6 +228,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         ownerPhotoUrl: userData.ownerPhotoUrl || '/assets/Dr. John Josephson_1757862871625-B4_CVazU.jpeg',
         revenueTitle: userData.revenueTitle || 'Revenue',
         expensesTitle: userData.expensesTitle || 'Expenses',
+        profitLossTitle: userData.profitLossTitle || 'Profit & Loss',
         cashInTitle: userData.cashInTitle || 'Cash In',
         cashOutTitle: userData.cashOutTitle || 'Cash Out',
         topRevenueTitle: userData.topRevenueTitle || 'Top Revenue Procedures',
@@ -285,6 +288,10 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         cashFlowSubheadings: initializeSubheadings(updates.cashFlowSubheadings, DEFAULT_CASH_FLOW_KEYS),
         arSubheadings: initializeARSubheadings(updates.arSubheadings),
         procedureNameOverrides: initializeSubheadings(updates.procedureNameOverrides, DEFAULT_PROCEDURE_KEYS),
+        // Preserve location name overrides and providers from existing user
+        locationNameOverrides: updates.locationNameOverrides || USERS[userIndex].locationNameOverrides,
+        providers: updates.providers || USERS[userIndex].providers,
+        userLocations: updates.userLocations || USERS[userIndex].userLocations,
       };
 
       const { password, ...userWithoutPassword } = USERS[userIndex];

@@ -97,6 +97,7 @@ interface UserConfig {
   ownerPhotoUrl: string | null;
   revenueTitle: string;
   expensesTitle: string;
+  profitLossTitle: string;
   cashInTitle: string;
   cashOutTitle: string;
   topRevenueTitle: string;
@@ -874,6 +875,15 @@ export default function Settings() {
                         />
                       </div>
                       <div>
+                        <Label htmlFor="profitLossTitle">Profit & Loss Widget Title</Label>
+                        <Input
+                          id="profitLossTitle"
+                          value={editingUser.profitLossTitle || 'Profit & Loss'}
+                          onChange={(e) => handleInputChange('profitLossTitle', e.target.value)}
+                          placeholder="Profit & Loss"
+                        />
+                      </div>
+                      <div>
                         <Label htmlFor="cashInTitle">Cash In Widget Title</Label>
                         <Input
                           id="cashInTitle"
@@ -1001,99 +1011,20 @@ export default function Settings() {
                     ))}
                   </CardContent>
                 </Card>
-              </TabsContent>
-              {/* Subheadings Tab */}
-              <TabsContent value="subheadings" className="space-y-6">
-                {/* Revenue Subheadings */}
+                {/* Cash Flow Subheadings */}
                 <Card>
                   <CardHeader>
-                    <CardTitle>Revenue Subheadings</CardTitle>
-                    <CardDescription>Customize revenue category names</CardDescription>
+                    <CardTitle>Cash Flow Subheadings</CardTitle>
+                    <CardDescription>Customize cash flow statement category names (Operating, Investing, Financing)</CardDescription>
                   </CardHeader>
                   <CardContent className="space-y-3">
-                    {DEFAULT_REVENUE_KEYS.map((key) => (
+                    {DEFAULT_CASH_FLOW_KEYS.map((key) => (
                       <div key={key}>
                         <Label className="text-xs text-gray-500">{key}</Label>
                         <Input
-                          value={editingUser.revenueSubheadings[key] || key}
-                          onChange={(e) => handleSubheadingChange('revenueSubheadings', key, e.target.value)}
+                          value={editingUser.cashFlowSubheadings[key] || ''}
+                          onChange={(e) => handleSubheadingChange('cashFlowSubheadings', key, e.target.value)}
                           placeholder={key}
-                        />
-                      </div>
-                    ))}
-                  </CardContent>
-                </Card>
-                {/* Expenses Subheadings */}
-                <Card>
-                  <CardHeader>
-                    <CardTitle>Expenses Subheadings</CardTitle>
-                    <CardDescription>Customize expense category names</CardDescription>
-                  </CardHeader>
-                  <CardContent className="space-y-3">
-                    {DEFAULT_EXPENSES_KEYS.map((key) => (
-                      <div key={key}>
-                        <Label className="text-xs text-gray-500">{key}</Label>
-                        <Input
-                          value={editingUser.expensesSubheadings[key] || key}
-                          onChange={(e) => handleSubheadingChange('expensesSubheadings', key, e.target.value)}
-                          placeholder={key}
-                        />
-                      </div>
-                    ))}
-                  </CardContent>
-                </Card>
-                {/* Cash In Subheadings */}
-                <Card>
-                  <CardHeader>
-                    <CardTitle>Cash In Subheadings</CardTitle>
-                    <CardDescription>Customize cash inflow category names</CardDescription>
-                  </CardHeader>
-                  <CardContent className="space-y-3">
-                    {DEFAULT_CASH_IN_KEYS.map((key) => (
-                      <div key={key}>
-                        <Label className="text-xs text-gray-500">{key}</Label>
-                        <Input
-                          value={editingUser.cashInSubheadings[key] || key}
-                          onChange={(e) => handleSubheadingChange('cashInSubheadings', key, e.target.value)}
-                          placeholder={key}
-                        />
-                      </div>
-                    ))}
-                  </CardContent>
-                </Card>
-                {/* Cash Out Subheadings */}
-                <Card>
-                  <CardHeader>
-                    <CardTitle>Cash Out Subheadings</CardTitle>
-                    <CardDescription>Customize cash outflow category names</CardDescription>
-                  </CardHeader>
-                  <CardContent className="space-y-3">
-                    {DEFAULT_CASH_OUT_KEYS.map((key) => (
-                      <div key={key}>
-                        <Label className="text-xs text-gray-500">{key}</Label>
-                        <Input
-                          value={editingUser.cashOutSubheadings[key] || key}
-                          onChange={(e) => handleSubheadingChange('cashOutSubheadings', key, e.target.value)}
-                          placeholder={key}
-                        />
-                      </div>
-                    ))}
-                  </CardContent>
-                </Card>
-                {/* AR Buckets Subheadings */}
-                <Card>
-                  <CardHeader>
-                    <CardTitle>AR Buckets Subheadings</CardTitle>
-                    <CardDescription>Customize AR aging bucket labels (0-30, 31-60, 61-90, 90+ days)</CardDescription>
-                  </CardHeader>
-                  <CardContent className="space-y-3">
-                    {DEFAULT_AR_KEYS.map((key) => (
-                      <div key={key}>
-                        <Label className="text-xs text-gray-500">{key} days</Label>
-                        <Input
-                          value={editingUser.arSubheadings?.[key] ?? `${key} days`}
-                          onChange={(e) => handleSubheadingChange('arSubheadings', key, e.target.value)}
-                          placeholder={`${key} days`}
                         />
                       </div>
                     ))}

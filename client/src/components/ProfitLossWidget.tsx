@@ -30,6 +30,7 @@ ChartJS.register(
 interface ProfitLossWidgetProps {
   selectedLocationId: string;
   selectedPeriod: string;
+  profitLossTitle?: string;
   revenueSubheadings?: Record<string, string>;
   expensesSubheadings?: Record<string, string>;
 }
@@ -103,7 +104,7 @@ const chartOptions = {
   }
 };
 
-export default function ProfitLossWidget({ selectedLocationId, selectedPeriod, revenueSubheadings = {}, expensesSubheadings = {} }: ProfitLossWidgetProps) {
+export default function ProfitLossWidget({ selectedLocationId, selectedPeriod, profitLossTitle = 'Profit & Loss', revenueSubheadings = {}, expensesSubheadings = {} }: ProfitLossWidgetProps) {
   const [viewMode, setViewMode] = useState<"list" | "graph">("list");
   const [revenueCollapsed, setRevenueCollapsed] = useState(true);
   const [expensesCollapsed, setExpensesCollapsed] = useState(true);
@@ -134,7 +135,7 @@ export default function ProfitLossWidget({ selectedLocationId, selectedPeriod, r
     <Card className="bg-white shadow-sm border border-gray-200" data-testid="profit-loss-widget">
       <CardHeader className="pb-4">
         <CardTitle className="text-xl font-bold text-gray-900 flex items-center justify-between">
-          P&L Statement
+          {profitLossTitle}
           
           {/* View Mode Toggle */}
           <div className="flex items-center gap-2" data-testid="pl-view-toggle">

@@ -442,6 +442,7 @@ export default function Dashboard() {
                     <ProfitLossWidget
                       selectedLocationId={selectedLocationId}
                       selectedPeriod={selectedFinancialPeriod}
+                      profitLossTitle={user?.profitLossTitle || 'Profit & Loss'}
                       revenueSubheadings={user?.revenueSubheadings || {}}
                       expensesSubheadings={user?.expensesSubheadings || {}}
                     />

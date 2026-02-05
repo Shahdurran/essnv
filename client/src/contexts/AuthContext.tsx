@@ -25,6 +25,7 @@ export interface User {
   ownerPhotoUrl: string | null;
   revenueTitle: string;
   expensesTitle: string;
+  profitLossTitle: string;
   cashInTitle: string;
   cashOutTitle: string;
   topRevenueTitle: string;
