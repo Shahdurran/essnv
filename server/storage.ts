@@ -23,7 +23,7 @@ import {
   type CashFlowData,
   type DashboardCustomization,
   type InsertDashboardCustomization
-} from "@shared/schema";
+} from "../shared/schema";
 
 // Define RevenueDataPoint interface for server use
 interface RevenueDataPoint {

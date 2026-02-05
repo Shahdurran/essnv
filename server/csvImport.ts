@@ -1,7 +1,7 @@
 import { neon } from '@neondatabase/serverless';
 import { drizzle } from 'drizzle-orm/neon-http';
-import { plMonthlyData, practiceLocations } from '@shared/schema';
-import type { InsertPlMonthlyData } from '@shared/schema';
+import { plMonthlyData, practiceLocations } from '../shared/schema';
+import type { InsertPlMonthlyData } from '../shared/schema';
 import * as fs from 'fs';
 import * as path from 'path';
 

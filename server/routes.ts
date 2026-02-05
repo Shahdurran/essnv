@@ -35,7 +35,7 @@ import { storage } from "./storage";
 // OpenAI SDK for AI assistant functionality
 import OpenAI from "openai";
 // Zod schema for AI query validation
-import { insertAiQuerySchema } from "@shared/schema";
+import { insertAiQuerySchema } from "../shared/schema";
 // Cash flow CSV import functions (imported conditionally to avoid database requirement)
 // import { importCashFlowDataFromCsv, getCashFlowData } from "./csvImport";
 // Multer for handling file uploads
