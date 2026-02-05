@@ -1,7 +1,7 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
 import { neon } from '@neondatabase/serverless';
 import { drizzle } from 'drizzle-orm/neon-http';
-import { sql as sqlFn, pgTable, text, varchar } from 'drizzle-orm/pg-core';
+import { pgTable, text, varchar, json, boolean } from 'drizzle-orm/pg-core';
 import { sql } from 'drizzle-orm';
 
 // Inline schema definition (avoids import issues with Vercel bundler)
@@ -12,6 +12,36 @@ const users = pgTable('users', {
   name: text('name').notNull(),
   role: text('role').notNull(),
   practiceId: varchar('practice_id'),
+  
+  // Branding fields
+  logoUrl: text('logo_url'),
+  practiceName: text('practice_name'),
+  practiceSubtitle: text('practice_subtitle'),
+  ownerName: text('owner_name'),
+  ownerTitle: text('owner_title'),
+  ownerPhotoUrl: text('owner_photo_url'),
+  
+  // Widget titles
+  revenueTitle: text('revenue_title'),
+  expensesTitle: text('expenses_title'),
+  profitLossTitle: text('profit_loss_title'),
+  cashInTitle: text('cash_in_title'),
+  cashOutTitle: text('cash_out_title'),
+  topRevenueTitle: text('top_revenue_title'),
+  
+  // Subheading customizations
+  revenueSubheadings: json('revenue_subheadings'),
+  expensesSubheadings: json('expenses_subheadings'),
+  cashInSubheadings: json('cash_in_subheadings'),
+  cashOutSubheadings: json('cash_out_subheadings'),
+  cashFlowSubheadings: json('cash_flow_subheadings'),
+  arSubheadings: json('ar_subheadings'),
+  
+  // Other customizations
+  procedureNameOverrides: json('procedure_name_overrides'),
+  locationNameOverrides: json('location_name_overrides'),
+  providers: json('providers'),
+  showCollectionsWidget: boolean('show_collections_widget').default(true),
 });
 
 // Initialize Neon DB connection
@@ -202,22 +232,39 @@ function initializeARSubheadings(existing?: Record<string, string>): Record<stri
 // Function to convert database user to app user format
 function convertDbUserToAppUser(dbUser: any): any {
   return {
+    // Basic fields
     username: dbUser.username,
     role: dbUser.role || 'user',
-    practiceName: 'MDS AI Analytics',
-    practiceSubtitle: 'Eye Specialists & Surgeons',
-    logoUrl: '/assets/MDS Logo_1754254040718-Dv0l5qLn.png',
+    
+    // Branding fields - use DB values or defaults
+    practiceName: dbUser.practiceName || 'MDS AI Analytics',
+    practiceSubtitle: dbUser.practiceSubtitle || 'Eye Specialists & Surgeons',
+    logoUrl: dbUser.logoUrl || '/assets/MDS Logo_1754254040718-Dv0l5qLn.png',
     ownerName: dbUser.name,
-    ownerTitle: dbUser.role === 'admin' ? 'Medical Director' : 'Staff',
-    ownerPhotoUrl: '/assets/Dr. John Josephson_1757862871625-B4_CVazU.jpeg',
-    revenueTitle: 'Revenue',
-    expensesTitle: 'Expenses',
-    profitLossTitle: 'Profit & Loss',
-    cashInTitle: 'Cash In',
-    cashOutTitle: 'Cash Out',
-    topRevenueTitle: 'Top Revenue Procedures',
-    showCollectionsWidget: true,
-    providers: [
+    ownerTitle: dbUser.ownerTitle || (dbUser.role === 'admin' ? 'Medical Director' : 'Staff'),
+    ownerPhotoUrl: dbUser.ownerPhotoUrl || '/assets/Dr. John Josephson_1757862871625-B4_CVazU.jpeg',
+    
+    // Widget titles - use DB values or defaults
+    revenueTitle: dbUser.revenueTitle || 'Revenue',
+    expensesTitle: dbUser.expensesTitle || 'Expenses',
+    profitLossTitle: dbUser.profitLossTitle || 'Profit & Loss',
+    cashInTitle: dbUser.cashInTitle || 'Cash In',
+    cashOutTitle: dbUser.cashOutTitle || 'Cash Out',
+    topRevenueTitle: dbUser.topRevenueTitle || 'Top Revenue Procedures',
+    
+    // Subheading customizations - use DB values or defaults
+    revenueSubheadings: dbUser.revenueSubheadings || {},
+    expensesSubheadings: dbUser.expensesSubheadings || {},
+    cashInSubheadings: dbUser.cashInSubheadings || {},
+    cashOutSubheadings: dbUser.cashOutSubheadings || {},
+    cashFlowSubheadings: dbUser.cashFlowSubheadings || {},
+    arSubheadings: dbUser.arSubheadings || {},
+    
+    // Other customizations
+    procedureNameOverrides: dbUser.procedureNameOverrides || {},
+    locationNameOverrides: dbUser.locationNameOverrides || {},
+    showCollectionsWidget: dbUser.showCollectionsWidget !== undefined ? dbUser.showCollectionsWidget : true,
+    providers: dbUser.providers || [
       { name: 'Dr. John Josephson', percentage: 19 },
       { name: 'Dr. Meghan G. Moroux', percentage: 14 },
       { name: 'Dr. Hubert H. Pham', percentage: 13 },
@@ -229,14 +276,6 @@ function convertDbUserToAppUser(dbUser: any): any {
       { name: 'Dr. Heloi Stark', percentage: 6 },
       { name: 'Dr. Noushin Sahraei', percentage: 5 }
     ],
-    revenueSubheadings: {},
-    expensesSubheadings: {},
-    cashInSubheadings: {},
-    cashOutSubheadings: {},
-    cashFlowSubheadings: {},
-    arSubheadings: {},
-    procedureNameOverrides: {},
-    locationNameOverrides: {}
   };
 }
 

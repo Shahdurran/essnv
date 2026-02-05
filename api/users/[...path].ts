@@ -2,9 +2,9 @@ import type { VercelRequest, VercelResponse } from '@vercel/node';
 import { neon } from '@neondatabase/serverless';
 import { drizzle } from 'drizzle-orm/neon-http';
 import { eq, sql } from 'drizzle-orm';
-import { pgTable, text, varchar } from 'drizzle-orm/pg-core';
+import { pgTable, text, varchar, json, boolean } from 'drizzle-orm/pg-core';
 
-// Inline users table definition for Vercel compatibility
+// Inline users table definition for Vercel compatibility (matches shared/schema.ts)
 const users = pgTable("users", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
   username: text("username").notNull().unique(),
@@ -12,6 +12,36 @@ const users = pgTable("users", {
   name: text("name").notNull(),
   role: text("role").notNull(),
   practiceId: varchar("practice_id"),
+  
+  // Branding fields
+  logoUrl: text("logo_url"),
+  practiceName: text("practice_name"),
+  practiceSubtitle: text("practice_subtitle"),
+  ownerName: text("owner_name"),
+  ownerTitle: text("owner_title"),
+  ownerPhotoUrl: text("owner_photo_url"),
+  
+  // Widget titles
+  revenueTitle: text("revenue_title"),
+  expensesTitle: text("expenses_title"),
+  profitLossTitle: text("profit_loss_title"),
+  cashInTitle: text("cash_in_title"),
+  cashOutTitle: text("cash_out_title"),
+  topRevenueTitle: text("top_revenue_title"),
+  
+  // Subheading customizations (stored as JSON)
+  revenueSubheadings: json("revenue_subheadings"),
+  expensesSubheadings: json("expenses_subheadings"),
+  cashInSubheadings: json("cash_in_subheadings"),
+  cashOutSubheadings: json("cash_out_subheadings"),
+  cashFlowSubheadings: json("cash_flow_subheadings"),
+  arSubheadings: json("ar_subheadings"),
+  
+  // Other customizations
+  procedureNameOverrides: json("procedure_name_overrides"),
+  locationNameOverrides: json("location_name_overrides"),
+  providers: json("providers"),
+  showCollectionsWidget: boolean("show_collections_widget").default(true),
 });
 
 // Initialize Neon DB connection

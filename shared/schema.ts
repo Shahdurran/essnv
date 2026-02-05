@@ -71,6 +71,36 @@ export const users = pgTable("users", {
   name: text("name").notNull(),
   role: text("role").notNull(), // practice_owner, staff, admin
   practiceId: varchar("practice_id"),
+  
+  // Branding fields
+  logoUrl: text("logo_url"),
+  practiceName: text("practice_name"),
+  practiceSubtitle: text("practice_subtitle"),
+  ownerName: text("owner_name"),
+  ownerTitle: text("owner_title"),
+  ownerPhotoUrl: text("owner_photo_url"),
+  
+  // Widget titles
+  revenueTitle: text("revenue_title"),
+  expensesTitle: text("expenses_title"),
+  profitLossTitle: text("profit_loss_title"),
+  cashInTitle: text("cash_in_title"),
+  cashOutTitle: text("cash_out_title"),
+  topRevenueTitle: text("top_revenue_title"),
+  
+  // Subheading customizations (stored as JSON)
+  revenueSubheadings: json("revenue_subheadings"),
+  expensesSubheadings: json("expenses_subheadings"),
+  cashInSubheadings: json("cash_in_subheadings"),
+  cashOutSubheadings: json("cash_out_subheadings"),
+  cashFlowSubheadings: json("cash_flow_subheadings"),
+  arSubheadings: json("ar_subheadings"),
+  
+  // Other customizations
+  procedureNameOverrides: json("procedure_name_overrides"),
+  locationNameOverrides: json("location_name_overrides"),
+  providers: json("providers"),
+  showCollectionsWidget: boolean("show_collections_widget").default(true),
 });
 
 /*
