@@ -454,16 +454,52 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
           const dbUsers = await db.select().from(users).where(eq(users.username, username));
           if (dbUsers.length > 0) {
             userFromDb = dbUsers[0];
-            // Update in DB
+            
+            // Update ALL fields in DB (including settings)
             const dbUser = {
               username: username,
               password: updates.password || dbUsers[0].password,
               name: updates.ownerName || dbUsers[0].name,
               role: updates.role || dbUsers[0].role,
-              practiceId: dbUsers[0].practiceId
+              practiceId: dbUsers[0].practiceId,
+              
+              // Branding fields
+              logoUrl: updates.logoUrl || dbUsers[0].logoUrl,
+              practiceName: updates.practiceName || dbUsers[0].practiceName,
+              practiceSubtitle: updates.practiceSubtitle || dbUsers[0].practiceSubtitle,
+              ownerName: updates.ownerName || dbUsers[0].ownerName,
+              ownerTitle: updates.ownerTitle || dbUsers[0].ownerTitle,
+              ownerPhotoUrl: updates.ownerPhotoUrl || dbUsers[0].ownerPhotoUrl,
+              
+              // Widget titles
+              revenueTitle: updates.revenueTitle || dbUsers[0].revenueTitle,
+              expensesTitle: updates.expensesTitle || dbUsers[0].expensesTitle,
+              profitLossTitle: updates.profitLossTitle || dbUsers[0].profitLossTitle,
+              cashInTitle: updates.cashInTitle || dbUsers[0].cashInTitle,
+              cashOutTitle: updates.cashOutTitle || dbUsers[0].cashOutTitle,
+              topRevenueTitle: updates.topRevenueTitle || dbUsers[0].topRevenueTitle,
+              
+              // JSON fields - update with new values or keep existing
+              revenueSubheadings: updates.revenueSubheadings || dbUsers[0].revenueSubheadings || {},
+              expensesSubheadings: updates.expensesSubheadings || dbUsers[0].expensesSubheadings || {},
+              cashInSubheadings: updates.cashInSubheadings || dbUsers[0].cashInSubheadings || {},
+              cashOutSubheadings: updates.cashOutSubheadings || dbUsers[0].cashOutSubheadings || {},
+              cashFlowSubheadings: updates.cashFlowSubheadings || dbUsers[0].cashFlowSubheadings || {},
+              arSubheadings: updates.arSubheadings || dbUsers[0].arSubheadings || {},
+              procedureNameOverrides: updates.procedureNameOverrides || dbUsers[0].procedureNameOverrides || {},
+              locationNameOverrides: updates.locationNameOverrides || dbUsers[0].locationNameOverrides || {},
+              providers: updates.providers || dbUsers[0].providers || [],
+              showCollectionsWidget: updates.showCollectionsWidget !== undefined ? updates.showCollectionsWidget : (dbUsers[0].showCollectionsWidget !== undefined ? dbUsers[0].showCollectionsWidget : true),
             };
+            
             await db.update(users).set(dbUser).where(eq(users.username, username));
             console.log('[USERS API] User updated in DB:', username);
+            
+            // Fetch updated user from DB to return
+            const updatedDbUsers = await db.select().from(users).where(eq(users.username, username));
+            if (updatedDbUsers.length > 0) {
+              userFromDb = updatedDbUsers[0];
+            }
           }
         } catch (dbError) {
           console.error('[USERS API] DB error updating user:', dbError);
@@ -507,12 +543,8 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         
         return res.status(200).json(userWithoutPassword);
       } else {
-        // User only in DB - return success
-        const userWithoutPassword = {
-          username: username,
-          role: userFromDb?.role || 'user',
-          ...updates
-        };
+        // User only in DB - return full user from DB
+        const userWithoutPassword = convertDbUserToAppUser(userFromDb);
         return res.status(200).json(userWithoutPassword);
       }
     }
