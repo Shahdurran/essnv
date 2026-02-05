@@ -485,6 +485,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         ownerPhotoUrl: userData.ownerPhotoUrl || '/assets/Dr. John Josephson_1757862871625-B4_CVazU.jpeg',
         revenueTitle: userData.revenueTitle || 'Revenue',
         expensesTitle: userData.expensesTitle || 'Expenses',
+        profitLossTitle: userData.profitLossTitle || 'Profit & Loss',
         cashInTitle: userData.cashInTitle || 'Cash In',
         cashOutTitle: userData.cashOutTitle || 'Cash Out',
         topRevenueTitle: userData.topRevenueTitle || 'Top Revenue Procedures',
