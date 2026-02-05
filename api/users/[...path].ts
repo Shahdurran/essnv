@@ -293,9 +293,16 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   }
 
   try {
-    // Get the path segments: /api/users or /api/users/admin → [] or ["admin"]
-    const { path } = req.query;
-    const username = Array.isArray(path) && path.length > 0 ? path[0] : null;
+    // Get the path segments from Vercel's catch-all route
+    // Vercel passes :path* as req.query.path
+    const pathParam = req.query.path;
+    let username: string | null = null;
+    
+    if (Array.isArray(pathParam)) {
+      username = pathParam.length > 0 ? pathParam[0] : null;
+    } else if (typeof pathParam === 'string') {
+      username = pathParam || null;
+    }
 
     console.log('[USERS API] Request:', req.method, username || 'list', req.url);
 
