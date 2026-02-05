@@ -1,4 +1,24 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
+import { neon } from '@neondatabase/serverless';
+import { drizzle } from 'drizzle-orm/neon-http';
+import { eq } from 'drizzle-orm';
+import { users } from '../../shared/schema';
+
+// Initialize Neon DB connection
+const databaseUrl = process.env.DATABASE_URL || process.env.DATABASE_CONNECTION_STRING;
+let db: any = null;
+
+try {
+  if (databaseUrl) {
+    const sqlConnection = neon(databaseUrl);
+    db = drizzle(sqlConnection);
+    console.log('[AUTH API] Neon DB connection initialized');
+  } else {
+    console.log('[AUTH API] No DATABASE_URL found - using in-memory users only');
+  }
+} catch (error) {
+  console.error('[AUTH API] Failed to initialize Neon DB:', error);
+}
 
 // Default subheading keys that match actual data line_item values
 const DEFAULT_REVENUE_KEYS = [
@@ -64,52 +84,8 @@ const DEFAULT_PROCEDURE_KEYS = [
   '45-59 minutes'
 ];
 
-// Helper function to initialize subheading records with default keys
-function initializeSubheadings(
-  existing: Record<string, string> | undefined,
-  defaultKeys: string[]
-): Record<string, string> {
-  const result = { ...(existing || {}) };
-  defaultKeys.forEach(key => {
-    if (!result.hasOwnProperty(key)) {
-      result[key] = '';
-    }
-  });
-  return result;
-}
-
-// Helper to initialize AR subheadings with default values
-function initializeARSubheadings(existing?: Record<string, string>): Record<string, string> {
-  const result = { ...(existing || {}) };
-  DEFAULT_AR_KEYS.forEach(key => {
-    if (!result.hasOwnProperty(key)) {
-      result[key] = `${key} days`;
-    }
-  });
-  return result;
-}
-
-// Simple in-memory session store
-const SESSIONS: Record<string, any> = {};
-
-// Global function to update sessions when user settings change (called from users API)
-export function updateAuthSessions(username: string, updatedUser: any) {
-  console.log('[AUTH API] Updating sessions for user:', username);
-  Object.keys(SESSIONS).forEach(token => {
-    if (SESSIONS[token]?.username === username) {
-      console.log('[AUTH API] Updated session token:', token);
-      SESSIONS[token] = { ...SESSIONS[token], ...updatedUser };
-    }
-  });
-}
-
-// Expose update function globally for cross-API communication
-if (typeof global !== 'undefined') {
-  (global as any).UPDATE_AUTH_SESSIONS = updateAuthSessions;
-}
-
-// Simple in-memory user store
-const USERS = [
+// In-memory user store (fallback when DB is not available)
+const IN_MEMORY_USERS = [
   {
     username: 'admin',
     password: 'admin123',
@@ -185,6 +161,91 @@ const USERS = [
   }
 ];
 
+// Simple in-memory session store
+const SESSIONS: Record<string, any> = {};
+
+// Helper function to initialize subheading records with default keys
+function initializeSubheadings(
+  existing: Record<string, string> | undefined,
+  defaultKeys: string[]
+): Record<string, string> {
+  const result = { ...(existing || {}) };
+  defaultKeys.forEach(key => {
+    if (!result.hasOwnProperty(key)) {
+      result[key] = '';
+    }
+  });
+  return result;
+}
+
+// Helper to initialize AR subheadings with default values
+function initializeARSubheadings(existing?: Record<string, string>): Record<string, string> {
+  const result = { ...(existing || {}) };
+  DEFAULT_AR_KEYS.forEach(key => {
+    if (!result.hasOwnProperty(key)) {
+      result[key] = `${key} days`;
+    }
+  });
+  return result;
+}
+
+// Function to convert database user to app user format
+function convertDbUserToAppUser(dbUser: any): any {
+  return {
+    username: dbUser.username,
+    role: dbUser.role || 'user',
+    practiceName: 'MDS AI Analytics',
+    practiceSubtitle: 'Eye Specialists & Surgeons',
+    logoUrl: '/assets/MDS Logo_1754254040718-Dv0l5qLn.png',
+    ownerName: dbUser.name,
+    ownerTitle: dbUser.role === 'admin' ? 'Medical Director' : 'Staff',
+    ownerPhotoUrl: '/assets/Dr. John Josephson_1757862871625-B4_CVazU.jpeg',
+    revenueTitle: 'Revenue',
+    expensesTitle: 'Expenses',
+    profitLossTitle: 'Profit & Loss',
+    cashInTitle: 'Cash In',
+    cashOutTitle: 'Cash Out',
+    topRevenueTitle: 'Top Revenue Procedures',
+    showCollectionsWidget: true,
+    providers: [
+      { name: 'Dr. John Josephson', percentage: 19 },
+      { name: 'Dr. Meghan G. Moroux', percentage: 14 },
+      { name: 'Dr. Hubert H. Pham', percentage: 13 },
+      { name: 'Dr. Sabita Ittoop', percentage: 10 },
+      { name: 'Dr. Kristen E. Dunbar', percentage: 9 },
+      { name: 'Dr. Erin Ong', percentage: 9 },
+      { name: 'Dr. Prema Modak', percentage: 8 },
+      { name: 'Dr. Julia Pierce', percentage: 7 },
+      { name: 'Dr. Heloi Stark', percentage: 6 },
+      { name: 'Dr. Noushin Sahraei', percentage: 5 }
+    ],
+    revenueSubheadings: {},
+    expensesSubheadings: {},
+    cashInSubheadings: {},
+    cashOutSubheadings: {},
+    cashFlowSubheadings: {},
+    arSubheadings: {},
+    procedureNameOverrides: {},
+    locationNameOverrides: {}
+  };
+}
+
+// Global function to update sessions when user settings change (called from users API)
+export function updateAuthSessions(username: string, updatedUser: any) {
+  console.log('[AUTH API] Updating sessions for user:', username);
+  Object.keys(SESSIONS).forEach(token => {
+    if (SESSIONS[token]?.username === username) {
+      console.log('[AUTH API] Updated session token:', token);
+      SESSIONS[token] = { ...SESSIONS[token], ...updatedUser };
+    }
+  });
+}
+
+// Expose update function globally for cross-API communication
+if (typeof global !== 'undefined') {
+  (global as any).UPDATE_AUTH_SESSIONS = updateAuthSessions;
+}
+
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   // Set CORS headers
   res.setHeader('Access-Control-Allow-Origin', '*');
@@ -215,16 +276,61 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         return res.status(400).json({ message: 'Username and password are required' });
       }
 
-      const user = USERS.find(u => u.username === username && u.password === password);
+      console.log('[AUTH/LOGIN] Login attempt for user:', username);
+
+      // Try to authenticate using Neon DB first
+      if (db) {
+        try {
+          const dbUsers = await db.select().from(users).where(eq(users.username, username));
+          
+          if (dbUsers.length > 0) {
+            const dbUser = dbUsers[0];
+            
+            // Simple password comparison (in production, use bcrypt)
+            if (dbUser.password === password) {
+              console.log('[AUTH/LOGIN] DB login successful for user:', username);
+              
+              const userWithoutPassword = convertDbUserToAppUser(dbUser);
+              
+              // Initialize subheading records with default keys
+              userWithoutPassword.revenueSubheadings = initializeSubheadings(userWithoutPassword.revenueSubheadings, DEFAULT_REVENUE_KEYS);
+              userWithoutPassword.expensesSubheadings = initializeSubheadings(userWithoutPassword.expensesSubheadings, DEFAULT_EXPENSES_KEYS);
+              userWithoutPassword.cashInSubheadings = initializeSubheadings(userWithoutPassword.cashInSubheadings, DEFAULT_CASH_IN_KEYS);
+              userWithoutPassword.cashOutSubheadings = initializeSubheadings(userWithoutPassword.cashOutSubheadings, DEFAULT_CASH_OUT_KEYS);
+              userWithoutPassword.cashFlowSubheadings = initializeSubheadings(userWithoutPassword.cashFlowSubheadings, DEFAULT_CASH_FLOW_KEYS);
+              userWithoutPassword.arSubheadings = initializeARSubheadings(userWithoutPassword.arSubheadings);
+              userWithoutPassword.procedureNameOverrides = initializeSubheadings(userWithoutPassword.procedureNameOverrides, DEFAULT_PROCEDURE_KEYS);
+              
+              // Generate session token
+              const sessionToken = `${username}_${Date.now()}`;
+              SESSIONS[sessionToken] = userWithoutPassword;
+              
+              console.log('[AUTH API] Login successful for user:', username);
+              return res.status(200).json({ user: userWithoutPassword, token: sessionToken });
+            } else {
+              console.log('[AUTH/LOGIN] DB login failed - wrong password for user:', username);
+            }
+          } else {
+            console.log('[AUTH/LOGIN] User not found in DB:', username);
+          }
+        } catch (dbError) {
+          console.error('[AUTH/LOGIN] DB error:', dbError);
+          // Fall back to in-memory users
+        }
+      }
+
+      // Fall back to in-memory users
+      console.log('[AUTH/LOGIN] Falling back to in-memory users');
+      const user = IN_MEMORY_USERS.find(u => u.username === username && u.password === password);
 
       if (!user) {
-        console.log('[AUTH API] Login failed for user:', username);
+        console.log('[AUTH/LOGIN] Login failed for user:', username);
         return res.status(401).json({ message: 'Invalid username or password' });
       }
 
       const { password: _, ...userWithoutPassword } = user;
       
-      // Initialize subheading records with default keys so they can be customized
+      // Initialize subheading records with default keys
       userWithoutPassword.revenueSubheadings = initializeSubheadings(user.revenueSubheadings, DEFAULT_REVENUE_KEYS);
       userWithoutPassword.expensesSubheadings = initializeSubheadings(user.expensesSubheadings, DEFAULT_EXPENSES_KEYS);
       userWithoutPassword.cashInSubheadings = initializeSubheadings(user.cashInSubheadings, DEFAULT_CASH_IN_KEYS);
@@ -274,17 +380,47 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         return res.status(401).json({ message: 'Not authenticated' });
       }
       
+      // Check in-memory sessions first
+      if (SESSIONS[token]) {
+        const sessionUser = SESSIONS[token];
+        console.log('[AUTH API] Auth check - returning session user:', sessionUser.username);
+        return res.status(200).json(sessionUser);
+      }
+      
       // Extract username from token (format: username_timestamp)
       const username = token.split('_')[0];
       
-      // Find the latest user data from USERS array to get any settings updates
-      const freshUser = USERS.find(u => u.username === username);
+      // Try to get fresh user data from DB
+      if (db) {
+        try {
+          const dbUsers = await db.select().from(users).where(eq(users.username, username));
+          if (dbUsers.length > 0) {
+            const userWithoutPassword = convertDbUserToAppUser(dbUsers[0]);
+            
+            // Initialize subheadings
+            userWithoutPassword.revenueSubheadings = initializeSubheadings(userWithoutPassword.revenueSubheadings, DEFAULT_REVENUE_KEYS);
+            userWithoutPassword.expensesSubheadings = initializeSubheadings(userWithoutPassword.expensesSubheadings, DEFAULT_EXPENSES_KEYS);
+            userWithoutPassword.cashInSubheadings = initializeSubheadings(userWithoutPassword.cashInSubheadings, DEFAULT_CASH_IN_KEYS);
+            userWithoutPassword.cashOutSubheadings = initializeSubheadings(userWithoutPassword.cashOutSubheadings, DEFAULT_CASH_OUT_KEYS);
+            userWithoutPassword.cashFlowSubheadings = initializeSubheadings(userWithoutPassword.cashFlowSubheadings, DEFAULT_CASH_FLOW_KEYS);
+            userWithoutPassword.arSubheadings = initializeARSubheadings(userWithoutPassword.arSubheadings);
+            userWithoutPassword.procedureNameOverrides = initializeSubheadings(userWithoutPassword.procedureNameOverrides, DEFAULT_PROCEDURE_KEYS);
+            
+            console.log('[AUTH API] Auth check - returning DB user:', username);
+            return res.status(200).json(userWithoutPassword);
+          }
+        } catch (dbError) {
+          console.error('[AUTH API] DB error fetching user:', dbError);
+        }
+      }
+      
+      // Fall back to in-memory users
+      const freshUser = IN_MEMORY_USERS.find(u => u.username === username);
       if (!freshUser) {
-        console.log('[AUTH API] Auth check - user not found in USERS:', username);
+        console.log('[AUTH API] Auth check - user not found:', username);
         return res.status(401).json({ message: 'Not authenticated' });
       }
       
-      // Return fresh user data with initialized subheadings
       const { password: _, ...userWithoutPassword } = freshUser;
       userWithoutPassword.revenueSubheadings = initializeSubheadings(freshUser.revenueSubheadings, DEFAULT_REVENUE_KEYS);
       userWithoutPassword.expensesSubheadings = initializeSubheadings(freshUser.expensesSubheadings, DEFAULT_EXPENSES_KEYS);
@@ -313,4 +449,3 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     });
   }
 }
-

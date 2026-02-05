@@ -1,4 +1,24 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
+import { neon } from '@neondatabase/serverless';
+import { drizzle } from 'drizzle-orm/neon-http';
+import { eq } from 'drizzle-orm';
+import { users } from '../../shared/schema';
+
+// Initialize Neon DB connection
+const databaseUrl = process.env.DATABASE_URL || process.env.DATABASE_CONNECTION_STRING;
+let db: any = null;
+
+try {
+  if (databaseUrl) {
+    const sqlConnection = neon(databaseUrl);
+    db = drizzle(sqlConnection);
+    console.log('[USERS API] Neon DB connection initialized');
+  } else {
+    console.log('[USERS API] No DATABASE_URL found - using in-memory users only');
+  }
+} catch (error) {
+  console.error('[USERS API] Failed to initialize Neon DB:', error);
+}
 
 // Default subheading keys that match actual data line_item values
 const DEFAULT_REVENUE_KEYS = [
@@ -64,33 +84,8 @@ const DEFAULT_PROCEDURE_KEYS = [
   '45-59 minutes'
 ];
 
-// Helper function to initialize subheading records with default keys
-function initializeSubheadings(
-  existing: Record<string, string> | undefined,
-  defaultKeys: string[]
-): Record<string, string> {
-  const result = { ...(existing || {}) };
-  defaultKeys.forEach(key => {
-    if (!result.hasOwnProperty(key)) {
-      result[key] = '';
-    }
-  });
-  return result;
-}
-
-// Helper to initialize AR subheadings with default values
-function initializeARSubheadings(existing?: Record<string, string>): Record<string, string> {
-  const result = { ...(existing || {}) };
-  DEFAULT_AR_KEYS.forEach(key => {
-    if (!result.hasOwnProperty(key)) {
-      result[key] = `${key} days`;
-    }
-  });
-  return result;
-}
-
-// In-memory user store - must match auth API for consistency
-const USERS = [
+// In-memory user store (fallback when DB is not available)
+const IN_MEMORY_USERS = [
   {
     username: 'admin',
     password: 'admin123',
@@ -168,6 +163,84 @@ const USERS = [
   }
 ];
 
+// Helper function to initialize subheading records with default keys
+function initializeSubheadings(
+  existing: Record<string, string> | undefined,
+  defaultKeys: string[]
+): Record<string, string> {
+  const result = { ...(existing || {}) };
+  defaultKeys.forEach(key => {
+    if (!result.hasOwnProperty(key)) {
+      result[key] = '';
+    }
+  });
+  return result;
+}
+
+// Helper to initialize AR subheadings with default values
+function initializeARSubheadings(existing?: Record<string, string>): Record<string, string> {
+  const result = { ...(existing || {}) };
+  DEFAULT_AR_KEYS.forEach(key => {
+    if (!result.hasOwnProperty(key)) {
+      result[key] = `${key} days`;
+    }
+  });
+  return result;
+}
+
+// Function to convert app user format to DB user
+function convertAppUserToDbUser(appUser: any): any {
+  return {
+    username: appUser.username,
+    password: appUser.password,
+    name: appUser.ownerName || appUser.username,
+    role: appUser.role || 'user',
+    practiceId: null
+  };
+}
+
+// Function to convert DB user to app user format
+function convertDbUserToAppUser(dbUser: any): any {
+  return {
+    username: dbUser.username,
+    role: dbUser.role || 'user',
+    practiceName: 'MDS AI Analytics',
+    practiceSubtitle: 'Eye Specialists & Surgeons',
+    logoUrl: '/assets/MDS Logo_1754254040718-Dv0l5qLn.png',
+    ownerName: dbUser.name,
+    ownerTitle: dbUser.role === 'admin' ? 'Medical Director' : 'Staff',
+    ownerPhotoUrl: '/assets/Dr. John Josephson_1757862871625-B4_CVazU.jpeg',
+    revenueTitle: 'Revenue',
+    expensesTitle: 'Expenses',
+    profitLossTitle: 'Profit & Loss',
+    cashInTitle: 'Cash In',
+    cashOutTitle: 'Cash Out',
+    topRevenueTitle: 'Top Revenue Procedures',
+    showCollectionsWidget: true,
+    providers: [
+      { name: 'Dr. John Josephson', percentage: 19 },
+      { name: 'Dr. Meghan G. Moroux', percentage: 14 },
+      { name: 'Dr. Hubert H. Pham', percentage: 13 },
+      { name: 'Dr. Sabita Ittoop', percentage: 10 },
+      { name: 'Dr. Kristen E. Dunbar', percentage: 9 },
+      { name: 'Dr. Erin Ong', percentage: 9 },
+      { name: 'Dr. Prema Modak', percentage: 8 },
+      { name: 'Dr. Julia Pierce', percentage: 7 },
+      { name: 'Dr. Heloi Stark', percentage: 6 },
+      { name: 'Dr. Noushin Sahraei', percentage: 5 }
+    ],
+    revenueSubheadings: {},
+    expensesSubheadings: {},
+    cashInSubheadings: {},
+    cashOutSubheadings: {},
+    cashFlowSubheadings: {},
+    arSubheadings: {},
+    procedureNameOverrides: {},
+    locationNameOverrides: {},
+    userLocations: []
+  };
+}
+
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   // Set CORS headers
   res.setHeader('Access-Control-Allow-Origin', '*');
@@ -188,13 +261,56 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
     // GET /api/users - List all users
     if (req.method === 'GET' && !username) {
-      const usersWithoutPasswords = USERS.map(({ password, ...user }) => user);
+      if (db) {
+        try {
+          const dbUsers = await db.select().from(users);
+          const appUsers = dbUsers.map(convertDbUserToAppUser);
+          // Add settings fields
+          const usersWithSettings = appUsers.map((user: any) => ({
+            ...user,
+            revenueTitle: 'Revenue',
+            expensesTitle: 'Expenses',
+            profitLossTitle: 'Profit & Loss',
+            cashInTitle: 'Cash In',
+            cashOutTitle: 'Cash Out',
+            topRevenueTitle: 'Top Revenue Procedures',
+            showCollectionsWidget: true,
+            revenueSubheadings: {},
+            expensesSubheadings: {},
+            cashInSubheadings: {},
+            cashOutSubheadings: {},
+            cashFlowSubheadings: {},
+            arSubheadings: {},
+            procedureNameOverrides: {},
+            locationNameOverrides: {},
+            userLocations: []
+          }));
+          return res.status(200).json(usersWithSettings);
+        } catch (dbError) {
+          console.error('[USERS API] DB error:', dbError);
+        }
+      }
+      // Fall back to in-memory users
+      const usersWithoutPasswords = IN_MEMORY_USERS.map(({ password, ...user }) => user);
       return res.status(200).json(usersWithoutPasswords);
     }
 
     // GET /api/users/:username - Get specific user
     if (req.method === 'GET' && username) {
-      const user = USERS.find(u => u.username === username);
+      if (db) {
+        try {
+          const dbUsers = await db.select().from(users).where(eq(users.username, username));
+          
+          if (dbUsers.length > 0) {
+            const userWithoutPassword = convertDbUserToAppUser(dbUsers[0]);
+            return res.status(200).json(userWithoutPassword);
+          }
+        } catch (dbError) {
+          console.error('[USERS API] DB error:', dbError);
+        }
+      }
+      // Fall back to in-memory users
+      const user = IN_MEMORY_USERS.find(u => u.username === username);
       
       if (!user) {
         return res.status(404).json({ message: 'User not found' });
@@ -212,10 +328,27 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         return res.status(400).json({ message: 'Username and password are required' });
       }
 
-      if (USERS.find(u => u.username === userData.username)) {
+      // Check in-memory users first
+      if (IN_MEMORY_USERS.find(u => u.username === userData.username)) {
         return res.status(409).json({ message: 'Username already exists' });
       }
 
+      // Try to create in DB
+      if (db) {
+        try {
+          const dbUser = convertAppUserToDbUser(userData);
+          await db.insert(users).values(dbUser);
+          console.log('[USERS API] User created in DB:', userData.username);
+        } catch (dbError: any) {
+          // Check if it's a unique constraint violation
+          if (dbError.code === '23505') {
+            return res.status(409).json({ message: 'Username already exists' });
+          }
+          console.error('[USERS API] DB error creating user:', dbError);
+        }
+      }
+
+      // Add to in-memory store
       const newUser = {
         username: userData.username,
         password: userData.password,
@@ -256,7 +389,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         userLocations: userData.userLocations || []
       };
 
-      USERS.push(newUser);
+      IN_MEMORY_USERS.push(newUser);
 
       const { password, ...userWithoutPassword } = newUser;
       return res.status(201).json(userWithoutPassword);
@@ -264,9 +397,32 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
     // PUT /api/users/:username - Update user
     if (req.method === 'PUT' && username) {
-      const userIndex = USERS.findIndex(u => u.username === username);
+      // Check in-memory users first
+      let userIndex = IN_MEMORY_USERS.findIndex(u => u.username === username);
       
-      if (userIndex === -1) {
+      if (userIndex === -1 && db) {
+        // Try to find in DB
+        try {
+          const dbUsers = await db.select().from(users).where(eq(users.username, username));
+          if (dbUsers.length > 0) {
+            // Update in DB
+            const updates = req.body;
+            const dbUser = {
+              username: username,
+              password: updates.password || dbUsers[0].password,
+              name: updates.ownerName || dbUsers[0].name,
+              role: updates.role || dbUsers[0].role,
+              practiceId: dbUsers[0].practiceId
+            };
+            await db.update(users).set(dbUser).where(eq(users.username, username));
+            console.log('[USERS API] User updated in DB:', username);
+          } else {
+            return res.status(404).json({ message: 'User not found' });
+          }
+        } catch (dbError) {
+          console.error('[USERS API] DB error updating user:', dbError);
+        }
+      } else if (userIndex === -1) {
         return res.status(404).json({ message: 'User not found' });
       }
 
@@ -274,10 +430,10 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       delete updates.username; // Don't allow username changes
       
       // Preserve password if not being updated
-      const currentPassword = USERS[userIndex].password;
+      const currentPassword = IN_MEMORY_USERS[userIndex].password;
       
-      USERS[userIndex] = {
-        ...USERS[userIndex],
+      IN_MEMORY_USERS[userIndex] = {
+        ...IN_MEMORY_USERS[userIndex],
         ...updates,
         password: currentPassword,
         // Ensure subheading records are properly initialized
@@ -289,12 +445,12 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         arSubheadings: initializeARSubheadings(updates.arSubheadings),
         procedureNameOverrides: initializeSubheadings(updates.procedureNameOverrides, DEFAULT_PROCEDURE_KEYS),
         // Preserve location name overrides and providers from existing user
-        locationNameOverrides: updates.locationNameOverrides || USERS[userIndex].locationNameOverrides,
-        providers: updates.providers || USERS[userIndex].providers,
-        userLocations: updates.userLocations || USERS[userIndex].userLocations,
+        locationNameOverrides: updates.locationNameOverrides || IN_MEMORY_USERS[userIndex].locationNameOverrides,
+        providers: updates.providers || IN_MEMORY_USERS[userIndex].providers,
+        userLocations: updates.userLocations || IN_MEMORY_USERS[userIndex].userLocations,
       };
 
-      const { password, ...userWithoutPassword } = USERS[userIndex];
+      const { password, ...userWithoutPassword } = IN_MEMORY_USERS[userIndex];
       
       // Update session in auth API if available (via global variable)
       if (typeof global !== 'undefined' && (global as any).UPDATE_AUTH_SESSIONS) {
@@ -306,17 +462,26 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
     // DELETE /api/users/:username - Delete user
     if (req.method === 'DELETE' && username) {
-      const userIndex = USERS.findIndex(u => u.username === username);
+      // Check in-memory users first
+      let userIndex = IN_MEMORY_USERS.findIndex(u => u.username === username);
       
-      if (userIndex === -1) {
+      if (userIndex === -1 && db) {
+        // Try to delete from DB
+        try {
+          await db.delete(users).where(eq(users.username, username));
+          console.log('[USERS API] User deleted from DB:', username);
+        } catch (dbError) {
+          console.error('[USERS API] DB error deleting user:', dbError);
+        }
+      } else if (userIndex === -1) {
         return res.status(404).json({ message: 'User not found' });
       }
 
-      if (USERS[userIndex].role === 'admin') {
+      if (IN_MEMORY_USERS[userIndex].role === 'admin') {
         return res.status(403).json({ message: 'Cannot delete admin user' });
       }
 
-      USERS.splice(userIndex, 1);
+      IN_MEMORY_USERS.splice(userIndex, 1);
       return res.status(200).json({ message: 'User deleted successfully' });
     }
 
@@ -330,4 +495,3 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     });
   }
 }
-
