@@ -4,48 +4,40 @@
   "outputDirectory": "dist/public",
   "rewrites": [
     {
-      "source": "/api/auth/login",
-      "destination": "/api/auth/login.ts"
-    },
-    {
       "source": "/api/auth/:path*",
-      "destination": "/api/auth/[...path].ts"
+      "destination": "/api/auth/[...path]"
     },
     {
       "source": "/api/users/:path*",
-      "destination": "/api/users/[...path].ts"
-    },
-    {
-      "source": "/api/users",
-      "destination": "/api/users/[...path].ts"
+      "destination": "/api/users/[...path]"
     },
     {
       "source": "/api/dashboard/customization/:path*",
-      "destination": "/api/dashboard/[...path].ts"
+      "destination": "/api/dashboard/[...path]"
     },
     {
       "source": "/api/dashboard/:path*",
-      "destination": "/api/dashboard/[...path].ts"
+      "destination": "/api/dashboard/[...path]"
     },
     {
       "source": "/api/locations",
-      "destination": "/api/locations.ts"
+      "destination": "/api/locations"
     },
     {
       "source": "/api/analytics/:path*",
-      "destination": "/api/analytics.ts"
+      "destination": "/api/analytics"
     },
     {
       "source": "/api/financial/:path*",
-      "destination": "/api/financial.ts"
+      "destination": "/api/financial"
     },
     {
       "source": "/api/ai/:path*",
-      "destination": "/api/ai/query.ts"
+      "destination": "/api/ai/query"
     },
     {
       "source": "/api/health",
-      "destination": "/api/health.ts"
+      "destination": "/api/health"
     },
     {
       "source": "/assets/(.*)",
