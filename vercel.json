@@ -2,9 +2,6 @@
   "version": 2,
   "buildCommand": "npm run build:client",
   "outputDirectory": "dist/public",
-  "includeFiles": [
-    "shared/**"
-  ],
   "rewrites": [
     {
       "source": "/api/auth/:path*",
