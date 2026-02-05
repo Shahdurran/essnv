@@ -1,8 +1,18 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
 import { neon } from '@neondatabase/serverless';
 import { drizzle } from 'drizzle-orm/neon-http';
-import { eq } from 'drizzle-orm';
-import { users } from '../../shared/schema';
+import { eq, sql } from 'drizzle-orm';
+import { pgTable, text, varchar } from 'drizzle-orm/pg-core';
+
+// Inline users table definition for Vercel compatibility
+const users = pgTable("users", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  username: text("username").notNull().unique(),
+  password: text("password").notNull(),
+  name: text("name").notNull(),
+  role: text("role").notNull(),
+  practiceId: varchar("practice_id"),
+});
 
 // Initialize Neon DB connection
 const databaseUrl = process.env.DATABASE_URL || process.env.DATABASE_CONNECTION_STRING;
