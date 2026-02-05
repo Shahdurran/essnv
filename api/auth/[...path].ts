@@ -1,8 +1,18 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
 import { neon } from '@neondatabase/serverless';
 import { drizzle } from 'drizzle-orm/neon-http';
-import { eq } from 'drizzle-orm';
-import { users } from '../../shared/schema';
+import { sql as sqlFn, pgTable, text, varchar } from 'drizzle-orm/pg-core';
+import { sql } from 'drizzle-orm';
+
+// Inline schema definition (avoids import issues with Vercel bundler)
+const users = pgTable('users', {
+  id: varchar('id').primaryKey().default(sql`gen_random_uuid()`),
+  username: text('username').notNull().unique(),
+  password: text('password').notNull(),
+  name: text('name').notNull(),
+  role: text('role').notNull(),
+  practiceId: varchar('practice_id'),
+});
 
 // Initialize Neon DB connection
 const databaseUrl = process.env.DATABASE_URL || process.env.DATABASE_CONNECTION_STRING;
@@ -230,7 +240,7 @@ function convertDbUserToAppUser(dbUser: any): any {
   };
 }
 
-// Global function to update sessions when user settings change (called from users API)
+// Global function to update sessions when user settings change
 export function updateAuthSessions(username: string, updatedUser: any) {
   console.log('[AUTH API] Updating sessions for user:', username);
   Object.keys(SESSIONS).forEach(token => {
@@ -281,7 +291,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       // Try to authenticate using Neon DB first
       if (db) {
         try {
-          const dbUsers = await db.select().from(users).where(eq(users.username, username));
+          const dbUsers = await db.select().from(users).where(sql`${users.username} = ${username}`);
           
           if (dbUsers.length > 0) {
             const dbUser = dbUsers[0];
@@ -393,7 +403,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       // Try to get fresh user data from DB
       if (db) {
         try {
-          const dbUsers = await db.select().from(users).where(eq(users.username, username));
+          const dbUsers = await db.select().from(users).where(sql`${users.username} = ${username}`);
           if (dbUsers.length > 0) {
             const userWithoutPassword = convertDbUserToAppUser(dbUsers[0]);
             
