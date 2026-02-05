@@ -407,16 +407,17 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
     // PUT /api/users/:username - Update user
     if (req.method === 'PUT' && username) {
-      // Check in-memory users first
-      let userIndex = IN_MEMORY_USERS.findIndex(u => u.username === username);
+      const updates = req.body;
+      delete updates.username; // Don't allow username changes
       
-      if (userIndex === -1 && db) {
-        // Try to find in DB
+      // Check if user exists in DB first
+      let userFromDb: any = null;
+      if (db) {
         try {
           const dbUsers = await db.select().from(users).where(eq(users.username, username));
           if (dbUsers.length > 0) {
+            userFromDb = dbUsers[0];
             // Update in DB
-            const updates = req.body;
             const dbUser = {
               username: username,
               password: updates.password || dbUsers[0].password,
@@ -426,48 +427,57 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
             };
             await db.update(users).set(dbUser).where(eq(users.username, username));
             console.log('[USERS API] User updated in DB:', username);
-          } else {
-            return res.status(404).json({ message: 'User not found' });
           }
         } catch (dbError) {
           console.error('[USERS API] DB error updating user:', dbError);
         }
-      } else if (userIndex === -1) {
+      }
+      
+      // Check in-memory users
+      let userIndex = IN_MEMORY_USERS.findIndex(u => u.username === username);
+      
+      if (userIndex === -1 && !userFromDb) {
         return res.status(404).json({ message: 'User not found' });
       }
+      
+      if (userIndex !== -1) {
+        // Update in-memory user
+        const currentPassword = IN_MEMORY_USERS[userIndex].password;
+        
+        IN_MEMORY_USERS[userIndex] = {
+          ...IN_MEMORY_USERS[userIndex],
+          ...updates,
+          password: currentPassword,
+          // Ensure subheading records are properly initialized
+          revenueSubheadings: initializeSubheadings(updates.revenueSubheadings, DEFAULT_REVENUE_KEYS),
+          expensesSubheadings: initializeSubheadings(updates.expensesSubheadings, DEFAULT_EXPENSES_KEYS),
+          cashInSubheadings: initializeSubheadings(updates.cashInSubheadings, DEFAULT_CASH_IN_KEYS),
+          cashOutSubheadings: initializeSubheadings(updates.cashOutSubheadings, DEFAULT_CASH_OUT_KEYS),
+          cashFlowSubheadings: initializeSubheadings(updates.cashFlowSubheadings, DEFAULT_CASH_FLOW_KEYS),
+          arSubheadings: initializeARSubheadings(updates.arSubheadings),
+          procedureNameOverrides: initializeSubheadings(updates.procedureNameOverrides, DEFAULT_PROCEDURE_KEYS),
+          locationNameOverrides: updates.locationNameOverrides || IN_MEMORY_USERS[userIndex].locationNameOverrides,
+          providers: updates.providers || IN_MEMORY_USERS[userIndex].providers,
+          userLocations: updates.userLocations || IN_MEMORY_USERS[userIndex].userLocations,
+        };
 
-      const updates = req.body;
-      delete updates.username; // Don't allow username changes
-      
-      // Preserve password if not being updated
-      const currentPassword = IN_MEMORY_USERS[userIndex].password;
-      
-      IN_MEMORY_USERS[userIndex] = {
-        ...IN_MEMORY_USERS[userIndex],
-        ...updates,
-        password: currentPassword,
-        // Ensure subheading records are properly initialized
-        revenueSubheadings: initializeSubheadings(updates.revenueSubheadings, DEFAULT_REVENUE_KEYS),
-        expensesSubheadings: initializeSubheadings(updates.expensesSubheadings, DEFAULT_EXPENSES_KEYS),
-        cashInSubheadings: initializeSubheadings(updates.cashInSubheadings, DEFAULT_CASH_IN_KEYS),
-        cashOutSubheadings: initializeSubheadings(updates.cashOutSubheadings, DEFAULT_CASH_OUT_KEYS),
-        cashFlowSubheadings: initializeSubheadings(updates.cashFlowSubheadings, DEFAULT_CASH_FLOW_KEYS),
-        arSubheadings: initializeARSubheadings(updates.arSubheadings),
-        procedureNameOverrides: initializeSubheadings(updates.procedureNameOverrides, DEFAULT_PROCEDURE_KEYS),
-        // Preserve location name overrides and providers from existing user
-        locationNameOverrides: updates.locationNameOverrides || IN_MEMORY_USERS[userIndex].locationNameOverrides,
-        providers: updates.providers || IN_MEMORY_USERS[userIndex].providers,
-        userLocations: updates.userLocations || IN_MEMORY_USERS[userIndex].userLocations,
-      };
-
-      const { password, ...userWithoutPassword } = IN_MEMORY_USERS[userIndex];
-      
-      // Update session in auth API if available (via global variable)
-      if (typeof global !== 'undefined' && (global as any).UPDATE_AUTH_SESSIONS) {
-        (global as any).UPDATE_AUTH_SESSIONS(username, userWithoutPassword);
+        const { password, ...userWithoutPassword } = IN_MEMORY_USERS[userIndex];
+        
+        // Update session in auth API if available
+        if (typeof global !== 'undefined' && (global as any).UPDATE_AUTH_SESSIONS) {
+          (global as any).UPDATE_AUTH_SESSIONS(username, userWithoutPassword);
+        }
+        
+        return res.status(200).json(userWithoutPassword);
+      } else {
+        // User only in DB - return success
+        const userWithoutPassword = {
+          username: username,
+          role: userFromDb?.role || 'user',
+          ...updates
+        };
+        return res.status(200).json(userWithoutPassword);
       }
-      
-      return res.status(200).json(userWithoutPassword);
     }
 
     // DELETE /api/users/:username - Delete user
