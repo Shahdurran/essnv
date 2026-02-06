@@ -49,7 +49,8 @@ interface AuthContextType {
   logout: () => void;
   isLoading: boolean;
   isAdmin: boolean;
-  refreshUser: () => Promise<void>; // New function to refresh user data
+  refreshUser: () => Promise<void>;
+  updateUser: (userData: User) => void; // New function to update user state immediately
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -164,6 +165,12 @@ export function AuthProvider({ children }: AuthProviderProps) {
     }
   };
 
+  // Update user state immediately (useful after saving settings)
+  const updateUser = (userData: User) => {
+    setUser(userData);
+    console.log("[AuthContext] User state updated immediately");
+  };
+
   const value = {
     isAuthenticated,
     user,
@@ -171,7 +178,8 @@ export function AuthProvider({ children }: AuthProviderProps) {
     logout,
     isLoading,
     isAdmin: user?.role === 'admin',
-    refreshUser
+    refreshUser,
+    updateUser
   };
 
   return (
@@ -195,7 +203,8 @@ export function useAuth() {
         logout: async () => {},
         isLoading: true,
         isAdmin: false,
-        refreshUser: async () => {}
+        refreshUser: async () => {},
+        updateUser: () => {}
       };
     }
     throw new Error("useAuth must be used within an AuthProvider");

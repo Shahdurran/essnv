@@ -128,7 +128,7 @@ interface PracticeLocation {
 }
 export default function Settings() {
   const { toast } = useToast();
-  const { user: currentUser, isAdmin, refreshUser } = useAuth();
+  const { user: currentUser, isAdmin, refreshUser, updateUser } = useAuth();
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [users, setUsers] = useState<UserConfig[]>([]);
@@ -496,7 +496,13 @@ export default function Settings() {
       setUsers(users.map(u => u.username === updatedUser.username ? updatedUser : u));
       setEditingUser(updatedUser);
       
-      // Refresh the current user's data in AuthContext so widgets update immediately
+      // CRITICAL: Immediately update AuthContext if editing current user
+      if (currentUser && updatedUser.username === currentUser.username) {
+        updateUser(updatedUser);
+        console.log('[Settings] Updated AuthContext for current user');
+      }
+      
+      // Also refresh from server to ensure consistency
       await refreshUser();
       
       toast({
