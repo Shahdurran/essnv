@@ -326,28 +326,13 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       if (db) {
         try {
           const dbUsers = await db.select().from(users);
-          const appUsers = dbUsers.map(convertDbUserToAppUser);
-          // Add settings fields
-          const usersWithSettings = appUsers.map((user: any) => ({
-            ...user,
-            revenueTitle: 'Revenue',
-            expensesTitle: 'Expenses',
-            profitLossTitle: 'Profit & Loss',
-            cashInTitle: 'Cash In',
-            cashOutTitle: 'Cash Out',
-            topRevenueTitle: 'Top Revenue Procedures',
-            showCollectionsWidget: true,
-            revenueSubheadings: {},
-            expensesSubheadings: {},
-            cashInSubheadings: {},
-            cashOutSubheadings: {},
-            cashFlowSubheadings: {},
-            arSubheadings: {},
-            procedureNameOverrides: {},
-            locationNameOverrides: {},
-            userLocations: []
-          }));
-          return res.status(200).json(usersWithSettings);
+          
+          if (dbUsers.length > 0) {
+            // Return actual user data from DB
+            const appUsers = dbUsers.map(convertDbUserToAppUser);
+            console.log('[USERS API] Loaded', appUsers.length, 'users from Neon DB');
+            return res.status(200).json(appUsers);
+          }
         } catch (dbError) {
           console.error('[USERS API] DB error:', dbError);
         }

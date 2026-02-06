@@ -284,104 +284,117 @@ export default function Settings() {
       setLoading(false);
     }
   };
-  const handleUserSelect = (username: string) => {
+  const handleUserSelect = async (username: string) => {
     setSelectedUser(username);
-    const user = users.find(u => u.username === username);
-    if (user) {
-      // Initialize providers if not present (for existing users)
-      if (!user.providers || user.providers.length === 0) {
-        user.providers = [
-          { name: 'Dr. John Josephson', percentage: 19 },
-          { name: 'Dr. Meghan G. Moroux', percentage: 14 },
-          { name: 'Dr. Hubert H. Pham', percentage: 13 },
-          { name: 'Dr. Sabita Ittoop', percentage: 10 },
-          { name: 'Dr. Kristen E. Dunbar', percentage: 9 },
-          { name: 'Dr. Erin Ong', percentage: 9 },
-          { name: 'Dr. Prema Modak', percentage: 8 },
-          { name: 'Dr. Julia Pierce', percentage: 7 },
-          { name: 'Dr. Heloi Stark', percentage: 6 },
-          { name: 'Dr. Noushin Sahraei', percentage: 5 }
-        ];
-      }
-      // Initialize userLocations if not present
-      if (!user.userLocations) {
-        user.userLocations = [];
-      }
-      // Initialize arSubheadings if not present
-      if (!user.arSubheadings) {
-        user.arSubheadings = { '0-30': '0-30 days', '31-60': '31-60 days', '61-90': '61-90 days', '90+': '90+ days' };
-      }
-      // Initialize revenueSubheadings with empty strings for all default keys if not present
-      if (!user.revenueSubheadings) {
-        user.revenueSubheadings = {};
-        DEFAULT_REVENUE_KEYS.forEach(key => {
-          user.revenueSubheadings[key] = '';
-        });
-      } else {
-        // Add missing keys to existing record
-        DEFAULT_REVENUE_KEYS.forEach(key => {
-          if (!user.revenueSubheadings.hasOwnProperty(key)) {
+    
+    // Fetch fresh user data from API instead of using cached data
+    try {
+      const response = await fetch(`/api/users/${username}`, {
+        credentials: 'include'
+      });
+      
+      if (response.ok) {
+        const user = await response.json();
+        
+        // Initialize missing fields with defaults
+        if (!user.providers || user.providers.length === 0) {
+          user.providers = [
+            { name: 'Dr. John Josephson', percentage: 19 },
+            { name: 'Dr. Meghan G. Moroux', percentage: 14 },
+            { name: 'Dr. Hubert H. Pham', percentage: 13 },
+            { name: 'Dr. Sabita Ittoop', percentage: 10 },
+            { name: 'Dr. Kristen E. Dunbar', percentage: 9 },
+            { name: 'Dr. Erin Ong', percentage: 9 },
+            { name: 'Dr. Prema Modak', percentage: 8 },
+            { name: 'Dr. Julia Pierce', percentage: 7 },
+            { name: 'Dr. Heloi Stark', percentage: 6 },
+            { name: 'Dr. Noushin Sahraei', percentage: 5 }
+          ];
+        }
+        
+        // Initialize subheadings if not present
+        if (!user.revenueSubheadings) {
+          user.revenueSubheadings = {};
+          DEFAULT_REVENUE_KEYS.forEach(key => {
             user.revenueSubheadings[key] = '';
-          }
-        });
-      }
-      // Initialize expensesSubheadings with empty strings for all default keys if not present
-      if (!user.expensesSubheadings) {
-        user.expensesSubheadings = {};
-        DEFAULT_EXPENSES_KEYS.forEach(key => {
-          user.expensesSubheadings[key] = '';
-        });
-      } else {
-        // Add missing keys to existing record
-        DEFAULT_EXPENSES_KEYS.forEach(key => {
-          if (!user.expensesSubheadings.hasOwnProperty(key)) {
+          });
+        } else {
+          DEFAULT_REVENUE_KEYS.forEach(key => {
+            if (!user.revenueSubheadings.hasOwnProperty(key)) {
+              user.revenueSubheadings[key] = '';
+            }
+          });
+        }
+        
+        if (!user.expensesSubheadings) {
+          user.expensesSubheadings = {};
+          DEFAULT_EXPENSES_KEYS.forEach(key => {
             user.expensesSubheadings[key] = '';
-          }
-        });
-      }
-      // Initialize cashInSubheadings with empty strings for all default keys if not present
-      if (!user.cashInSubheadings) {
-        user.cashInSubheadings = {};
-        DEFAULT_CASH_IN_KEYS.forEach(key => {
-          user.cashInSubheadings[key] = '';
-        });
-      } else {
-        // Add missing keys to existing record
-        DEFAULT_CASH_IN_KEYS.forEach(key => {
-          if (!user.cashInSubheadings.hasOwnProperty(key)) {
+          });
+        } else {
+          DEFAULT_EXPENSES_KEYS.forEach(key => {
+            if (!user.expensesSubheadings.hasOwnProperty(key)) {
+              user.expensesSubheadings[key] = '';
+            }
+          });
+        }
+        
+        if (!user.cashInSubheadings) {
+          user.cashInSubheadings = {};
+          DEFAULT_CASH_IN_KEYS.forEach(key => {
             user.cashInSubheadings[key] = '';
-          }
-        });
-      }
-      // Initialize cashOutSubheadings with empty strings for all default keys if not present
-      if (!user.cashOutSubheadings) {
-        user.cashOutSubheadings = {};
-        DEFAULT_CASH_OUT_KEYS.forEach(key => {
-          user.cashOutSubheadings[key] = '';
-        });
-      } else {
-        // Add missing keys to existing record
-        DEFAULT_CASH_OUT_KEYS.forEach(key => {
-          if (!user.cashOutSubheadings.hasOwnProperty(key)) {
+          });
+        } else {
+          DEFAULT_CASH_IN_KEYS.forEach(key => {
+            if (!user.cashInSubheadings.hasOwnProperty(key)) {
+              user.cashInSubheadings[key] = '';
+            }
+          });
+        }
+        
+        if (!user.cashOutSubheadings) {
+          user.cashOutSubheadings = {};
+          DEFAULT_CASH_OUT_KEYS.forEach(key => {
             user.cashOutSubheadings[key] = '';
-          }
-        });
-      }
-      // Initialize cashFlowSubheadings with empty strings for all default keys if not present
-      if (!user.cashFlowSubheadings) {
-        user.cashFlowSubheadings = {};
-        DEFAULT_CASH_FLOW_KEYS.forEach(key => {
-          user.cashFlowSubheadings[key] = '';
-        });
-      } else {
-        // Add missing keys to existing record
-        DEFAULT_CASH_FLOW_KEYS.forEach(key => {
-          if (!user.cashFlowSubheadings.hasOwnProperty(key)) {
+          });
+        } else {
+          DEFAULT_CASH_OUT_KEYS.forEach(key => {
+            if (!user.cashOutSubheadings.hasOwnProperty(key)) {
+              user.cashOutSubheadings[key] = '';
+            }
+          });
+        }
+        
+        if (!user.cashFlowSubheadings) {
+          user.cashFlowSubheadings = {};
+          DEFAULT_CASH_FLOW_KEYS.forEach(key => {
             user.cashFlowSubheadings[key] = '';
-          }
-        });
+          });
+        } else {
+          DEFAULT_CASH_FLOW_KEYS.forEach(key => {
+            if (!user.cashFlowSubheadings.hasOwnProperty(key)) {
+              user.cashFlowSubheadings[key] = '';
+            }
+          });
+        }
+        
+        if (!user.arSubheadings) {
+          user.arSubheadings = { '0-30': '0-30 days', '31-60': '31-60 days', '61-90': '61-90 days', '90+': '90+ days' };
+        }
+        
+        if (!user.userLocations) {
+          user.userLocations = [];
+        }
+        
+        setEditingUser(user);
       }
-      setEditingUser(user);
+    } catch (error) {
+      console.error('Error fetching user data:', error);
+      // Fallback to cached data
+      const cachedUser = users.find(u => u.username === username);
+      if (cachedUser) {
+        setEditingUser(cachedUser);
+      }
     }
   };
   const handleInputChange = (field: keyof UserConfig, value: any) => {
