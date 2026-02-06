@@ -241,23 +241,38 @@ function convertAppUserToDbUser(appUser: any): any {
 
 // Function to convert DB user to app user format
 function convertDbUserToAppUser(dbUser: any): any {
+  // Parse JSON fields if they are strings (from Neon DB)
+  const parseJsonField = (field: any): any => {
+    if (typeof field === 'string') {
+      try {
+        return JSON.parse(field);
+      } catch {
+        return field;
+      }
+    }
+    return field || {};
+  };
+
   return {
     username: dbUser.username,
     role: dbUser.role || 'user',
-    practiceName: 'MDS AI Analytics',
-    practiceSubtitle: 'Eye Specialists & Surgeons',
-    logoUrl: '/assets/MDS Logo_1754254040718-Dv0l5qLn.png',
+    // Use actual DB values, fallback to defaults only if DB value is null/undefined
+    practiceName: dbUser.practiceName || 'MDS AI Analytics',
+    practiceSubtitle: dbUser.practiceSubtitle || 'Eye Specialists & Surgeons',
+    logoUrl: dbUser.logoUrl || '/assets/MDS Logo_1754254040718-Dv0l5qLn.png',
     ownerName: dbUser.name,
-    ownerTitle: dbUser.role === 'admin' ? 'Medical Director' : 'Staff',
-    ownerPhotoUrl: '/assets/Dr. John Josephson_1757862871625-B4_CVazU.jpeg',
-    revenueTitle: 'Revenue',
-    expensesTitle: 'Expenses',
-    profitLossTitle: 'Profit & Loss',
-    cashInTitle: 'Cash In',
-    cashOutTitle: 'Cash Out',
-    topRevenueTitle: 'Top Revenue Procedures',
-    showCollectionsWidget: true,
-    providers: [
+    ownerTitle: dbUser.ownerTitle || (dbUser.role === 'admin' ? 'Medical Director' : 'Staff'),
+    ownerPhotoUrl: dbUser.ownerPhotoUrl || '/assets/Dr. John Josephson_1757862871625-B4_CVazU.jpeg',
+    // Widget titles - use DB values or defaults
+    revenueTitle: dbUser.revenueTitle || 'Revenue',
+    expensesTitle: dbUser.expensesTitle || 'Expenses',
+    profitLossTitle: dbUser.profitLossTitle || 'Profit & Loss',
+    cashInTitle: dbUser.cashInTitle || 'Cash In',
+    cashOutTitle: dbUser.cashOutTitle || 'Cash Out',
+    topRevenueTitle: dbUser.topRevenueTitle || 'Top Revenue Procedures',
+    showCollectionsWidget: dbUser.showCollectionsWidget !== undefined ? dbUser.showCollectionsWidget : true,
+    // JSON fields - parse from string if needed, use DB values or defaults
+    providers: parseJsonField(dbUser.providers) || [
       { name: 'Dr. John Josephson', percentage: 19 },
       { name: 'Dr. Meghan G. Moroux', percentage: 14 },
       { name: 'Dr. Hubert H. Pham', percentage: 13 },
@@ -269,15 +284,15 @@ function convertDbUserToAppUser(dbUser: any): any {
       { name: 'Dr. Heloi Stark', percentage: 6 },
       { name: 'Dr. Noushin Sahraei', percentage: 5 }
     ],
-    revenueSubheadings: {},
-    expensesSubheadings: {},
-    cashInSubheadings: {},
-    cashOutSubheadings: {},
-    cashFlowSubheadings: {},
-    arSubheadings: {},
-    procedureNameOverrides: {},
-    locationNameOverrides: {},
-    userLocations: []
+    revenueSubheadings: parseJsonField(dbUser.revenueSubheadings),
+    expensesSubheadings: parseJsonField(dbUser.expensesSubheadings),
+    cashInSubheadings: parseJsonField(dbUser.cashInSubheadings),
+    cashOutSubheadings: parseJsonField(dbUser.cashOutSubheadings),
+    cashFlowSubheadings: parseJsonField(dbUser.cashFlowSubheadings),
+    arSubheadings: parseJsonField(dbUser.arSubheadings),
+    procedureNameOverrides: parseJsonField(dbUser.procedureNameOverrides),
+    locationNameOverrides: parseJsonField(dbUser.locationNameOverrides),
+    userLocations: parseJsonField(dbUser.userLocations) || []
   };
 }
 
@@ -479,16 +494,16 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
               cashOutTitle: updates.cashOutTitle || dbUsers[0].cashOutTitle,
               topRevenueTitle: updates.topRevenueTitle || dbUsers[0].topRevenueTitle,
               
-              // JSON fields - update with new values or keep existing
-              revenueSubheadings: updates.revenueSubheadings || dbUsers[0].revenueSubheadings || {},
-              expensesSubheadings: updates.expensesSubheadings || dbUsers[0].expensesSubheadings || {},
-              cashInSubheadings: updates.cashInSubheadings || dbUsers[0].cashInSubheadings || {},
-              cashOutSubheadings: updates.cashOutSubheadings || dbUsers[0].cashOutSubheadings || {},
-              cashFlowSubheadings: updates.cashFlowSubheadings || dbUsers[0].cashFlowSubheadings || {},
-              arSubheadings: updates.arSubheadings || dbUsers[0].arSubheadings || {},
-              procedureNameOverrides: updates.procedureNameOverrides || dbUsers[0].procedureNameOverrides || {},
-              locationNameOverrides: updates.locationNameOverrides || dbUsers[0].locationNameOverrides || {},
-              providers: updates.providers || dbUsers[0].providers || [],
+              // JSON fields - stringify objects for Neon DB
+              revenueSubheadings: updates.revenueSubheadings ? JSON.stringify(updates.revenueSubheadings) : (dbUsers[0].revenueSubheadings || '{}'),
+              expensesSubheadings: updates.expensesSubheadings ? JSON.stringify(updates.expensesSubheadings) : (dbUsers[0].expensesSubheadings || '{}'),
+              cashInSubheadings: updates.cashInSubheadings ? JSON.stringify(updates.cashInSubheadings) : (dbUsers[0].cashInSubheadings || '{}'),
+              cashOutSubheadings: updates.cashOutSubheadings ? JSON.stringify(updates.cashOutSubheadings) : (dbUsers[0].cashOutSubheadings || '{}'),
+              cashFlowSubheadings: updates.cashFlowSubheadings ? JSON.stringify(updates.cashFlowSubheadings) : (dbUsers[0].cashFlowSubheadings || '{}'),
+              arSubheadings: updates.arSubheadings ? JSON.stringify(updates.arSubheadings) : (dbUsers[0].arSubheadings || '{}'),
+              procedureNameOverrides: updates.procedureNameOverrides ? JSON.stringify(updates.procedureNameOverrides) : (dbUsers[0].procedureNameOverrides || '{}'),
+              locationNameOverrides: updates.locationNameOverrides ? JSON.stringify(updates.locationNameOverrides) : (dbUsers[0].locationNameOverrides || '{}'),
+              providers: updates.providers ? JSON.stringify(updates.providers) : (dbUsers[0].providers || '[]'),
               showCollectionsWidget: updates.showCollectionsWidget !== undefined ? updates.showCollectionsWidget : (dbUsers[0].showCollectionsWidget !== undefined ? dbUsers[0].showCollectionsWidget : true),
             };
             

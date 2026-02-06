@@ -73,11 +73,62 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
     // POST /api/dashboard/customization/upload-image - Image upload
     if (req.method === 'POST' && endpoint.includes('upload-image')) {
-      // Not implemented - requires file upload handling
-      return res.status(501).json({ 
-        message: 'Image upload not implemented. Use direct asset URLs.',
-        note: 'For production, implement with Vercel Blob Storage.'
-      });
+      try {
+        const body = req.body;
+        
+        // Check if body exists and has image data
+        if (!body) {
+          return res.status(400).json({ message: 'No image data provided' });
+        }
+        
+        // Handle FormData (from multipart/form-data)
+        if (body.image || body.file) {
+          const imageData = body.image || body.file;
+          
+          // For Vercel Serverless, we'll use Base64 encoding
+          // In production, you'd want to use Vercel Blob Storage or a cloud provider
+          if (imageData && imageData.type === 'Buffer') {
+            // Convert Buffer to Base64
+            const buffer = Buffer.from(imageData.data);
+            const base64 = buffer.toString('base64');
+            const mimeType = imageData.type || 'image/jpeg';
+            const dataUrl = `data:${mimeType};base64,${base64}`;
+            
+            return res.status(200).json({ 
+              url: dataUrl,
+              message: 'Image uploaded successfully (Base64 encoded)',
+              note: 'For production, configure Vercel Blob Storage or S3'
+            });
+          }
+          
+          // If it's already a data URL or external URL, use it directly
+          if (typeof imageData === 'string' && (imageData.startsWith('data:') || imageData.startsWith('http'))) {
+            return res.status(200).json({ url: imageData });
+          }
+        }
+        
+        // Handle JSON body with base64 data
+        if (body.base64Data) {
+          const mimeType = body.mimeType || 'image/jpeg';
+          const dataUrl = `data:${mimeType};base64,${body.base64Data}`;
+          
+          return res.status(200).json({ 
+            url: dataUrl,
+            message: 'Image uploaded successfully (Base64 encoded)',
+            note: 'For production, configure Vercel Blob Storage or S3'
+          });
+        }
+        
+        // No image data found
+        return res.status(400).json({ message: 'No image data found in request' });
+        
+      } catch (error: any) {
+        console.error('[DASHBOARD API] Image upload error:', error);
+        return res.status(500).json({ 
+          message: 'Image upload failed',
+          error: error.message 
+        });
+      }
     }
 
     return res.status(404).json({ 

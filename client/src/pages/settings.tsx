@@ -405,26 +405,50 @@ export default function Settings() {
   };
   const handleImageUpload = async (field: 'logoUrl' | 'ownerPhotoUrl', file: File) => {
     try {
-      const formData = new FormData();
-      formData.append('image', file);
+      // For Vercel serverless, convert to Base64
+      const reader = new FileReader();
+      reader.readAsDataURL(file);
+      reader.onload = async () => {
+        const base64Data = reader.result?.toString().split(',')[1];
+        
+        try {
+          const response = await fetch('/api/dashboard/customization/upload-image', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json'
+            },
+            credentials: 'include',
+            body: JSON.stringify({
+              base64Data: base64Data,
+              mimeType: file.type,
+              fileName: file.name
+            })
+          });
+          
+          if (!response.ok) {
+            throw new Error('Upload failed');
+          }
+          
+          const data = await response.json();
+          handleInputChange(field, data.url);
+          
+          toast({
+            title: "Success",
+            description: "Image uploaded successfully"
+          });
+        } catch (uploadError) {
+          console.error('Error uploading image:', uploadError);
+          toast({
+            title: "Error",
+            description: "Failed to upload image",
+            variant: "destructive"
+          });
+        }
+      };
       
-      const response = await fetch('/api/dashboard/customization/upload-image', {
-        method: 'POST',
-        body: formData,
-        credentials: 'include'
-      });
-      
-      if (!response.ok) {
-        throw new Error('Upload failed');
-      }
-      
-      const data = await response.json();
-      handleInputChange(field, data.url);
-      
-      toast({
-        title: "Success",
-        description: "Image uploaded successfully"
-      });
+      reader.onerror = () => {
+        throw new Error('Failed to read file');
+      };
     } catch (error) {
       console.error('Error uploading image:', error);
       toast({
@@ -844,71 +868,6 @@ export default function Settings() {
                           </Label>
                           <p className="text-xs text-gray-500 mt-1">Max 5MB, JPEG/PNG/GIF/WebP</p>
                         </div>
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
-                {/* Widget Titles */}
-                <Card>
-                  <CardHeader>
-                    <CardTitle>Widget Titles</CardTitle>
-                    <CardDescription>Customize the titles shown on dashboard widgets</CardDescription>
-                  </CardHeader>
-                  <CardContent className="space-y-4">
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      <div>
-                        <Label htmlFor="revenueTitle">Revenue Widget Title</Label>
-                        <Input
-                          id="revenueTitle"
-                          value={editingUser.revenueTitle || 'Revenue'}
-                          onChange={(e) => handleInputChange('revenueTitle', e.target.value)}
-                          placeholder="Revenue"
-                        />
-                      </div>
-                      <div>
-                        <Label htmlFor="expensesTitle">Expenses Widget Title</Label>
-                        <Input
-                          id="expensesTitle"
-                          value={editingUser.expensesTitle || 'Expenses'}
-                          onChange={(e) => handleInputChange('expensesTitle', e.target.value)}
-                          placeholder="Expenses"
-                        />
-                      </div>
-                      <div>
-                        <Label htmlFor="profitLossTitle">Profit & Loss Widget Title</Label>
-                        <Input
-                          id="profitLossTitle"
-                          value={editingUser.profitLossTitle || 'Profit & Loss'}
-                          onChange={(e) => handleInputChange('profitLossTitle', e.target.value)}
-                          placeholder="Profit & Loss"
-                        />
-                      </div>
-                      <div>
-                        <Label htmlFor="cashInTitle">Cash In Widget Title</Label>
-                        <Input
-                          id="cashInTitle"
-                          value={editingUser.cashInTitle || 'Cash In'}
-                          onChange={(e) => handleInputChange('cashInTitle', e.target.value)}
-                          placeholder="Cash In"
-                        />
-                      </div>
-                      <div>
-                        <Label htmlFor="cashOutTitle">Cash Out Widget Title</Label>
-                        <Input
-                          id="cashOutTitle"
-                          value={editingUser.cashOutTitle || 'Cash Out'}
-                          onChange={(e) => handleInputChange('cashOutTitle', e.target.value)}
-                          placeholder="Cash Out"
-                        />
-                      </div>
-                      <div className="md:col-span-2">
-                        <Label htmlFor="topRevenueTitle">Top Revenue Procedures Title</Label>
-                        <Input
-                          id="topRevenueTitle"
-                          value={editingUser.topRevenueTitle || 'Top Revenue Procedures'}
-                          onChange={(e) => handleInputChange('topRevenueTitle', e.target.value)}
-                          placeholder="Top Revenue Procedures"
-                        />
                       </div>
                     </div>
                   </CardContent>
