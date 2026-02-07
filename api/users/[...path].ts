@@ -323,6 +323,11 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
     // GET /api/users - List all users
     if (req.method === 'GET' && !username) {
+      // Add cache-control headers to prevent caching
+      res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');
+      res.setHeader('Pragma', 'no-cache');
+      res.setHeader('Expires', '0');
+      
       if (db) {
         try {
           const dbUsers = await db.select().from(users);
@@ -344,6 +349,11 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
     // GET /api/users/:username - Get specific user
     if (req.method === 'GET' && username) {
+      // Add cache-control headers to prevent caching
+      res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');
+      res.setHeader('Pragma', 'no-cache');
+      res.setHeader('Expires', '0');
+      
       if (db) {
         try {
           const dbUsers = await db.select().from(users).where(eq(users.username, username));

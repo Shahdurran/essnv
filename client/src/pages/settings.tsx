@@ -418,55 +418,50 @@ export default function Settings() {
   };
   const handleImageUpload = async (field: 'logoUrl' | 'ownerPhotoUrl', file: File) => {
     try {
-      // For Vercel serverless, convert to Base64
+      // For Vercel serverless compatibility, convert to Base64 and store directly
       const reader = new FileReader();
       reader.readAsDataURL(file);
-      reader.onload = async () => {
-        const base64Data = reader.result?.toString().split(',')[1];
+      reader.onload = () => {
+        const base64Data = reader.result?.toString() || '';
         
-        try {
-          const response = await fetch('/api/dashboard/customization/upload-image', {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json'
-            },
-            credentials: 'include',
-            body: JSON.stringify({
-              base64Data: base64Data,
-              mimeType: file.type,
-              fileName: file.name
-            })
-          });
-          
-          if (!response.ok) {
-            throw new Error('Upload failed');
-          }
-          
-          const data = await response.json();
-          handleInputChange(field, data.url);
-          
-          toast({
-            title: "Success",
-            description: "Image uploaded successfully"
-          });
-        } catch (uploadError) {
-          console.error('Error uploading image:', uploadError);
+        // Validate file size (max 5MB)
+        if (file.size > 5 * 1024 * 1024) {
           toast({
             title: "Error",
-            description: "Failed to upload image",
+            description: "File size must be less than 5MB",
             variant: "destructive"
           });
+          return;
         }
+        
+        // Validate file type
+        if (!file.type.startsWith('image/')) {
+          toast({
+            title: "Error",
+            description: "File must be an image",
+            variant: "destructive"
+          });
+          return;
+        }
+        
+        // Update the field directly with Base64 data
+        // This will be saved to the database as owner_photo_url
+        handleInputChange(field, base64Data);
+        
+        toast({
+          title: "Success",
+          description: "Image processed successfully (will be saved when you click Save Changes)"
+        });
       };
       
       reader.onerror = () => {
         throw new Error('Failed to read file');
       };
     } catch (error) {
-      console.error('Error uploading image:', error);
+      console.error('Error processing image:', error);
       toast({
         title: "Error",
-        description: "Failed to upload image",
+        description: "Failed to process image",
         variant: "destructive"
       });
     }

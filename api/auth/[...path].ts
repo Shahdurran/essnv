@@ -420,6 +420,11 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         return res.status(405).json({ message: 'Method not allowed. Use GET.' });
       }
 
+      // Add cache-control headers to prevent caching - ensures multi-device sync
+      res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');
+      res.setHeader('Pragma', 'no-cache');
+      res.setHeader('Expires', '0');
+      
       // Get token from Authorization header
       const authHeader = req.headers.authorization;
       const token = authHeader?.replace('Bearer ', '');

@@ -317,6 +317,10 @@ export default function Dashboard() {
                 src={user?.ownerPhotoUrl ?? drJohnJosephsonPhoto}
                 alt={user?.ownerName ?? "Owner"}
                 className="w-8 h-8 sm:w-10 sm:h-10 rounded-full object-cover border-2 border-blue-100"
+                onError={(e) => {
+                  // Fallback to default if Base64 image fails to load
+                  e.currentTarget.src = drJohnJosephsonPhoto;
+                }}
               />
             </div>
           </div>
@@ -488,7 +492,17 @@ export default function Dashboard() {
               <div className="space-y-6" data-testid="clinical-analysis-content">
                 <h3 className="text-lg font-semibold text-gray-900 mb-4">Clinical Analysis</h3>
 
-
+                {/* 
+                  Top Revenue Procedures (CPT Codes) Widget
+                  Displays top revenue-generating procedures by CPT code
+                  Uses procedureNameOverrides from user config for custom labels
+                */}
+                <TopRevenueProcedures
+                  selectedLocationId={selectedLocationId}
+                  selectedTimePeriod={selectedFinancialPeriod}
+                  title={user?.topRevenueTitle || "Top Revenue by CPT Codes"}
+                  procedureNameOverrides={user?.procedureNameOverrides || {}}
+                />
 
                 {/* 
                   Key Metrics Trends Chart Component
