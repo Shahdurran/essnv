@@ -99,6 +99,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+
 interface UserConfig {
   username: string;
   role: 'admin' | 'user';
@@ -129,6 +130,7 @@ interface UserConfig {
   }>;
   userLocations?: string[]; // Array of location IDs that this user has access to
 }
+
 interface PracticeLocation {
   id: string;
   name: string;
@@ -139,22 +141,26 @@ interface PracticeLocation {
   phone: string | null;
   isActive?: boolean | null;
 }
+
+// Default providers when user has none
+const DEFAULT_PROVIDERS = [
+  { name: 'Dr. John Josephson', percentage: 19 },
+  { name: 'Dr. Meghan G. Moroux', percentage: 14 },
+  { name: 'Dr. Hubert H. Pham', percentage: 13 },
+  { name: 'Dr. Sabita Ittoop', percentage: 10 },
+  { name: 'Dr. Kristen E. Dunbar', percentage: 9 },
+  { name: 'Dr. Erin Ong', percentage: 9 },
+  { name: 'Dr. Prema Modak', percentage: 8 },
+  { name: 'Dr. Julia Pierce', percentage: 7 },
+  { name: 'Dr. Heloi Stark', percentage: 6 },
+  { name: 'Dr. Noushin Sahraei', percentage: 5 }
+];
+
 export default function Settings() {
   const { toast } = useToast();
   const { user: currentUser, isAdmin, refreshUser, updateUser } = useAuth();
   
-  // CRITICAL: Add user guard to prevent null-pointer crash that causes blank page
-  if (!currentUser) {
-    return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="text-center">
-          <RefreshCw className="h-8 w-8 animate-spin mx-auto mb-4 text-blue-600" />
-          <p className="text-gray-600">Loading...</p>
-        </div>
-      </div>
-    );
-  }
-  
+  // State declarations
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [users, setUsers] = useState<UserConfig[]>([]);
@@ -167,18 +173,21 @@ export default function Settings() {
     password: '',
     role: 'user' as 'admin' | 'user'
   });
-  // Redirect if not admin
-  useEffect(() => {
-    if (!isAdmin) {
-      window.location.href = '/';
-    }
-  }, [isAdmin]);
-  // Fetch users and locations
+
+  // Fetch users and locations on mount
   useEffect(() => {
     if (isAdmin) {
       fetchData();
     }
   }, [isAdmin]);
+
+  // Redirect if not admin
+  useEffect(() => {
+    if (!isAdmin && !loading) {
+      window.location.href = '/';
+    }
+  }, [isAdmin, loading]);
+
   const fetchData = async () => {
     try {
       setLoading(true);
@@ -187,131 +196,72 @@ export default function Settings() {
       const usersRes = await fetch('/api/users', {
         credentials: 'include'
       });
+      
+      if (!usersRes.ok) {
+        throw new Error('Failed to fetch users');
+      }
+      
       const usersData = await usersRes.json();
       
-      // Initialize providers and locations for users that don't have them
-      const usersWithProviders = usersData.map((user: UserConfig) => {
-        if (!user.providers || user.providers.length === 0) {
-          user.providers = [
-            { name: 'Dr. John Josephson', percentage: 19 },
-            { name: 'Dr. Meghan G. Moroux', percentage: 14 },
-            { name: 'Dr. Hubert H. Pham', percentage: 13 },
-            { name: 'Dr. Sabita Ittoop', percentage: 10 },
-            { name: 'Dr. Kristen E. Dunbar', percentage: 9 },
-            { name: 'Dr. Erin Ong', percentage: 9 },
-            { name: 'Dr. Prema Modak', percentage: 8 },
-            { name: 'Dr. Julia Pierce', percentage: 7 },
-            { name: 'Dr. Heloi Stark', percentage: 6 },
-            { name: 'Dr. Noushin Sahraei', percentage: 5 }
-          ];
+      // Initialize users with safe defaults
+      const usersWithDefaults = usersData.map((user: UserConfig) => {
+        // Safely initialize providers
+        if (!user.providers || !Array.isArray(user.providers) || user.providers.length === 0) {
+          user.providers = [...DEFAULT_PROVIDERS];
         }
-        // Initialize userLocations if not present - default to all locations
-        if (!user.userLocations) {
+        
+        // Safely initialize locations
+        if (!user.userLocations || !Array.isArray(user.userLocations)) {
           user.userLocations = [];
         }
-        // Initialize arSubheadings if not present
-        if (!user.arSubheadings) {
-          user.arSubheadings = { '0-30': '0-30 days', '31-60': '31-60 days', '61-90': '61-90 days', '90+': '90+ days' };
-        }
-        // Initialize revenueSubheadings with empty strings for all default keys if not present
-        if (!user.revenueSubheadings) {
-          user.revenueSubheadings = {};
-          DEFAULT_REVENUE_KEYS.forEach(key => {
-            user.revenueSubheadings[key] = '';
+        
+        // Safely initialize all subheading objects
+        const initSubheadings = (existing: any, defaults: string[], labelFn: (k: string) => string = (k: string) => '') => {
+          if (!existing || typeof existing !== 'object') {
+            const result: Record<string, string> = {};
+            defaults.forEach(key => { result[key] = labelFn(key) || ''; });
+            return result;
+          }
+          const result = { ...existing };
+          defaults.forEach(key => {
+            if (!result.hasOwnProperty(key)) { result[key] = labelFn(key) || ''; }
           });
-        } else {
-          // Add missing keys to existing record
-          DEFAULT_REVENUE_KEYS.forEach(key => {
-            if (!user.revenueSubheadings.hasOwnProperty(key)) {
-              user.revenueSubheadings[key] = '';
-            }
-          });
-        }
-        // Initialize expensesSubheadings with empty strings for all default keys if not present
-        if (!user.expensesSubheadings) {
-          user.expensesSubheadings = {};
-          DEFAULT_EXPENSES_KEYS.forEach(key => {
-            user.expensesSubheadings[key] = '';
-          });
-        } else {
-          // Add missing keys to existing record
-          DEFAULT_EXPENSES_KEYS.forEach(key => {
-            if (!user.expensesSubheadings.hasOwnProperty(key)) {
-              user.expensesSubheadings[key] = '';
-            }
-          });
-        }
-        // Initialize cashInSubheadings with empty strings for all default keys if not present
-        if (!user.cashInSubheadings) {
-          user.cashInSubheadings = {};
-          DEFAULT_CASH_IN_KEYS.forEach(key => {
-            user.cashInSubheadings[key] = '';
-          });
-        } else {
-          // Add missing keys to existing record
-          DEFAULT_CASH_IN_KEYS.forEach(key => {
-            if (!user.cashInSubheadings.hasOwnProperty(key)) {
-              user.cashInSubheadings[key] = '';
-            }
-          });
-        }
-        // Initialize cashOutSubheadings with empty strings for all default keys if not present
-        if (!user.cashOutSubheadings) {
-          user.cashOutSubheadings = {};
-          DEFAULT_CASH_OUT_KEYS.forEach(key => {
-            user.cashOutSubheadings[key] = '';
-          });
-        } else {
-          // Add missing keys to existing record
-          DEFAULT_CASH_OUT_KEYS.forEach(key => {
-            if (!user.cashOutSubheadings.hasOwnProperty(key)) {
-              user.cashOutSubheadings[key] = '';
-            }
-          });
-        }
-        // Initialize cashFlowSubheadings with empty strings for all default keys if not present
-        if (!user.cashFlowSubheadings) {
-          user.cashFlowSubheadings = {};
-          DEFAULT_CASH_FLOW_KEYS.forEach(key => {
-            user.cashFlowSubheadings[key] = '';
-          });
-        } else {
-          // Add missing keys to existing record
-          DEFAULT_CASH_FLOW_KEYS.forEach(key => {
-            if (!user.cashFlowSubheadings.hasOwnProperty(key)) {
-              user.cashFlowSubheadings[key] = '';
-            }
-          });
-        }
-        // Initialize procedureNameOverrides with empty strings for all default clinical procedure keys
-        if (!user.procedureNameOverrides) {
-          user.procedureNameOverrides = {};
-          DEFAULT_CLINICAL_PROCEDURE_KEYS.forEach(key => {
-            user.procedureNameOverrides[key] = '';
-          });
-        } else {
-          // Add missing keys to existing record
-          DEFAULT_CLINICAL_PROCEDURE_KEYS.forEach(key => {
-            if (!user.procedureNameOverrides.hasOwnProperty(key)) {
-              user.procedureNameOverrides[key] = '';
-            }
-          });
-        }
+          return result;
+        };
+        
+        user.revenueSubheadings = initSubheadings(user.revenueSubheadings, DEFAULT_REVENUE_KEYS);
+        user.expensesSubheadings = initSubheadings(user.expensesSubheadings, DEFAULT_EXPENSES_KEYS);
+        user.cashInSubheadings = initSubheadings(user.cashInSubheadings, DEFAULT_CASH_IN_KEYS);
+        user.cashOutSubheadings = initSubheadings(user.cashOutSubheadings, DEFAULT_CASH_OUT_KEYS);
+        user.cashFlowSubheadings = initSubheadings(user.cashFlowSubheadings, DEFAULT_CASH_FLOW_KEYS);
+        user.arSubheadings = initSubheadings(user.arSubheadings, DEFAULT_AR_KEYS, (k) => `${k} days`);
+        user.procedureNameOverrides = initSubheadings(user.procedureNameOverrides, DEFAULT_CLINICAL_PROCEDURE_KEYS);
+        user.locationNameOverrides = user.locationNameOverrides || {};
+        
         return user;
       });
       
-      setUsers(usersWithProviders);
+      setUsers(usersWithDefaults);
       
       // Select first user by default
-      if (usersWithProviders.length > 0 && !selectedUser) {
-        setSelectedUser(usersWithProviders[0].username);
-        setEditingUser(usersWithProviders[0]);
+      if (usersWithDefaults.length > 0) {
+        setSelectedUser(usersWithDefaults[0].username);
+        setEditingUser(usersWithDefaults[0]);
       }
       
       // Fetch locations
-      const locRes = await fetch('/api/locations');
-      const locData = await locRes.json();
-      setLocations(locData);
+      try {
+        const locRes = await fetch('/api/locations');
+        if (locRes.ok) {
+          const locData = await locRes.json();
+          setLocations(Array.isArray(locData) ? locData : []);
+        } else {
+          setLocations([]);
+        }
+      } catch (locError) {
+        console.error('Error fetching locations:', locError);
+        setLocations([]);
+      }
       
       setLoading(false);
     } catch (error) {
@@ -324,10 +274,18 @@ export default function Settings() {
       setLoading(false);
     }
   };
+
   const handleUserSelect = async (username: string) => {
     setSelectedUser(username);
     
-    // Fetch fresh user data from API instead of using cached data
+    // Find user in local state first
+    const cachedUser = users.find(u => u.username === username);
+    if (cachedUser) {
+      setEditingUser(cachedUser);
+      return;
+    }
+    
+    // Fetch fresh user data from API
     try {
       const response = await fetch(`/api/users/${username}`, {
         credentials: 'include'
@@ -336,121 +294,21 @@ export default function Settings() {
       if (response.ok) {
         const user = await response.json();
         
-        // Initialize missing fields with defaults
-        if (!user.providers || user.providers.length === 0) {
-          user.providers = [
-            { name: 'Dr. John Josephson', percentage: 19 },
-            { name: 'Dr. Meghan G. Moroux', percentage: 14 },
-            { name: 'Dr. Hubert H. Pham', percentage: 13 },
-            { name: 'Dr. Sabita Ittoop', percentage: 10 },
-            { name: 'Dr. Kristen E. Dunbar', percentage: 9 },
-            { name: 'Dr. Erin Ong', percentage: 9 },
-            { name: 'Dr. Prema Modak', percentage: 8 },
-            { name: 'Dr. Julia Pierce', percentage: 7 },
-            { name: 'Dr. Heloi Stark', percentage: 6 },
-            { name: 'Dr. Noushin Sahraei', percentage: 5 }
-          ];
+        // Ensure user has all required fields with defaults
+        if (!user.providers || !Array.isArray(user.providers) || user.providers.length === 0) {
+          user.providers = [...DEFAULT_PROVIDERS];
         }
-        
-        // Initialize subheadings if not present
-        if (!user.revenueSubheadings) {
-          user.revenueSubheadings = {};
-          DEFAULT_REVENUE_KEYS.forEach(key => {
-            user.revenueSubheadings[key] = '';
-          });
-        } else {
-          DEFAULT_REVENUE_KEYS.forEach(key => {
-            if (!user.revenueSubheadings.hasOwnProperty(key)) {
-              user.revenueSubheadings[key] = '';
-            }
-          });
-        }
-        
-        if (!user.expensesSubheadings) {
-          user.expensesSubheadings = {};
-          DEFAULT_EXPENSES_KEYS.forEach(key => {
-            user.expensesSubheadings[key] = '';
-          });
-        } else {
-          DEFAULT_EXPENSES_KEYS.forEach(key => {
-            if (!user.expensesSubheadings.hasOwnProperty(key)) {
-              user.expensesSubheadings[key] = '';
-            }
-          });
-        }
-        
-        if (!user.cashInSubheadings) {
-          user.cashInSubheadings = {};
-          DEFAULT_CASH_IN_KEYS.forEach(key => {
-            user.cashInSubheadings[key] = '';
-          });
-        } else {
-          DEFAULT_CASH_IN_KEYS.forEach(key => {
-            if (!user.cashInSubheadings.hasOwnProperty(key)) {
-              user.cashInSubheadings[key] = '';
-            }
-          });
-        }
-        
-        if (!user.cashOutSubheadings) {
-          user.cashOutSubheadings = {};
-          DEFAULT_CASH_OUT_KEYS.forEach(key => {
-            user.cashOutSubheadings[key] = '';
-          });
-        } else {
-          DEFAULT_CASH_OUT_KEYS.forEach(key => {
-            if (!user.cashOutSubheadings.hasOwnProperty(key)) {
-              user.cashOutSubheadings[key] = '';
-            }
-          });
-        }
-        
-        if (!user.cashFlowSubheadings) {
-          user.cashFlowSubheadings = {};
-          DEFAULT_CASH_FLOW_KEYS.forEach(key => {
-            user.cashFlowSubheadings[key] = '';
-          });
-        } else {
-          DEFAULT_CASH_FLOW_KEYS.forEach(key => {
-            if (!user.cashFlowSubheadings.hasOwnProperty(key)) {
-              user.cashFlowSubheadings[key] = '';
-            }
-          });
-        }
-        
-        if (!user.arSubheadings) {
-          user.arSubheadings = { '0-30': '0-30 days', '31-60': '31-60 days', '61-90': '61-90 days', '90+': '90+ days' };
-        }
-        
-        if (!user.userLocations) {
+        if (!user.userLocations || !Array.isArray(user.userLocations)) {
           user.userLocations = [];
-        }
-        
-        // Initialize procedureNameOverrides with empty strings for all default clinical procedure keys
-        if (!user.procedureNameOverrides) {
-          user.procedureNameOverrides = {};
-          DEFAULT_CLINICAL_PROCEDURE_KEYS.forEach(key => {
-            user.procedureNameOverrides[key] = '';
-          });
-        } else {
-          DEFAULT_CLINICAL_PROCEDURE_KEYS.forEach(key => {
-            if (!user.procedureNameOverrides.hasOwnProperty(key)) {
-              user.procedureNameOverrides[key] = '';
-            }
-          });
         }
         
         setEditingUser(user);
       }
     } catch (error) {
       console.error('Error fetching user data:', error);
-      // Fallback to cached data
-      const cachedUser = users.find(u => u.username === username);
-      if (cachedUser) {
-        setEditingUser(cachedUser);
-      }
     }
   };
+
   const handleInputChange = (field: keyof UserConfig, value: any) => {
     if (editingUser) {
       setEditingUser({
@@ -459,26 +317,26 @@ export default function Settings() {
       });
     }
   };
+
   const handleSubheadingChange = (category: 'revenueSubheadings' | 'expensesSubheadings' | 'cashInSubheadings' | 'cashOutSubheadings' | 'cashFlowSubheadings' | 'arSubheadings' | 'procedureNameOverrides', key: string, value: string) => {
     if (editingUser) {
       setEditingUser({
         ...editingUser,
         [category]: {
-          ...(editingUser[category] as object || {}),
+          ...((editingUser[category] as object) || {}),
           [key]: value
         }
       });
     }
   };
+
   const handleImageUpload = async (field: 'logoUrl' | 'ownerPhotoUrl', file: File) => {
     try {
-      // For Vercel serverless compatibility, convert to Base64 and store directly
       const reader = new FileReader();
       reader.readAsDataURL(file);
       reader.onload = () => {
         const base64Data = reader.result?.toString() || '';
         
-        // Validate file size (max 5MB)
         if (file.size > 5 * 1024 * 1024) {
           toast({
             title: "Error",
@@ -488,7 +346,6 @@ export default function Settings() {
           return;
         }
         
-        // Validate file type
         if (!file.type.startsWith('image/')) {
           toast({
             title: "Error",
@@ -498,8 +355,6 @@ export default function Settings() {
           return;
         }
         
-        // Update the field directly with Base64 data
-        // This will be saved to the database as owner_photo_url
         handleInputChange(field, base64Data);
         
         toast({
@@ -520,6 +375,7 @@ export default function Settings() {
       });
     }
   };
+
   const handleSave = async () => {
     if (!editingUser) return;
     
@@ -548,10 +404,8 @@ export default function Settings() {
       // CRITICAL: Immediately update AuthContext if editing current user
       if (currentUser && updatedUser.username === currentUser.username) {
         updateUser(updatedUser);
-        console.log('[Settings] Updated AuthContext for current user');
       }
       
-      // Also refresh from server to ensure consistency
       await refreshUser();
       
       toast({
@@ -570,6 +424,7 @@ export default function Settings() {
       setSaving(false);
     }
   };
+
   const handleCreateUser = async () => {
     if (!newUserData.username || !newUserData.password) {
       toast({
@@ -611,6 +466,7 @@ export default function Settings() {
       });
     }
   };
+
   const handleDeleteUser = async (username: string) => {
     if (username === 'admin') {
       toast({
@@ -633,14 +489,13 @@ export default function Settings() {
         throw new Error('Failed to delete user');
       }
       
-      // Filter users FIRST before calling handleUserSelect
+      // Immediately remove user from sidebar state
       const remainingUsers = users.filter(u => u.username !== username);
       setUsers(remainingUsers);
       
       // If we deleted the selected user, switch to another user
       if (selectedUser === username) {
         if (remainingUsers.length > 0) {
-          // Redirect to settings page first, then select the first remaining user
           window.location.href = '/settings';
         } else {
           setSelectedUser(null);
@@ -661,6 +516,8 @@ export default function Settings() {
       });
     }
   };
+
+  // CRITICAL: Loading guard
   if (loading) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
@@ -671,13 +528,24 @@ export default function Settings() {
       </div>
     );
   }
+  
+  // CRITICAL: Editing user guard
   if (!editingUser) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <p className="text-red-600">No users found</p>
+        <div className="text-center">
+          <p className="text-gray-600">No user selected. Please select a user from the sidebar.</p>
+          {users.length === 0 && (
+            <p className="text-red-500 mt-2">No users found. Please reload the page.</p>
+          )}
+        </div>
       </div>
     );
   }
+
+  // Safe providers array
+  const safeProviders = editingUser.providers ?? [];
+
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Header */}
@@ -709,6 +577,7 @@ export default function Settings() {
           </div>
         </div>
       </header>
+
       {/* Main Content */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
@@ -810,6 +679,7 @@ export default function Settings() {
               </CardContent>
             </Card>
           </div>
+
           {/* Settings Panel */}
           <div className="lg:col-span-3">
             <Tabs defaultValue="branding" className="space-y-6">
@@ -819,9 +689,9 @@ export default function Settings() {
                 <TabsTrigger value="subheadings">Subheadings</TabsTrigger>
                 <TabsTrigger value="providers">Providers</TabsTrigger>
               </TabsList>
+
               {/* Branding Tab */}
               <TabsContent value="branding" className="space-y-6">
-                {/* Practice Branding */}
                 <Card>
                   <CardHeader>
                     <CardTitle>Practice Branding</CardTitle>
@@ -882,6 +752,7 @@ export default function Settings() {
                     </div>
                   </CardContent>
                 </Card>
+
                 {/* Owner Information */}
                 <Card>
                   <CardHeader>
@@ -944,231 +815,16 @@ export default function Settings() {
                   </CardContent>
                 </Card>
               </TabsContent>
-              {/* Subheadings Tab */}
-              <TabsContent value="subheadings" className="space-y-6">
-                {/* Revenue Subheadings */}
-                <Card>
-                  <CardHeader>
-                    <CardTitle>Revenue Subheadings</CardTitle>
-                    <CardDescription>Customize revenue category names</CardDescription>
-                  </CardHeader>
-                  <CardContent className="space-y-3">
-                    {DEFAULT_REVENUE_KEYS.map((key) => (
-                      <div key={key}>
-                        <Label className="text-xs text-gray-500">{key}</Label>
-                        <Input
-                          value={editingUser.revenueSubheadings?.[key] || key}
-                          onChange={(e) => handleSubheadingChange('revenueSubheadings', key, e.target.value)}
-                          placeholder={key}
-                        />
-                      </div>
-                    ))}
-                  </CardContent>
-                </Card>
-                {/* Expenses Subheadings */}
-                <Card>
-                  <CardHeader>
-                    <CardTitle>Expenses Subheadings</CardTitle>
-                    <CardDescription>Customize expense category names</CardDescription>
-                  </CardHeader>
-                  <CardContent className="space-y-3">
-                    {DEFAULT_EXPENSES_KEYS.map((key) => (
-                      <div key={key}>
-                        <Label className="text-xs text-gray-500">{key}</Label>
-                        <Input
-                          value={editingUser.expensesSubheadings?.[key] || key}
-                          onChange={(e) => handleSubheadingChange('expensesSubheadings', key, e.target.value)}
-                          placeholder={key}
-                        />
-                      </div>
-                    ))}
-                  </CardContent>
-                </Card>
-                {/* Cash In Subheadings */}
-                <Card>
-                  <CardHeader>
-                    <CardTitle>Cash In Subheadings</CardTitle>
-                    <CardDescription>Customize cash inflow category names</CardDescription>
-                  </CardHeader>
-                  <CardContent className="space-y-3">
-                    {DEFAULT_CASH_IN_KEYS.map((key) => (
-                      <div key={key}>
-                        <Label className="text-xs text-gray-500">{key}</Label>
-                        <Input
-                          value={editingUser.cashInSubheadings?.[key] || key}
-                          onChange={(e) => handleSubheadingChange('cashInSubheadings', key, e.target.value)}
-                          placeholder={key}
-                        />
-                      </div>
-                    ))}
-                  </CardContent>
-                </Card>
-                {/* Cash Out Subheadings */}
-                <Card>
-                  <CardHeader>
-                    <CardTitle>Cash Out Subheadings</CardTitle>
-                    <CardDescription>Customize cash outflow category names</CardDescription>
-                  </CardHeader>
-                  <CardContent className="space-y-3">
-                    {DEFAULT_CASH_OUT_KEYS.map((key) => (
-                      <div key={key}>
-                        <Label className="text-xs text-gray-500">{key}</Label>
-                        <Input
-                          value={editingUser.cashOutSubheadings?.[key] || key}
-                          onChange={(e) => handleSubheadingChange('cashOutSubheadings', key, e.target.value)}
-                          placeholder={key}
-                        />
-                      </div>
-                    ))}
-                  </CardContent>
-                </Card>
-                {/* AR Buckets Subheadings */}
-                <Card>
-                  <CardHeader>
-                    <CardTitle>AR Buckets Subheadings</CardTitle>
-                    <CardDescription>Customize AR aging bucket labels (0-30, 31-60, 61-90, 90+ days)</CardDescription>
-                  </CardHeader>
-                  <CardContent className="space-y-3">
-                    {DEFAULT_AR_KEYS.map((key) => (
-                      <div key={key}>
-                        <Label className="text-xs text-gray-500">{key} days</Label>
-                        <Input
-                          value={editingUser.arSubheadings?.[key] ?? `${key} days`}
-                          onChange={(e) => handleSubheadingChange('arSubheadings', key, e.target.value)}
-                          placeholder={`${key} days`}
-                        />
-                      </div>
-                    ))}
-                  </CardContent>
-                </Card>
-                {/* Cash Flow Subheadings */}
-                <Card>
-                  <CardHeader>
-                    <CardTitle>Cash Flow Subheadings</CardTitle>
-                    <CardDescription>Customize cash flow statement category names (Operating, Investing, Financing)</CardDescription>
-                  </CardHeader>
-                  <CardContent className="space-y-3">
-                    {DEFAULT_CASH_FLOW_KEYS.map((key) => (
-                      <div key={key}>
-                        <Label className="text-xs text-gray-500">{key}</Label>
-                        <Input
-                          value={editingUser.cashFlowSubheadings?.[key] || key}
-                          onChange={(e) => handleSubheadingChange('cashFlowSubheadings', key, e.target.value)}
-                          placeholder={key}
-                        />
-                      </div>
-                    ))}
-                  </CardContent>
-                </Card>
-                {/* Top Revenue Procedures - Clinical Procedure Name Overrides */}
-                <Card>
-                  <CardHeader>
-                    <CardTitle>Top Revenue Procedures</CardTitle>
-                    <CardDescription>Customize clinical procedure names displayed in the Top Revenue Procedures widget</CardDescription>
-                  </CardHeader>
-                  <CardContent className="space-y-3">
-                    {DEFAULT_CLINICAL_PROCEDURE_KEYS.map((key) => (
-                      <div key={key}>
-                        <Label className="text-xs text-gray-500">{key}</Label>
-                        <Input
-                          value={editingUser.procedureNameOverrides?.[key] || ''}
-                          onChange={(e) => handleSubheadingChange('procedureNameOverrides', key, e.target.value)}
-                          placeholder={key}
-                        />
-                      </div>
-                    ))}
-                  </CardContent>
-                </Card>
-              </TabsContent>
-              {/* Providers Tab */}
-              <TabsContent value="providers" className="space-y-6">
-                <Card>
-                  <CardHeader>
-                    <CardTitle>Provider/Doctor Revenue Distribution</CardTitle>
-                    <CardDescription>
-                      Customize the list of providers and their revenue percentages for the Revenue Breakdown widget.
-                      Total percentage must equal 100%.
-                    </CardDescription>
-                  </CardHeader>
-                  <CardContent className="space-y-4">
-                    {editingUser.providers && editingUser.providers.map((provider, index) => (
-                      <div key={index} className="flex items-center gap-4 p-3 border rounded-lg">
-                        <div className="flex-1">
-                          <Label htmlFor={`provider-name-${index}`}>Provider Name</Label>
-                          <Input
-                            id={`provider-name-${index}`}
-                            value={provider.name}
-                            onChange={(e) => {
-                              const newProviders = [...editingUser.providers];
-                              newProviders[index].name = e.target.value;
-                              handleInputChange('providers', newProviders);
-                            }}
-                            placeholder="e.g., Dr. John Smith"
-                          />
-                        </div>
-                        <div className="w-32">
-                          <Label htmlFor={`provider-percentage-${index}`}>Percentage</Label>
-                          <div className="flex items-center gap-2">
-                            <Input
-                              id={`provider-percentage-${index}`}
-                              type="number"
-                              min="0"
-                              max="100"
-                              value={provider.percentage}
-                              onChange={(e) => {
-                                const newProviders = [...editingUser.providers];
-                                newProviders[index].percentage = parseFloat(e.target.value) || 0;
-                                handleInputChange('providers', newProviders);
-                              }}
-                            />
-                            <span className="text-sm text-gray-500">%</span>
-                          </div>
-                        </div>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => {
-                            const newProviders = editingUser.providers.filter((_, i) => i !== index);
-                            handleInputChange('providers', newProviders);
-                          }}
-                          className="mt-6"
-                        >
-                          <Trash2 className="h-4 w-4 text-red-500" />
-                        </Button>
-                      </div>
-                    ))}
-                    
-                    <div className="flex items-center justify-between pt-4 border-t">
-                      <div>
-                        <p className="text-sm font-medium">
-                          Total: {editingUser.providers?.reduce((sum, p) => sum + p.percentage, 0) || 0}%
-                        </p>
-                        {editingUser.providers && editingUser.providers.reduce((sum, p) => sum + p.percentage, 0) !== 100 && (
-                          <p className="text-xs text-red-500">Warning: Total should equal 100%</p>
-                        )}
-                      </div>
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => {
-                          const newProviders = [...(editingUser.providers || []), { name: '', percentage: 0 }];
-                          handleInputChange('providers', newProviders);
-                        }}
-                      >
-                        <Plus className="h-4 w-4 mr-2" />
-                        Add Provider
-                      </Button>
-                    </div>
-                  </CardContent>
-                </Card>
-              </TabsContent>
-              {/* Locations Management Tab */}
+
+              {/* Locations Tab */}
               <TabsContent value="locations" className="space-y-6">
                 <Card>
                   <CardHeader>
                     <CardTitle>Practice Locations</CardTitle>
                     <CardDescription>
                       Manage practice locations. Add, edit, or remove locations for your practice.
+                      <br />
+                      <span className="text-orange-500">Total Locations: {locations?.length || 0}</span>
                     </CardDescription>
                   </CardHeader>
                   <CardContent className="space-y-4">
@@ -1259,7 +915,7 @@ export default function Settings() {
                     
                     <div className="flex items-center justify-between pt-4 border-t">
                       <p className="text-sm text-gray-500">
-                        Total Locations: {locations.length}
+                        Total Locations: {locations?.length || 0}
                       </p>
                       <Button
                         variant="outline"
@@ -1272,7 +928,7 @@ export default function Settings() {
                             phone: null,
                             isActive: true
                           };
-                          setLocations([...locations, newLocation]);
+                          setLocations([...(locations || []), newLocation]);
                         }}
                       >
                         <Plus className="h-4 w-4 mr-2" />
@@ -1284,8 +940,7 @@ export default function Settings() {
                       <Button
                         onClick={async () => {
                           try {
-                            // Save all locations
-                            for (const location of locations) {
+                            for (const location of (locations || [])) {
                               if (!location.name) {
                                 toast({
                                   title: "Error",
@@ -1295,9 +950,7 @@ export default function Settings() {
                                 return;
                               }
                               
-                              // Check if it's a new location (temporary ID)
                               if (location.id.startsWith('location-')) {
-                                // Create new location
                                 const response = await fetch('/api/locations', {
                                   method: 'POST',
                                   headers: { 'Content-Type': 'application/json' },
@@ -1308,15 +961,7 @@ export default function Settings() {
                                 if (!response.ok) {
                                   throw new Error('Failed to create location');
                                 }
-                                
-                                const newLocation = await response.json();
-                                // Update the location with the real ID
-                                const index = locations.findIndex(loc => loc.id === location.id);
-                                if (index !== -1) {
-                                  locations[index] = newLocation;
-                                }
                               } else {
-                                // Update existing location
                                 const response = await fetch('/api/locations', {
                                   method: 'PUT',
                                   headers: { 'Content-Type': 'application/json' },
@@ -1330,7 +975,6 @@ export default function Settings() {
                               }
                             }
                             
-                            // Refresh locations list
                             await fetchData();
                             
                             toast({
@@ -1354,7 +998,234 @@ export default function Settings() {
                   </CardContent>
                 </Card>
               </TabsContent>
+
+              {/* Subheadings Tab */}
+              <TabsContent value="subheadings" className="space-y-6">
+                {/* Revenue Subheadings */}
+                <Card>
+                  <CardHeader>
+                    <CardTitle>Revenue Subheadings</CardTitle>
+                    <CardDescription>Customize revenue category names</CardDescription>
+                  </CardHeader>
+                  <CardContent className="space-y-3">
+                    {DEFAULT_REVENUE_KEYS.map((key) => (
+                      <div key={key}>
+                        <Label className="text-xs text-gray-500">{key}</Label>
+                        <Input
+                          value={editingUser.revenueSubheadings?.[key] || key}
+                          onChange={(e) => handleSubheadingChange('revenueSubheadings', key, e.target.value)}
+                          placeholder={key}
+                        />
+                      </div>
+                    ))}
+                  </CardContent>
+                </Card>
+
+                {/* Expenses Subheadings */}
+                <Card>
+                  <CardHeader>
+                    <CardTitle>Expenses Subheadings</CardTitle>
+                    <CardDescription>Customize expense category names</CardDescription>
+                  </CardHeader>
+                  <CardContent className="space-y-3">
+                    {DEFAULT_EXPENSES_KEYS.map((key) => (
+                      <div key={key}>
+                        <Label className="text-xs text-gray-500">{key}</Label>
+                        <Input
+                          value={editingUser.expensesSubheadings?.[key] || key}
+                          onChange={(e) => handleSubheadingChange('expensesSubheadings', key, e.target.value)}
+                          placeholder={key}
+                        />
+                      </div>
+                    ))}
+                  </CardContent>
+                </Card>
+
+                {/* Cash In Subheadings */}
+                <Card>
+                  <CardHeader>
+                    <CardTitle>Cash In Subheadings</CardTitle>
+                    <CardDescription>Customize cash inflow category names</CardDescription>
+                  </CardHeader>
+                  <CardContent className="space-y-3">
+                    {DEFAULT_CASH_IN_KEYS.map((key) => (
+                      <div key={key}>
+                        <Label className="text-xs text-gray-500">{key}</Label>
+                        <Input
+                          value={editingUser.cashInSubheadings?.[key] || key}
+                          onChange={(e) => handleSubheadingChange('cashInSubheadings', key, e.target.value)}
+                          placeholder={key}
+                        />
+                      </div>
+                    ))}
+                  </CardContent>
+                </Card>
+
+                {/* Cash Out Subheadings */}
+                <Card>
+                  <CardHeader>
+                    <CardTitle>Cash Out Subheadings</CardTitle>
+                    <CardDescription>Customize cash outflow category names</CardDescription>
+                  </CardHeader>
+                  <CardContent className="space-y-3">
+                    {DEFAULT_CASH_OUT_KEYS.map((key) => (
+                      <div key={key}>
+                        <Label className="text-xs text-gray-500">{key}</Label>
+                        <Input
+                          value={editingUser.cashOutSubheadings?.[key] || key}
+                          onChange={(e) => handleSubheadingChange('cashOutSubheadings', key, e.target.value)}
+                          placeholder={key}
+                        />
+                      </div>
+                    ))}
+                  </CardContent>
+                </Card>
+
+                {/* AR Buckets Subheadings */}
+                <Card>
+                  <CardHeader>
+                    <CardTitle>AR Buckets Subheadings</CardTitle>
+                    <CardDescription>Customize AR aging bucket labels (0-30, 31-60, 61-90, 90+ days)</CardDescription>
+                  </CardHeader>
+                  <CardContent className="space-y-3">
+                    {DEFAULT_AR_KEYS.map((key) => (
+                      <div key={key}>
+                        <Label className="text-xs text-gray-500">{key} days</Label>
+                        <Input
+                          value={editingUser.arSubheadings?.[key] ?? `${key} days`}
+                          onChange={(e) => handleSubheadingChange('arSubheadings', key, e.target.value)}
+                          placeholder={`${key} days`}
+                        />
+                      </div>
+                    ))}
+                  </CardContent>
+                </Card>
+
+                {/* Cash Flow Subheadings */}
+                <Card>
+                  <CardHeader>
+                    <CardTitle>Cash Flow Subheadings</CardTitle>
+                    <CardDescription>Customize cash flow statement category names (Operating, Investing, Financing)</CardDescription>
+                  </CardHeader>
+                  <CardContent className="space-y-3">
+                    {DEFAULT_CASH_FLOW_KEYS.map((key) => (
+                      <div key={key}>
+                        <Label className="text-xs text-gray-500">{key}</Label>
+                        <Input
+                          value={editingUser.cashFlowSubheadings?.[key] || key}
+                          onChange={(e) => handleSubheadingChange('cashFlowSubheadings', key, e.target.value)}
+                          placeholder={key}
+                        />
+                      </div>
+                    ))}
+                  </CardContent>
+                </Card>
+
+                {/* Clinical Procedures - Top Revenue Procedures */}
+                <Card>
+                  <CardHeader>
+                    <CardTitle>Clinical Procedures</CardTitle>
+                    <CardDescription>Customize clinical procedure names displayed in the Top Revenue Procedures widget</CardDescription>
+                  </CardHeader>
+                  <CardContent className="space-y-3">
+                    {DEFAULT_CLINICAL_PROCEDURE_KEYS.map((key) => (
+                      <div key={key}>
+                        <Label className="text-xs text-gray-500">{key}</Label>
+                        <Input
+                          value={editingUser.procedureNameOverrides?.[key] || ''}
+                          onChange={(e) => handleSubheadingChange('procedureNameOverrides', key, e.target.value)}
+                          placeholder={key}
+                        />
+                      </div>
+                    ))}
+                  </CardContent>
+                </Card>
+              </TabsContent>
+
+              {/* Providers Tab */}
+              <TabsContent value="providers" className="space-y-6">
+                <Card>
+                  <CardHeader>
+                    <CardTitle>Provider/Doctor Revenue Distribution</CardTitle>
+                    <CardDescription>
+                      Customize the list of providers and their revenue percentages for the Revenue Breakdown widget.
+                      Total percentage must equal 100%.
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent className="space-y-4">
+                    {safeProviders.map((provider, index) => (
+                      <div key={index} className="flex items-center gap-4 p-3 border rounded-lg">
+                        <div className="flex-1">
+                          <Label htmlFor={`provider-name-${index}`}>Provider Name</Label>
+                          <Input
+                            id={`provider-name-${index}`}
+                            value={provider.name}
+                            onChange={(e) => {
+                              const newProviders = [...safeProviders];
+                              newProviders[index].name = e.target.value;
+                              handleInputChange('providers', newProviders);
+                            }}
+                            placeholder="e.g., Dr. John Smith"
+                          />
+                        </div>
+                        <div className="w-32">
+                          <Label htmlFor={`provider-percentage-${index}`}>Percentage</Label>
+                          <div className="flex items-center gap-2">
+                            <Input
+                              id={`provider-percentage-${index}`}
+                              type="number"
+                              min="0"
+                              max="100"
+                              value={provider.percentage}
+                              onChange={(e) => {
+                                const newProviders = [...safeProviders];
+                                newProviders[index].percentage = parseFloat(e.target.value) || 0;
+                                handleInputChange('providers', newProviders);
+                              }}
+                            />
+                            <span className="text-sm text-gray-500">%</span>
+                          </div>
+                        </div>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => {
+                            const newProviders = safeProviders.filter((_, i) => i !== index);
+                            handleInputChange('providers', newProviders);
+                          }}
+                          className="mt-6"
+                        >
+                          <Trash2 className="h-4 w-4 text-red-500" />
+                        </Button>
+                      </div>
+                    ))}
+                    
+                    <div className="flex items-center justify-between pt-4 border-t">
+                      <div>
+                        <p className="text-sm font-medium">
+                          Total: {safeProviders.reduce((sum, p) => sum + p.percentage, 0)}%
+                        </p>
+                        {safeProviders.reduce((sum, p) => sum + p.percentage, 0) !== 100 && (
+                          <p className="text-xs text-red-500">Warning: Total should equal 100%</p>
+                        )}
+                      </div>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => {
+                          const newProviders = [...safeProviders, { name: '', percentage: 0 }];
+                          handleInputChange('providers', newProviders);
+                        }}
+                      >
+                        <Plus className="h-4 w-4 mr-2" />
+                        Add Provider
+                      </Button>
+                    </div>
+                  </CardContent>
+                </Card>
+              </TabsContent>
             </Tabs>
+
             {/* Save Button (Bottom) */}
             <div className="flex justify-end mt-6">
               <Button onClick={handleSave} disabled={saving} size="lg">
@@ -1366,7 +1237,7 @@ export default function Settings() {
                 ) : (
                   <>
                     <Save className="h-4 w-4 mr-2" />
-                    Save Changes for {editingUser.username}
+                    Save All Changes
                   </>
                 )}
               </Button>

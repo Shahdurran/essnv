@@ -197,13 +197,7 @@ const IN_MEMORY_USERS = [
     cashFlowSubheadings: {},
     arSubheadings: {},
     procedureNameOverrides: {},
-    locationNameOverrides: {
-      'fairfax': 'Fairfax',
-      'gainesville': 'Falls Church',
-      'manassas': 'Woodbridge',
-      'leesburg': 'Stafford',
-      'reston': 'Lorton'
-    }
+    locationNameOverrides: {} // NO hardcoded locations
   }
 ];
 

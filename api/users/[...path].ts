@@ -131,6 +131,7 @@ const DEFAULT_PROCEDURE_KEYS = [
 ];
 
 // In-memory user store (fallback when DB is not available)
+// CRITICAL: No hardcoded location data - use empty arrays as fallback
 const IN_MEMORY_USERS = [
   {
     username: 'admin',
@@ -168,7 +169,7 @@ const IN_MEMORY_USERS = [
     cashFlowSubheadings: {},
     arSubheadings: {},
     procedureNameOverrides: {},
-    locationNameOverrides: {},
+    locationNameOverrides: {}, // NO hardcoded locations
     userLocations: []
   },
   {
@@ -198,13 +199,7 @@ const IN_MEMORY_USERS = [
     cashFlowSubheadings: {},
     arSubheadings: {},
     procedureNameOverrides: {},
-    locationNameOverrides: {
-      'fairfax': 'Fairfax',
-      'gainesville': 'Falls Church',
-      'manassas': 'Woodbridge',
-      'leesburg': 'Stafford',
-      'reston': 'Lorton'
-    },
+    locationNameOverrides: {}, // NO hardcoded locations - use empty object
     userLocations: []
   }
 ];
