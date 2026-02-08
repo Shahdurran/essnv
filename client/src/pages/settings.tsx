@@ -73,6 +73,19 @@ const DEFAULT_CASH_FLOW_KEYS = [
   'Net Cash from Financing'
 ];
 const DEFAULT_AR_KEYS = ['0-30', '31-60', '61-90', '90+'];
+
+// Clinical Procedure Name Overrides (for Top Revenue Procedures widget)
+const DEFAULT_CLINICAL_PROCEDURE_KEYS = [
+  'With IOL insertion',
+  'Medication injection',
+  'Refractive surgery',
+  'Upper eyelid surgery',
+  'Retinal imaging',
+  'Laser glaucoma treatment',
+  'New patient exam',
+  '45-59 minutes'
+];
+
 import {
   Tabs,
   TabsContent,
@@ -257,6 +270,20 @@ export default function Settings() {
             }
           });
         }
+        // Initialize procedureNameOverrides with empty strings for all default clinical procedure keys
+        if (!user.procedureNameOverrides) {
+          user.procedureNameOverrides = {};
+          DEFAULT_CLINICAL_PROCEDURE_KEYS.forEach(key => {
+            user.procedureNameOverrides[key] = '';
+          });
+        } else {
+          // Add missing keys to existing record
+          DEFAULT_CLINICAL_PROCEDURE_KEYS.forEach(key => {
+            if (!user.procedureNameOverrides.hasOwnProperty(key)) {
+              user.procedureNameOverrides[key] = '';
+            }
+          });
+        }
         return user;
       });
       
@@ -386,6 +413,20 @@ export default function Settings() {
           user.userLocations = [];
         }
         
+        // Initialize procedureNameOverrides with empty strings for all default clinical procedure keys
+        if (!user.procedureNameOverrides) {
+          user.procedureNameOverrides = {};
+          DEFAULT_CLINICAL_PROCEDURE_KEYS.forEach(key => {
+            user.procedureNameOverrides[key] = '';
+          });
+        } else {
+          DEFAULT_CLINICAL_PROCEDURE_KEYS.forEach(key => {
+            if (!user.procedureNameOverrides.hasOwnProperty(key)) {
+              user.procedureNameOverrides[key] = '';
+            }
+          });
+        }
+        
         setEditingUser(user);
       }
     } catch (error) {
@@ -405,12 +446,12 @@ export default function Settings() {
       });
     }
   };
-  const handleSubheadingChange = (category: 'revenueSubheadings' | 'expensesSubheadings' | 'cashInSubheadings' | 'cashOutSubheadings' | 'cashFlowSubheadings' | 'arSubheadings', key: string, value: string) => {
+  const handleSubheadingChange = (category: 'revenueSubheadings' | 'expensesSubheadings' | 'cashInSubheadings' | 'cashOutSubheadings' | 'cashFlowSubheadings' | 'arSubheadings' | 'procedureNameOverrides', key: string, value: string) => {
     if (editingUser) {
       setEditingUser({
         ...editingUser,
         [category]: {
-          ...editingUser[category],
+          ...(editingUser[category] as object || {}),
           [key]: value
         }
       });
@@ -997,6 +1038,25 @@ export default function Settings() {
                         <Input
                           value={editingUser.cashFlowSubheadings[key] || ''}
                           onChange={(e) => handleSubheadingChange('cashFlowSubheadings', key, e.target.value)}
+                          placeholder={key}
+                        />
+                      </div>
+                    ))}
+                  </CardContent>
+                </Card>
+                {/* Top Revenue Procedures - Clinical Procedure Name Overrides */}
+                <Card>
+                  <CardHeader>
+                    <CardTitle>Top Revenue Procedures</CardTitle>
+                    <CardDescription>Customize clinical procedure names displayed in the Top Revenue Procedures widget</CardDescription>
+                  </CardHeader>
+                  <CardContent className="space-y-3">
+                    {DEFAULT_CLINICAL_PROCEDURE_KEYS.map((key) => (
+                      <div key={key}>
+                        <Label className="text-xs text-gray-500">{key}</Label>
+                        <Input
+                          value={editingUser.procedureNameOverrides?.[key] || ''}
+                          onChange={(e) => handleSubheadingChange('procedureNameOverrides', key, e.target.value)}
                           placeholder={key}
                         />
                       </div>

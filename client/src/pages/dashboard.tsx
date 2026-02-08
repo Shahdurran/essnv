@@ -493,18 +493,6 @@ export default function Dashboard() {
                 <h3 className="text-lg font-semibold text-gray-900 mb-4">Clinical Analysis</h3>
 
                 {/* 
-                  Top Revenue Procedures (CPT Codes) Widget
-                  Displays top revenue-generating procedures by CPT code
-                  Uses procedureNameOverrides from user config for custom labels
-                */}
-                <TopRevenueProcedures
-                  selectedLocationId={selectedLocationId}
-                  selectedTimePeriod={selectedFinancialPeriod}
-                  title={user?.topRevenueTitle || "Top Revenue by CPT Codes"}
-                  procedureNameOverrides={user?.procedureNameOverrides || {}}
-                />
-
-                {/* 
                   Key Metrics Trends Chart Component
                   Advanced charting with actual vs projected data
                   Modified: Default to 1 year, add EBITDA, replace AR Days with Write-Offs

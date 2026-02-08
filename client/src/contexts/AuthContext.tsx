@@ -140,6 +140,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
   };
 
   // Refresh user data from the server (useful after saving settings)
+  // CRITICAL: This ensures AuthContext has fresh data after Save operations
   const refreshUser = async () => {
     try {
       const token = localStorage.getItem("authToken");
@@ -147,6 +148,8 @@ export function AuthProvider({ children }: AuthProviderProps) {
       if (token) {
         headers['Authorization'] = `Bearer ${token}`;
       }
+      
+      console.log("[AuthContext] Refreshing user data from server...");
       
       const response = await fetch('/api/auth/me', {
         credentials: 'include',
@@ -156,7 +159,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
       if (response.ok) {
         const userData = await response.json();
         setUser(userData);
-        console.log("[AuthContext] User data refreshed successfully");
+        console.log("[AuthContext] User data refreshed successfully:", userData.username);
       } else {
         console.error("[AuthContext] Failed to refresh user data:", response.status);
       }

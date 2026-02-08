@@ -441,9 +441,114 @@ export async function createUser(config: Omit<UserConfiguration, 'id' | 'created
 }
 
 /**
- * Update user configuration
+ * Update user configuration - CRITICAL: Uses .where() clause to prevent global overwrites
+ * Arrays like 'locations' and 'providers' are OVERWRITTEN, not appended
  */
 export async function updateUser(username: string, updates: Partial<Omit<UserConfiguration, 'id' | 'username' | 'createdAt'>>): Promise<UserConfiguration> {
+  console.log(`[UserConfig] Updating user: ${username}`);
+  console.log(`[UserConfig] Update fields:`, Object.keys(updates));
+  
+  // Prevent password updates through this method (security)
+  if (updates.password) {
+    delete updates.password;
+  }
+  
+  // For Neon DB, we MUST use .where() to target specific user
+  if (db) {
+    try {
+      // First check if user exists
+      const existingUsers = await db.select().from(users).where(eq(users.username, username));
+      
+      if (existingUsers.length === 0) {
+        throw new Error('User not found in database');
+      }
+      
+      const existingUser = existingUsers[0];
+      
+      // Build update object - OVERWRITE arrays, don't append
+      const updateData: any = {
+        updatedAt: new Date().toISOString()
+      };
+      
+      // Branding fields
+      if (updates.logoUrl !== undefined) updateData.logoUrl = updates.logoUrl;
+      if (updates.practiceName !== undefined) updateData.practiceName = updates.practiceName;
+      if (updates.practiceSubtitle !== undefined) updateData.practiceSubtitle = updates.practiceSubtitle;
+      if (updates.ownerName !== undefined) updateData.ownerName = updates.ownerName;
+      if (updates.ownerTitle !== undefined) updateData.ownerTitle = updates.ownerTitle;
+      if (updates.ownerPhotoUrl !== undefined) updateData.ownerPhotoUrl = updates.ownerPhotoUrl;
+      
+      // Widget titles
+      if (updates.revenueTitle !== undefined) updateData.revenueTitle = updates.revenueTitle;
+      if (updates.expensesTitle !== undefined) updateData.expensesTitle = updates.expensesTitle;
+      if (updates.profitLossTitle !== undefined) updateData.profitLossTitle = updates.profitLossTitle;
+      if (updates.cashInTitle !== undefined) updateData.cashInTitle = updates.cashInTitle;
+      if (updates.cashOutTitle !== undefined) updateData.cashOutTitle = updates.cashOutTitle;
+      if (updates.topRevenueTitle !== undefined) updateData.topRevenueTitle = updates.topRevenueTitle;
+      
+      // JSON fields - OVERWRITE with fresh data, not append
+      if (updates.revenueSubheadings !== undefined) {
+        updateData.revenueSubheadings = JSON.stringify(updates.revenueSubheadings);
+      }
+      if (updates.expensesSubheadings !== undefined) {
+        updateData.expensesSubheadings = JSON.stringify(updates.expensesSubheadings);
+      }
+      if (updates.cashInSubheadings !== undefined) {
+        updateData.cashInSubheadings = JSON.stringify(updates.cashInSubheadings);
+      }
+      if (updates.cashOutSubheadings !== undefined) {
+        updateData.cashOutSubheadings = JSON.stringify(updates.cashOutSubheadings);
+      }
+      if (updates.cashFlowSubheadings !== undefined) {
+        updateData.cashFlowSubheadings = JSON.stringify(updates.cashFlowSubheadings);
+      }
+      if (updates.arSubheadings !== undefined) {
+        updateData.arSubheadings = JSON.stringify(updates.arSubheadings);
+      }
+      if (updates.procedureNameOverrides !== undefined) {
+        updateData.procedureNameOverrides = JSON.stringify(updates.procedureNameOverrides);
+      }
+      if (updates.locationNameOverrides !== undefined) {
+        updateData.locationNameOverrides = JSON.stringify(updates.locationNameOverrides);
+      }
+      if (updates.providers !== undefined) {
+        // CRITICAL: OVERWRITE providers array, don't append
+        updateData.providers = JSON.stringify(updates.providers);
+        console.log(`[UserConfig] Overwriting providers array with ${updates.providers.length} items`);
+      }
+      if (updates.showCollectionsWidget !== undefined) {
+        updateData.showCollectionsWidget = updates.showCollectionsWidget;
+      }
+      
+      // CRITICAL: Use .where(eq()) to target ONLY this user
+      await db.update(users)
+        .set(updateData)
+        .where(eq(users.username, username));
+        
+      console.log(`[UserConfig] Successfully updated user in Neon DB: ${username}`);
+      
+      // Fetch and return updated user
+      const updatedUsers = await db.select().from(users).where(eq(users.username, username));
+      
+      if (updatedUsers.length > 0) {
+        const updatedConfig = dbToUserConfig(updatedUsers[0]);
+        // Update in-memory cache
+        const cacheIndex = configCache?.findIndex(c => c.username === username);
+        if (cacheIndex !== undefined && cacheIndex >= 0 && configCache) {
+          configCache[cacheIndex] = updatedConfig;
+        }
+        return updatedConfig;
+      }
+      
+      throw new Error('Failed to fetch updated user');
+      
+    } catch (error) {
+      console.error('[UserConfig] DB update error:', error);
+      throw error;
+    }
+  }
+  
+  // Fallback to in-memory update
   const configs = await readUserConfigurations();
   const index = configs.findIndex(c => c.username === username);
   
@@ -451,18 +556,19 @@ export async function updateUser(username: string, updates: Partial<Omit<UserCon
     throw new Error('User not found');
   }
   
-  // Hash password if it's being updated
-  if (updates.password) {
-    updates.password = await bcrypt.hash(updates.password, 10);
-  }
-  
+  // OVERWRITE arrays, don't append
   configs[index] = {
     ...configs[index],
     ...updates,
+    // Ensure arrays are fully replaced
+    providers: updates.providers || configs[index].providers,
+    revenueSubheadings: updates.revenueSubheadings || configs[index].revenueSubheadings,
+    expensesSubheadings: updates.expensesSubheadings || configs[index].expensesSubheadings,
     updatedAt: new Date().toISOString()
   };
   
-  await writeUserConfigurations(configs);
+  configCache = configs;
+  console.log(`[UserConfig] Updated user in memory: ${username}`);
   
   return configs[index];
 }

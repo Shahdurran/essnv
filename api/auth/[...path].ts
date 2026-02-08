@@ -1,4 +1,10 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
+
+// CRITICAL: Force dynamic rendering for multi-device sync
+// This ensures app.medidentai.com always serves fresh data from Neon
+// Never a cached version from the browser or Vercel edge
+export const dynamic = "force-dynamic";
+
 import { neon } from '@neondatabase/serverless';
 import { drizzle } from 'drizzle-orm/neon-http';
 import { pgTable, text, varchar, json, boolean } from 'drizzle-orm/pg-core';
@@ -296,6 +302,13 @@ if (typeof global !== 'undefined') {
 }
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
+  // CRITICAL: Set cache-control headers for multi-device sync
+  // Ensures app.medidentai.com never serves cached data from browser or Vercel edge
+  res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');
+  res.setHeader('Pragma', 'no-cache');
+  res.setHeader('Expires', '0');
+  res.setHeader('Surrogate-Control', 'no-store');
+  
   // Set CORS headers
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
