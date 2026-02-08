@@ -341,6 +341,7 @@ export async function readUserConfigurations(): Promise<UserConfiguration[]> {
 
 /**
  * Write all user configurations to database
+ * CRITICAL: Uses .where() clause to target specific users
  */
 async function writeUserConfigurations(configs: UserConfiguration[]): Promise<void> {
   if (!db) {
@@ -350,19 +351,46 @@ async function writeUserConfigurations(configs: UserConfiguration[]): Promise<vo
   }
   
   try {
-    // Upsert each user to the database
+    // Upsert each user to the database - TARGET EACH USER SPECIFICALLY
     for (const config of configs) {
       const existing = await db.select().from(users).where(eq(users.username, config.username));
       
       if (existing.length > 0) {
-        // Update existing user
+        // Update existing user - INCLUDE ALL CONFIG FIELDS
         await db.update(users)
           .set({
             password: config.password,
             role: config.role,
+            // Branding fields
+            logoUrl: config.logoUrl,
+            practiceName: config.practiceName,
+            practiceSubtitle: config.practiceSubtitle,
+            ownerName: config.ownerName,
+            ownerTitle: config.ownerTitle,
+            ownerPhotoUrl: config.ownerPhotoUrl,
+            // Widget titles
+            revenueTitle: config.revenueTitle,
+            expensesTitle: config.expensesTitle,
+            profitLossTitle: config.profitLossTitle,
+            cashInTitle: config.cashInTitle,
+            cashOutTitle: config.cashOutTitle,
+            topRevenueTitle: config.topRevenueTitle,
+            // JSON fields - must be stringified
+            revenueSubheadings: JSON.stringify(config.revenueSubheadings),
+            expensesSubheadings: JSON.stringify(config.expensesSubheadings),
+            cashInSubheadings: JSON.stringify(config.cashInSubheadings),
+            cashOutSubheadings: JSON.stringify(config.cashOutSubheadings),
+            cashFlowSubheadings: JSON.stringify(config.cashFlowSubheadings),
+            arSubheadings: JSON.stringify(config.arSubheadings),
+            procedureNameOverrides: JSON.stringify(config.procedureNameOverrides),
+            locationNameOverrides: JSON.stringify(config.locationNameOverrides),
+            providers: JSON.stringify(config.providers),
+            showCollectionsWidget: config.showCollectionsWidget,
             updatedAt: new Date().toISOString()
           })
           .where(eq(users.username, config.username));
+          
+        console.log(`[UserConfig] Updated all fields for user: ${config.username}`);
       } else {
         // Insert new user
         await db.insert(users).values({
@@ -370,8 +398,34 @@ async function writeUserConfigurations(configs: UserConfiguration[]): Promise<vo
           username: config.username,
           password: config.password,
           name: config.ownerName || config.username,
-          role: config.role
+          role: config.role,
+          // Branding fields
+          logoUrl: config.logoUrl,
+          practiceName: config.practiceName,
+          practiceSubtitle: config.practiceSubtitle,
+          ownerName: config.ownerName,
+          ownerTitle: config.ownerTitle,
+          ownerPhotoUrl: config.ownerPhotoUrl,
+          // Widget titles
+          revenueTitle: config.revenueTitle,
+          expensesTitle: config.expensesTitle,
+          profitLossTitle: config.profitLossTitle,
+          cashInTitle: config.cashInTitle,
+          cashOutTitle: config.cashOutTitle,
+          topRevenueTitle: config.topRevenueTitle,
+          // JSON fields
+          revenueSubheadings: JSON.stringify(config.revenueSubheadings),
+          expensesSubheadings: JSON.stringify(config.expensesSubheadings),
+          cashInSubheadings: JSON.stringify(config.cashInSubheadings),
+          cashOutSubheadings: JSON.stringify(config.cashOutSubheadings),
+          cashFlowSubheadings: JSON.stringify(config.cashFlowSubheadings),
+          arSubheadings: JSON.stringify(config.arSubheadings),
+          procedureNameOverrides: JSON.stringify(config.procedureNameOverrides),
+          locationNameOverrides: JSON.stringify(config.locationNameOverrides),
+          providers: JSON.stringify(config.providers),
+          showCollectionsWidget: config.showCollectionsWidget
         });
+        console.log(`[UserConfig] Created new user: ${config.username}`);
       }
     }
     
@@ -574,7 +628,7 @@ export async function updateUser(username: string, updates: Partial<Omit<UserCon
 }
 
 /**
- * Delete user configuration
+ * Delete user configuration - CRITICAL: Uses .where() clause to target specific user
  */
 export async function deleteUser(username: string): Promise<boolean> {
   // Prevent deleting admin user
@@ -582,6 +636,52 @@ export async function deleteUser(username: string): Promise<boolean> {
     throw new Error('Cannot delete admin user');
   }
   
+  // For Neon DB, we MUST use .where() to target specific user
+  if (db) {
+    try {
+      // First check if user exists in DB
+      const existingUsers = await db.select().from(users).where(eq(users.username, username));
+      
+      if (existingUsers.length === 0) {
+        // User not in DB, check in-memory
+        const configs = await readUserConfigurations();
+        const filteredConfigs = configs.filter(c => c.username !== username);
+        
+        if (filteredConfigs.length === configs.length) {
+          return false; // User not found
+        }
+        
+        await writeUserConfigurations(filteredConfigs);
+        return true;
+      }
+      
+      // Delete from Neon DB - handle any foreign key constraints
+      try {
+        await db.delete(users).where(eq(users.username, username));
+        console.log(`[UserConfig] Successfully deleted user from Neon DB: ${username}`);
+      } catch (deleteError: any) {
+        if (deleteError.code === '23503') {
+          console.error(`[UserConfig] Foreign key constraint error deleting user: ${username}`);
+          throw new Error('Cannot delete user: related records exist. Please remove dependencies first.');
+        }
+        throw deleteError;
+      }
+      
+      // Update in-memory cache
+      const cacheIndex = configCache?.findIndex(c => c.username === username);
+      if (cacheIndex !== undefined && cacheIndex >= 0 && configCache) {
+        configCache.splice(cacheIndex, 1);
+      }
+      
+      return true;
+      
+    } catch (error) {
+      console.error('[UserConfig] DB delete error:', error);
+      throw error;
+    }
+  }
+  
+  // Fallback to in-memory delete
   const configs = await readUserConfigurations();
   const filteredConfigs = configs.filter(c => c.username !== username);
   

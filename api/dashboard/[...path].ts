@@ -36,6 +36,13 @@ const DEFAULT_CONFIG = {
 };
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
+  // CRITICAL: Set cache-control headers for multi-device sync
+  // Ensures app.medidentai.com never serves cached data from browser or Vercel edge
+  res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');
+  res.setHeader('Pragma', 'no-cache');
+  res.setHeader('Expires', '0');
+  res.setHeader('Surrogate-Control', 'no-store');
+  
   // Set CORS headers
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, OPTIONS');

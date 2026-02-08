@@ -620,12 +620,15 @@ export default function Settings() {
         throw new Error('Failed to delete user');
       }
       
-      setUsers(users.filter(u => u.username !== username));
+      // Filter users FIRST before calling handleUserSelect
+      const remainingUsers = users.filter(u => u.username !== username);
+      setUsers(remainingUsers);
       
+      // If we deleted the selected user, switch to another user
       if (selectedUser === username) {
-        const remainingUsers = users.filter(u => u.username !== username);
         if (remainingUsers.length > 0) {
-          handleUserSelect(remainingUsers[0].username);
+          // Redirect to settings page first, then select the first remaining user
+          window.location.href = '/settings';
         } else {
           setSelectedUser(null);
           setEditingUser(null);
@@ -941,7 +944,7 @@ export default function Settings() {
                       <div key={key}>
                         <Label className="text-xs text-gray-500">{key}</Label>
                         <Input
-                          value={editingUser.revenueSubheadings[key] || key}
+                          value={editingUser.revenueSubheadings?.[key] || key}
                           onChange={(e) => handleSubheadingChange('revenueSubheadings', key, e.target.value)}
                           placeholder={key}
                         />
@@ -960,7 +963,7 @@ export default function Settings() {
                       <div key={key}>
                         <Label className="text-xs text-gray-500">{key}</Label>
                         <Input
-                          value={editingUser.expensesSubheadings[key] || key}
+                          value={editingUser.expensesSubheadings?.[key] || key}
                           onChange={(e) => handleSubheadingChange('expensesSubheadings', key, e.target.value)}
                           placeholder={key}
                         />
@@ -979,7 +982,7 @@ export default function Settings() {
                       <div key={key}>
                         <Label className="text-xs text-gray-500">{key}</Label>
                         <Input
-                          value={editingUser.cashInSubheadings[key] || key}
+                          value={editingUser.cashInSubheadings?.[key] || key}
                           onChange={(e) => handleSubheadingChange('cashInSubheadings', key, e.target.value)}
                           placeholder={key}
                         />
@@ -998,7 +1001,7 @@ export default function Settings() {
                       <div key={key}>
                         <Label className="text-xs text-gray-500">{key}</Label>
                         <Input
-                          value={editingUser.cashOutSubheadings[key] || key}
+                          value={editingUser.cashOutSubheadings?.[key] || key}
                           onChange={(e) => handleSubheadingChange('cashOutSubheadings', key, e.target.value)}
                           placeholder={key}
                         />
@@ -1036,7 +1039,7 @@ export default function Settings() {
                       <div key={key}>
                         <Label className="text-xs text-gray-500">{key}</Label>
                         <Input
-                          value={editingUser.cashFlowSubheadings[key] || ''}
+                          value={editingUser.cashFlowSubheadings?.[key] || key}
                           onChange={(e) => handleSubheadingChange('cashFlowSubheadings', key, e.target.value)}
                           placeholder={key}
                         />
@@ -1173,10 +1176,10 @@ export default function Settings() {
                             />
                           </div>
                           <div>
-                            <Label htmlFor={`location-address-${index}`}>Address</Label>
+                            <Label htmlFor={`location-address-${index}`}>Address (Optional)</Label>
                             <Input
                               id={`location-address-${index}`}
-                              value={location.address}
+                              value={location.address || ''}
                               onChange={(e) => {
                                 const newLocations = [...locations];
                                 newLocations[index].address = e.target.value;
@@ -1270,10 +1273,10 @@ export default function Settings() {
                           try {
                             // Save all locations
                             for (const location of locations) {
-                              if (!location.name || !location.address) {
+                              if (!location.name) {
                                 toast({
                                   title: "Error",
-                                  description: "All locations must have a name and address",
+                                  description: "All locations must have a name",
                                   variant: "destructive"
                                 });
                                 return;

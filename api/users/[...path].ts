@@ -574,27 +574,50 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
     // DELETE /api/users/:username - Delete user
     if (req.method === 'DELETE' && username) {
-      // Check in-memory users first
-      let userIndex = IN_MEMORY_USERS.findIndex(u => u.username === username);
+      // Prevent deleting admin user
+      if (username === 'admin') {
+        return res.status(403).json({ message: 'Cannot delete admin user' });
+      }
       
-      if (userIndex === -1 && db) {
-        // Try to delete from DB
+      let deletedFromDb = false;
+      let deletedFromMemory = false;
+      
+      // Try to delete from DB first
+      if (db) {
         try {
-          await db.delete(users).where(eq(users.username, username));
-          console.log('[USERS API] User deleted from DB:', username);
+          // Check if user exists in DB
+          const dbUsers = await db.select().from(users).where(eq(users.username, username));
+          
+          if (dbUsers.length > 0) {
+            // Delete from DB
+            await db.delete(users).where(eq(users.username, username));
+            console.log('[USERS API] User deleted from DB:', username);
+            deletedFromDb = true;
+          }
         } catch (dbError) {
           console.error('[USERS API] DB error deleting user:', dbError);
         }
-      } else if (userIndex === -1) {
+      }
+      
+      // Also delete from in-memory store if exists
+      const userIndex = IN_MEMORY_USERS.findIndex(u => u.username === username);
+      
+      if (userIndex !== -1) {
+        IN_MEMORY_USERS.splice(userIndex, 1);
+        deletedFromMemory = true;
+        console.log('[USERS API] User deleted from memory:', username);
+      }
+      
+      // If user wasn't found anywhere, return 404
+      if (!deletedFromDb && !deletedFromMemory) {
         return res.status(404).json({ message: 'User not found' });
       }
-
-      if (IN_MEMORY_USERS[userIndex].role === 'admin') {
-        return res.status(403).json({ message: 'Cannot delete admin user' });
-      }
-
-      IN_MEMORY_USERS.splice(userIndex, 1);
-      return res.status(200).json({ message: 'User deleted successfully' });
+      
+      return res.status(200).json({ 
+        message: 'User deleted successfully',
+        deletedFromDb,
+        deletedFromMemory
+      });
     }
 
     return res.status(405).json({ message: 'Method not allowed' });
