@@ -441,17 +441,11 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         return res.status(401).json({ message: 'Not authenticated' });
       }
       
-      // Check in-memory sessions first
-      if (SESSIONS[token]) {
-        const sessionUser = SESSIONS[token];
-        console.log('[AUTH API] Auth check - returning session user:', sessionUser.username);
-        return res.status(200).json(sessionUser);
-      }
-      
       // Extract username from token (format: username_timestamp)
       const username = token.split('_')[0];
       
-      // Try to get fresh user data from DB
+      // CRITICAL: ALWAYS fetch fresh data from DB, don't return cached session
+      // This ensures settings changes are immediately reflected
       if (db) {
         try {
           const dbUsers = await db.select().from(users).where(sql`${users.username} = ${username}`);
@@ -467,7 +461,10 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
             userWithoutPassword.arSubheadings = initializeARSubheadings(userWithoutPassword.arSubheadings);
             userWithoutPassword.procedureNameOverrides = initializeSubheadings(userWithoutPassword.procedureNameOverrides, DEFAULT_PROCEDURE_KEYS);
             
-            console.log('[AUTH API] Auth check - returning DB user:', username);
+            // Update session with fresh DB data
+            SESSIONS[token] = userWithoutPassword;
+            
+            console.log('[AUTH API] Auth check - returning FRESH DB user:', username);
             return res.status(200).json(userWithoutPassword);
           }
         } catch (dbError) {
@@ -475,7 +472,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         }
       }
       
-      // Fall back to in-memory users
+      // Fall back to in-memory users if DB fails
       const freshUser = IN_MEMORY_USERS.find(u => u.username === username);
       if (!freshUser) {
         console.log('[AUTH API] Auth check - user not found:', username);
@@ -490,6 +487,9 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       userWithoutPassword.cashFlowSubheadings = initializeSubheadings(freshUser.cashFlowSubheadings, DEFAULT_CASH_FLOW_KEYS);
       userWithoutPassword.arSubheadings = initializeARSubheadings(freshUser.arSubheadings);
       userWithoutPassword.procedureNameOverrides = initializeSubheadings(freshUser.procedureNameOverrides, DEFAULT_PROCEDURE_KEYS);
+      
+      // Update session with fresh data
+      SESSIONS[token] = userWithoutPassword;
       
       console.log('[AUTH API] Auth check - returning fresh data for user:', username);
       return res.status(200).json(userWithoutPassword);
