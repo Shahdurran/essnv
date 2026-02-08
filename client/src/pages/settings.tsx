@@ -142,6 +142,19 @@ interface PracticeLocation {
 export default function Settings() {
   const { toast } = useToast();
   const { user: currentUser, isAdmin, refreshUser, updateUser } = useAuth();
+  
+  // CRITICAL: Add user guard to prevent null-pointer crash that causes blank page
+  if (!currentUser) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <RefreshCw className="h-8 w-8 animate-spin mx-auto mb-4 text-blue-600" />
+          <p className="text-gray-600">Loading...</p>
+        </div>
+      </div>
+    );
+  }
+  
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [users, setUsers] = useState<UserConfig[]>([]);
@@ -1159,7 +1172,7 @@ export default function Settings() {
                     </CardDescription>
                   </CardHeader>
                   <CardContent className="space-y-4">
-                    {locations.map((location, index) => (
+                    {locations?.map((location, index) => (
                       <div key={location.id} className="flex items-start gap-4 p-3 border rounded-lg">
                         <div className="flex-1 space-y-3">
                           <div>

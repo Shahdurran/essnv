@@ -6,28 +6,19 @@
  * to convert them into the formats expected by the frontend components.
  * 
  * DATA SOURCES:
- * - practice_locations.json: Practice location information
  * - cash_flow_monthly_data.json: Monthly cash flow data
  * - pl_monthly_data.json: Profit & Loss monthly data
+ * 
+ * NOTE: Practice locations are now fetched from Neon DB only.
+ * The system does NOT use hardcoded location arrays.
+ * If a user has no locations in Neon DB, it returns an empty array [].
  */
 
-// Import the static JSON data
-import practiceLocationsData from '../data/practice_locations.json';
+// Import the static JSON data (locations removed - use Neon DB only)
 import cashFlowData from '../data/cash_flow_monthly_data.json';
 import plData from '../data/pl_monthly_data.json';
 
-// Types for the raw data
-interface RawPracticeLocation {
-  id: string;
-  name: string;
-  address: string;
-  city: string;
-  state: string;
-  zip_code: string;
-  phone: string;
-  is_active: boolean;
-}
-
+// Types for the raw data (locations removed)
 interface RawCashFlowItem {
   id: string;
   location_id: string;
@@ -50,25 +41,21 @@ interface RawPLItem {
   updated_at: string;
 }
 
-// Cast the imported JSON data to the correct types
-const rawPracticeLocations = practiceLocationsData as RawPracticeLocation[];
+// Cast the imported JSON data to the correct types (locations removed)
 const rawCashFlowData = cashFlowData as RawCashFlowItem[];
 const rawPLData = plData as RawPLItem[];
 
 /**
- * Process practice locations data
+ * CRITICAL: Get practice locations from Neon DB only
+ * 
+ * This function returns an empty array [] if no locations exist in the database.
+ * The system NO LONGER uses hardcoded location arrays.
+ * 
+ * @returns Empty array - locations should be fetched from Neon DB via API
  */
 export function getProcessedLocations() {
-  return rawPracticeLocations.map(location => ({
-    id: location.id,
-    name: location.name,
-    address: location.address,
-    city: location.city,
-    state: location.state,
-    zipCode: location.zip_code,
-    phone: location.phone,
-    isActive: location.is_active
-  }));
+  console.log('[staticData] Locations should be fetched from Neon DB, not from hardcoded data');
+  return [];
 }
 
 /**
