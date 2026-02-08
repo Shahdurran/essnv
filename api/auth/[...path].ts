@@ -46,6 +46,7 @@ const users = pgTable('users', {
   // Other customizations
   procedureNameOverrides: json('procedure_name_overrides'),
   locationNameOverrides: json('location_name_overrides'),
+  userLocations: json('user_locations'), // Array of location IDs user has access to
   providers: json('providers'),
   showCollectionsWidget: boolean('show_collections_widget').default(true),
 });
@@ -263,6 +264,7 @@ function convertDbUserToAppUser(dbUser: any): any {
     // Other customizations
     procedureNameOverrides: dbUser.procedureNameOverrides || {},
     locationNameOverrides: dbUser.locationNameOverrides || {},
+    userLocations: dbUser.userLocations || [], // Array of location IDs user has access to
     showCollectionsWidget: dbUser.showCollectionsWidget !== undefined ? dbUser.showCollectionsWidget : true,
     providers: dbUser.providers || [
       { name: 'Dr. John Josephson', percentage: 19 },

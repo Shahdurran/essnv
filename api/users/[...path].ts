@@ -46,6 +46,7 @@ const users = pgTable("users", {
   // Other customizations
   procedureNameOverrides: json("procedure_name_overrides"),
   locationNameOverrides: json("location_name_overrides"),
+  userLocations: json("user_locations"), // Array of location IDs user has access to
   providers: json("providers"),
   showCollectionsWidget: boolean("show_collections_widget").default(true),
 });
@@ -519,8 +520,14 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
               userFromDb = updatedDbUsers[0];
             }
           }
-        } catch (dbError) {
-          console.error('[USERS API] DB error updating user:', dbError);
+        } catch (dbError: any) {
+          console.error('[USERS API] DB error updating user:', {
+            error: dbError?.message || dbError,
+            code: dbError?.code,
+            detail: dbError?.detail,
+            username: username
+          });
+          // Continue to in-memory fallback
         }
       }
       
