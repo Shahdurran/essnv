@@ -1327,7 +1327,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
           userId,
           query,
           response: aiResponse.response,
-          queryType: aiResponse.queryType,
         });
       }
 

@@ -203,6 +203,7 @@ export const patient = pgTable('patient', {
   zipCode: varchar('zip_code'),
   insuranceProvider: varchar('insurance_provider'),
   insuranceId: varchar('insurance_id'),
+  locationId: varchar('location_id'),
   createdAt: timestamp('created_at').defaultNow(),
   updatedAt: timestamp('updated_at').defaultNow(),
 });
@@ -324,6 +325,7 @@ export const dashboardCustomization = pgTable('dashboard_customization', {
   widgetName: varchar('widget_name'),
   position: integer('position').default(0),
   isVisible: boolean('is_visible').default(true),
+  locationNameOverrides: jsonb('location_name_overrides').default({}),
   config: jsonb('config').default({}),
   createdAt: timestamp('created_at').defaultNow(),
   updatedAt: timestamp('updated_at').defaultNow(),

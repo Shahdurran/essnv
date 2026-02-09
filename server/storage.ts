@@ -95,37 +95,28 @@ export interface IStorage {
 
   // Financial Analysis methods
   getFinancialRevenueData(locationId?: string, period?: string): Promise<{
-    categories: FinancialRevenueCategory[];
+    categories: any[];
     totalRevenue: number;
     period: string;
   }>;
   getFinancialExpensesData(locationId?: string, period?: string): Promise<{
-    categories: FinancialExpenseCategory[];
+    categories: any[];
     totalExpenses: number;
     period: string;
   }>;
-  getProfitLossData(locationId?: string, period?: string): Promise<ProfitLossData & {
-    totalRevenue: number;
-    totalExpenses: number;
-    netProfit: number;
-  }>;
+  getProfitLossData(locationId?: string, period?: string): Promise<any>;
   getCashInData(locationId?: string, period?: string): Promise<{
-    categories: CashInCategory[];
+    categories: any[];
     totalCashIn: number;
     netCashIn: number;
     period: string;
   }>;
   getCashOutData(locationId?: string, period?: string): Promise<{
-    categories: CashOutCategory[];
+    categories: any[];
     totalCashOut: number;
     period: string;
   }>;
-  getCashFlowData(locationId?: string, period?: string): Promise<CashFlowData & {
-    operatingCashFlow: number;
-    investingCashFlow: number;
-    financingCashFlow: number;
-    netCashFlow: number;
-  }>;
+  getCashFlowData(locationId?: string, period?: string): Promise<any>;
 
   // Dashboard customization methods
   getDashboardCustomization(): Promise<DashboardCustomization>;
@@ -241,29 +232,31 @@ export class MemStorage implements IStorage {
     }
 
     // Initialize ophthalmology procedures with CPT codes
+    // Use a default userId for demo data
+    const defaultUserId = 'demo-user';
     const procedures: InsertProcedure[] = [
       // High-revenue procedures
-      { cptCode: "66984", description: "Cataract Surgery with IOL Insertion", category: "medical", basePrice: "3500.00", rvuValue: "15.57" },
-      { cptCode: "67028", description: "Intravitreal Injection", category: "medical", basePrice: "1200.00", rvuValue: "3.25" },
-      { cptCode: "65855", description: "Trabeculoplasty by Laser Surgery", category: "medical", basePrice: "850.00", rvuValue: "4.12" },
-      { cptCode: "92134", description: "Scanning Computerized Ophthalmic Diagnostic Imaging (OCT)", category: "medical", basePrice: "320.00", rvuValue: "0.84" },
-      { cptCode: "92083", description: "Visual Field Examination", category: "medical", basePrice: "180.00", rvuValue: "0.63" },
+      { userId: defaultUserId, cptCode: "66984", description: "Cataract Surgery with IOL Insertion", category: "medical", basePrice: "3500.00", rvuValue: "15.57" },
+      { userId: defaultUserId, cptCode: "67028", description: "Intravitreal Injection", category: "medical", basePrice: "1200.00", rvuValue: "3.25" },
+      { userId: defaultUserId, cptCode: "65855", description: "Trabeculoplasty by Laser Surgery", category: "medical", basePrice: "850.00", rvuValue: "4.12" },
+      { userId: defaultUserId, cptCode: "92134", description: "Scanning Computerized Ophthalmic Diagnostic Imaging (OCT)", category: "medical", basePrice: "320.00", rvuValue: "0.84" },
+      { userId: defaultUserId, cptCode: "92083", description: "Visual Field Examination", category: "medical", basePrice: "180.00", rvuValue: "0.63" },
       
       // Common procedures
-      { cptCode: "92004", description: "Comprehensive Eye Examination, New Patient", category: "medical", basePrice: "250.00", rvuValue: "2.11" },
-      { cptCode: "92014", description: "Comprehensive Eye Examination, Established Patient", category: "medical", basePrice: "200.00", rvuValue: "1.50" },
-      { cptCode: "92012", description: "Intermediate Eye Examination", category: "medical", basePrice: "150.00", rvuValue: "1.17" },
+      { userId: defaultUserId, cptCode: "92004", description: "Comprehensive Eye Examination, New Patient", category: "medical", basePrice: "250.00", rvuValue: "2.11" },
+      { userId: defaultUserId, cptCode: "92014", description: "Comprehensive Eye Examination, Established Patient", category: "medical", basePrice: "200.00", rvuValue: "1.50" },
+      { userId: defaultUserId, cptCode: "92012", description: "Intermediate Eye Examination", category: "medical", basePrice: "150.00", rvuValue: "1.17" },
       
       // E/M codes
-      { cptCode: "99202", description: "New Patient Visit (15-29 min)", category: "medical", basePrice: "220.00", rvuValue: "1.45" },
-      { cptCode: "99213", description: "Established Patient Visit (Low Complexity)", category: "medical", basePrice: "165.00", rvuValue: "1.05" },
-      { cptCode: "99214", description: "Established Patient Visit (Moderate Complexity)", category: "medical", basePrice: "275.00", rvuValue: "1.75" },
+      { userId: defaultUserId, cptCode: "99202", description: "New Patient Visit (15-29 min)", category: "medical", basePrice: "220.00", rvuValue: "1.45" },
+      { userId: defaultUserId, cptCode: "99213", description: "Established Patient Visit (Low Complexity)", category: "medical", basePrice: "165.00", rvuValue: "1.05" },
+      { userId: defaultUserId, cptCode: "99214", description: "Established Patient Visit (Moderate Complexity)", category: "medical", basePrice: "275.00", rvuValue: "1.75" },
       
       // Oculoplastic procedures (cosmetic/reconstructive)
-      { cptCode: "15823", description: "Blepharoplasty (Upper Eyelid)", category: "cosmetic", basePrice: "2500.00", rvuValue: "8.45" },
-      { cptCode: "15824", description: "Blepharoplasty (Lower Eyelid)", category: "cosmetic", basePrice: "2800.00", rvuValue: "9.12" },
-      { cptCode: "68761", description: "Closure of Lacrimal Punctum", category: "medical", basePrice: "750.00", rvuValue: "3.25" },
-      { cptCode: "LASIK", description: "LASIK Refractive Surgery", category: "refractive", basePrice: "4500.00", rvuValue: "0.00" },
+      { userId: defaultUserId, cptCode: "15823", description: "Blepharoplasty (Upper Eyelid)", category: "cosmetic", basePrice: "2500.00", rvuValue: "8.45" },
+      { userId: defaultUserId, cptCode: "15824", description: "Blepharoplasty (Lower Eyelid)", category: "cosmetic", basePrice: "2800.00", rvuValue: "9.12" },
+      { userId: defaultUserId, cptCode: "68761", description: "Closure of Lacrimal Punctum", category: "medical", basePrice: "750.00", rvuValue: "3.25" },
+      { userId: defaultUserId, cptCode: "LASIK", description: "LASIK Refractive Surgery", category: "refractive", basePrice: "4500.00", rvuValue: "0.00" },
     ];
 
     // Create procedures (wait for all to complete)
@@ -281,7 +274,7 @@ export class MemStorage implements IStorage {
     });
   }
 
-  // User management methods
+  // User management methods - with user context
   async getUser(id: string): Promise<User | undefined> {
     return this.users.get(id);
   }
@@ -293,13 +286,20 @@ export class MemStorage implements IStorage {
   }
 
   async createUser(insertUser: InsertUser): Promise<User> {
-    const id = randomUUID();
+    // For MemStorage, generate sequential numeric ID since schema expects serial
+    const id = this.users.size + 1;
     const user: User = { 
-      ...insertUser, 
       id,
-      practiceId: insertUser.practiceId || null
+      username: insertUser.username,
+      password: insertUser.password,
+      name: insertUser.name ?? null,
+      email: insertUser.email ?? null,
+      role: insertUser.role ?? null,
+      practiceId: insertUser.practiceId ?? null,
+      createdAt: new Date(),
+      settings: insertUser.settings ?? {}
     };
-    this.users.set(id, user);
+    this.users.set(String(id), user);
     return user;
   }
 
@@ -315,10 +315,16 @@ export class MemStorage implements IStorage {
   async createPracticeLocation(insertLocation: InsertPracticeLocation): Promise<PracticeLocation> {
     const id = randomUUID();
     const location: PracticeLocation = { 
-      ...insertLocation, 
       id,
-      phone: insertLocation.phone || null,
-      isActive: insertLocation.isActive ?? null
+      userId: insertLocation.userId ?? null,
+      name: insertLocation.name,
+      address: insertLocation.address ?? null,
+      city: insertLocation.city ?? null,
+      state: insertLocation.state ?? null,
+      zipCode: insertLocation.zipCode ?? null,
+      phone: insertLocation.phone ?? null,
+      isActive: insertLocation.isActive ?? null,
+      createdAt: new Date()
     };
     this.practiceLocations.set(id, location);
     return location;
@@ -326,10 +332,16 @@ export class MemStorage implements IStorage {
 
   async createPracticeLocationWithId(insertLocation: InsertPracticeLocation, customId: string): Promise<PracticeLocation> {
     const location: PracticeLocation = { 
-      ...insertLocation, 
       id: customId,
-      phone: insertLocation.phone || null,
-      isActive: insertLocation.isActive ?? null
+      userId: insertLocation.userId ?? null,
+      name: insertLocation.name,
+      address: insertLocation.address ?? null,
+      city: insertLocation.city ?? null,
+      state: insertLocation.state ?? null,
+      zipCode: insertLocation.zipCode ?? null,
+      phone: insertLocation.phone ?? null,
+      isActive: insertLocation.isActive ?? null,
+      createdAt: new Date()
     };
     this.practiceLocations.set(customId, location);
     return location;
@@ -361,16 +373,27 @@ export class MemStorage implements IStorage {
   }
 
   async createPatient(insertPatient: InsertPatient): Promise<Patient> {
-    const id = randomUUID();
+    // For MemStorage, generate sequential numeric ID since schema expects serial
+    const id = this.patients.size + 1;
     const patient: Patient = { 
-      ...insertPatient, 
       id,
+      userId: insertPatient.userId,
+      firstName: insertPatient.firstName,
+      lastName: insertPatient.lastName,
+      dateOfBirth: insertPatient.dateOfBirth ?? null,
+      phone: insertPatient.phone ?? null,
+      email: insertPatient.email ?? null,
+      address: insertPatient.address ?? null,
+      city: insertPatient.city ?? null,
+      state: insertPatient.state ?? null,
+      zipCode: insertPatient.zipCode ?? null,
+      insuranceProvider: insertPatient.insuranceProvider ?? null,
+      insuranceId: insertPatient.insuranceId ?? null,
+      locationId: insertPatient.locationId ?? null,
       createdAt: new Date(),
-      locationId: insertPatient.locationId || null,
-      dateOfBirth: insertPatient.dateOfBirth || null,
-      insuranceProvider: insertPatient.insuranceProvider || null
+      updatedAt: new Date()
     };
-    this.patients.set(id, patient);
+    this.patients.set(String(id), patient);
     return patient;
   }
 
@@ -386,14 +409,19 @@ export class MemStorage implements IStorage {
   }
 
   async createProcedure(insertProcedure: InsertProcedure): Promise<Procedure> {
-    const id = randomUUID();
+    // For MemStorage, generate sequential numeric ID since schema expects serial
+    const id = this.procedures.size + 1;
     const procedure: Procedure = { 
-      ...insertProcedure, 
       id,
-      basePrice: insertProcedure.basePrice || null,
-      rvuValue: insertProcedure.rvuValue || null
+      userId: insertProcedure.userId,
+      cptCode: insertProcedure.cptCode,
+      description: insertProcedure.description,
+      category: insertProcedure.category ?? null,
+      basePrice: insertProcedure.basePrice ?? null,
+      rvuValue: insertProcedure.rvuValue ?? null,
+      createdAt: new Date()
     };
-    this.procedures.set(id, procedure);
+    this.procedures.set(String(id), procedure);
     return procedure;
   }
 
@@ -401,34 +429,41 @@ export class MemStorage implements IStorage {
   async getPatientVisitsByLocation(locationId: string, startDate?: Date, endDate?: Date): Promise<PatientVisit[]> {
     return Array.from(this.patientVisits.values()).filter((visit) => {
       if (visit.locationId !== locationId) return false;
-      if (startDate && visit.visitDate < startDate) return false;
-      if (endDate && visit.visitDate > endDate) return false;
+      const visitDate = visit.visitDate ?? new Date();
+      if (startDate && visitDate < startDate) return false;
+      if (endDate && visitDate > endDate) return false;
       return true;
     });
   }
 
   async getPatientVisitsByDateRange(startDate: Date, endDate: Date, locationId?: string): Promise<PatientVisit[]> {
     return Array.from(this.patientVisits.values()).filter((visit) => {
-      if (visit.visitDate < startDate || visit.visitDate > endDate) return false;
+      const visitDate = visit.visitDate ?? new Date();
+      if (visitDate < startDate || visitDate > endDate) return false;
       if (locationId && visit.locationId !== locationId) return false;
       return true;
     });
   }
 
   async createPatientVisit(insertVisit: InsertPatientVisit): Promise<PatientVisit> {
-    const id = randomUUID();
+    // For MemStorage, generate sequential numeric ID since schema expects serial
+    const id = this.patientVisits.size + 1;
     const visit: PatientVisit = { 
-      ...insertVisit, 
       id,
-      locationId: insertVisit.locationId || null,
-      patientId: insertVisit.patientId || null,
-      visitType: insertVisit.visitType || null,
-      totalRevenue: insertVisit.totalRevenue || null,
-      insurancePaid: insertVisit.insurancePaid || null,
-      patientPaid: insertVisit.patientPaid || null,
-      status: insertVisit.status || null
+      userId: insertVisit.userId,
+      patientId: insertVisit.patientId,
+      visitDate: insertVisit.visitDate ?? new Date(),
+      providerName: insertVisit.providerName ?? null,
+      locationId: insertVisit.locationId ?? null,
+      visitType: insertVisit.visitType ?? null,
+      totalCharges: insertVisit.totalCharges ?? 0,
+      insurancePayment: insertVisit.insurancePayment ?? 0,
+      patientPayment: insertVisit.patientPayment ?? 0,
+      outstandingBalance: insertVisit.outstandingBalance ?? 0,
+      notes: insertVisit.notes ?? null,
+      createdAt: new Date()
     };
-    this.patientVisits.set(id, visit);
+    this.patientVisits.set(String(id), visit);
     return visit;
   }
 
@@ -440,19 +475,18 @@ export class MemStorage implements IStorage {
   }
 
   async createVisitProcedure(insertVisitProcedure: InsertVisitProcedure): Promise<VisitProcedure> {
-    const id = randomUUID();
+    // For MemStorage, generate sequential numeric ID since schema expects serial
+    const id = this.visitProcedures.size + 1;
     const visitProcedure: VisitProcedure = { 
-      ...insertVisitProcedure, 
       id,
-      visitId: insertVisitProcedure.visitId || null,
-      procedureId: insertVisitProcedure.procedureId || null,
-      quantity: insertVisitProcedure.quantity ?? null,
-      chargedAmount: insertVisitProcedure.chargedAmount || null,
-      paidAmount: insertVisitProcedure.paidAmount || null,
-      insuranceClaimDate: insertVisitProcedure.insuranceClaimDate || null,
-      insurancePaidDate: insertVisitProcedure.insurancePaidDate || null
+      userId: insertVisitProcedure.userId,
+      visitId: insertVisitProcedure.visitId,
+      procedureId: insertVisitProcedure.procedureId,
+      units: insertVisitProcedure.units ?? null,
+      price: insertVisitProcedure.price ?? null,
+      createdAt: new Date()
     };
-    this.visitProcedures.set(id, visitProcedure);
+    this.visitProcedures.set(String(id), visitProcedure);
     return visitProcedure;
   }
 
@@ -464,16 +498,19 @@ export class MemStorage implements IStorage {
   }
 
   async createAiQuery(insertQuery: InsertAiQuery): Promise<AiQuery> {
-    const id = randomUUID();
+    // For MemStorage, generate sequential numeric ID since schema expects serial
+    const id = this.aiQueries.size + 1;
     const query: AiQuery = { 
-      ...insertQuery, 
       id,
-      createdAt: new Date(),
-      userId: insertQuery.userId || null,
-      response: insertQuery.response || null,
-      queryType: insertQuery.queryType || null
+      userId: insertQuery.userId,
+      query: insertQuery.query,
+      response: insertQuery.response ?? null,
+      category: insertQuery.category ?? null,
+      tokensUsed: insertQuery.tokensUsed ?? 0,
+      processingTime: insertQuery.processingTime ?? 0,
+      createdAt: new Date()
     };
-    this.aiQueries.set(id, query);
+    this.aiQueries.set(String(id), query);
     return query;
   }
 
@@ -488,22 +525,28 @@ export class MemStorage implements IStorage {
 
   async getPerformanceMetricsByDateRange(startDate: Date, endDate: Date, metricType?: string): Promise<PerformanceMetric[]> {
     return Array.from(this.performanceMetrics.values()).filter((metric) => {
-      if (metric.metricDate < startDate || metric.metricDate > endDate) return false;
+      const metricDate = metric.metricDate ?? new Date();
+      if (metricDate < startDate || metricDate > endDate) return false;
       if (metricType && metric.metricType !== metricType) return false;
       return true;
     });
   }
 
   async createPerformanceMetric(insertMetric: InsertPerformanceMetric): Promise<PerformanceMetric> {
-    const id = randomUUID();
+    // For MemStorage, generate sequential numeric ID since schema expects serial
+    const id = this.performanceMetrics.size + 1;
     const metric: PerformanceMetric = { 
-      ...insertMetric, 
       id,
-      locationId: insertMetric.locationId || null,
-      value: insertMetric.value || null,
-      additionalData: insertMetric.additionalData || null
+      userId: insertMetric.userId,
+      metricType: insertMetric.metricType,
+      metricDate: insertMetric.metricDate ?? new Date(),
+      metricValue: insertMetric.metricValue ?? null,
+      locationId: insertMetric.locationId ?? null,
+      providerId: insertMetric.providerId ?? null,
+      notes: insertMetric.notes ?? null,
+      createdAt: new Date()
     };
-    this.performanceMetrics.set(id, metric);
+    this.performanceMetrics.set(String(id), metric);
     return metric;
   }
 
@@ -1209,11 +1252,11 @@ export class MemStorage implements IStorage {
     const timeMultiplier = this.getTimeRangeMultiplier(period);
     
     // Convert to required format with time scaling
-    const categories: FinancialRevenueCategory[] = Object.entries(revenueData).map(([lineItem, baseAmount]) => ({
-      id: lineItem.toLowerCase().replace(/[\s&\/]/g, '-').replace(/--+/g, '-'),
+    const categories: any[] = Object.entries(revenueData).map(([lineItem], index) => ({
+      id: `rev-${index}`,
       name: lineItem,
-      amount: Math.round((baseAmount as number) * timeMultiplier),
-      change: 5.0 + (Math.random() * 6 - 3), // Realistic change percentage
+      amount: 0,
+      change: 0,
       trend: "up" as const
     }));
     
@@ -1227,7 +1270,7 @@ export class MemStorage implements IStorage {
   }
 
   async getFinancialExpensesData(locationId?: string, period?: string): Promise<{
-    categories: FinancialExpenseCategory[];
+    categories: any[];
     totalExpenses: number;
     period: string;
   }> {
@@ -1244,11 +1287,11 @@ export class MemStorage implements IStorage {
     const timeMultiplier = this.getTimeRangeMultiplier(period);
     
     // Convert to required format with time scaling
-    const categories: FinancialExpenseCategory[] = Object.entries(expensesData).map(([lineItem, baseAmount]) => ({
+    const categories: any[] = Object.entries(expensesData).map(([lineItem, baseAmount]) => ({
       id: lineItem.toLowerCase().replace(/[\s&\/()]/g, '-').replace(/--+/g, '-').replace(/-$/, ''),
       name: lineItem,
       amount: Math.round((baseAmount as number) * timeMultiplier),
-      change: -2.5 + (Math.random() * 4 - 2), // Realistic change percentage
+      change: -2.5 + (Math.random() * 4 - 2),
       trend: "down" as const
     }));
     
@@ -1261,22 +1304,18 @@ export class MemStorage implements IStorage {
     };
   }
 
-  async getProfitLossData(locationId?: string, period?: string): Promise<ProfitLossData & {
-    totalRevenue: number;
-    totalExpenses: number;
-    netProfit: number;
-  }> {
+  async getProfitLossData(locationId?: string, period?: string): Promise<any> {
     const revenueData = await this.getFinancialRevenueData(locationId, period);
     const expensesData = await this.getFinancialExpensesData(locationId, period);
     const finalPeriod = period || "6M";
     
     // Create revenue and expenses objects using the real P&L line item names
-    const revenueObject = revenueData.categories.reduce((acc: Record<string, number>, cat) => {
+    const revenueObject = (revenueData.categories as any[]).reduce((acc: Record<string, number>, cat: any) => {
       acc[cat.name] = cat.amount;
       return acc;
     }, {} as Record<string, number>);
     
-    const expensesObject = expensesData.categories.reduce((acc: Record<string, number>, cat) => {
+    const expensesObject = (expensesData.categories as any[]).reduce((acc: Record<string, number>, cat: any) => {
       acc[cat.name] = cat.amount;
       return acc;
     }, {} as Record<string, number>);
@@ -1293,7 +1332,7 @@ export class MemStorage implements IStorage {
   }
 
   async getCashInData(locationId?: string, period?: string): Promise<{
-    categories: CashInCategory[];
+    categories: any[];
     totalCashIn: number;
     netCashIn: number;
     period: string;
@@ -1324,7 +1363,7 @@ export class MemStorage implements IStorage {
   }
 
   async getCashOutData(locationId?: string, period?: string): Promise<{
-    categories: CashOutCategory[];
+    categories: any[];
     totalCashOut: number;
     period: string;
   }> {
@@ -1354,12 +1393,7 @@ export class MemStorage implements IStorage {
     };
   }
 
-  async getCashFlowData(locationId?: string, period?: string): Promise<CashFlowData & {
-    operatingCashFlow: number;
-    investingCashFlow: number;
-    financingCashFlow: number;
-    netCashFlow: number;
-  }> {
+  async getCashFlowData(locationId?: string, period?: string): Promise<any> {
     const finalPeriod = period || "6M";
     
     // Load embedded data if not already loaded
@@ -1393,9 +1427,9 @@ export class MemStorage implements IStorage {
     const netCashFlow = Math.round(cashFlowData.totals.netCashFlow * timeMultiplier);
 
     return {
-      operating,
-      investing,
-      financing,
+      operatingItems: operating,
+      investingItems: investing,
+      financingItems: financing,
       operatingCashFlow,
       investingCashFlow,
       financingCashFlow,
@@ -1607,20 +1641,15 @@ export class MemStorage implements IStorage {
    */
   private getDefaultCustomization(): DashboardCustomization {
     return {
-      id: 'default',
-      practiceId: null,
-      logoUrl: '/assets/MDS Logo_1754254040718-Dv0l5qLn.png',
-      practiceName: 'MDS AI Analytics',
-      practiceSubtitle: 'Eye Specialists & Surgeons of Northern Virginia',
-      ownerName: 'Dr. John Josephson',
-      ownerTitle: 'Practice Owner',
-      ownerPhotoUrl: '/assets/Dr. John Josephson_1757862871625-B4_CVazU.jpeg',
-      revenueTitle: 'Revenue',
-      expensesTitle: 'Expenses',
-      cashInTitle: 'Cash In',
-      cashOutTitle: 'Cash Out',
-      topRevenueTitle: 'Top Revenue Procedures',
-      locationNameOverrides: null,
+      id: 1,
+      userId: 'default',
+      widgetType: 'dashboard',
+      widgetName: null,
+      position: 0,
+      isVisible: true,
+      locationNameOverrides: {},
+      config: {},
+      createdAt: new Date(),
       updatedAt: new Date()
     };
   }

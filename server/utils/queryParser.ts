@@ -211,8 +211,8 @@ export function findLocationByReference(
   for (const location of availableLocations) {
     if (
       location.name.toLowerCase().includes(refLower) ||
-      location.city.toLowerCase().includes(refLower) ||
-      location.state.toLowerCase().includes(refLower)
+      (location.city?.toLowerCase() ?? '').includes(refLower) ||
+      (location.state?.toLowerCase() ?? '').includes(refLower)
     ) {
       return location;
     }
