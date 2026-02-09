@@ -88,7 +88,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
             .from(practiceLocations)
             .where(eq(practiceLocations.userId, userId));
           
-          const locations = dbLocations.map(loc => ({
+          const locations = dbLocations.map((loc: any) => ({
             id: loc.id,
             userId: loc.userId,
             name: loc.name,
