@@ -1,24 +1,25 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
 
-// CRITICAL: Practice locations are now fetched from Neon DB ONLY.
-// If the DB returns nothing, use an empty array '[]' as the fallback.
-// NO hardcoded location arrays are used.
+// CRITICAL: Practice locations are now USER-ISOLATED in Neon DB.
+// Each user sees ONLY their own locations based on user_id.
 
 import { neon } from '@neondatabase/serverless';
 import { drizzle } from 'drizzle-orm/neon-http';
-import { pgTable, text, varchar, boolean } from 'drizzle-orm/pg-core';
-import { sql } from 'drizzle-orm';
+import { pgTable, text, varchar, boolean, timestamp } from 'drizzle-orm/pg-core';
+import { sql, eq } from 'drizzle-orm';
 
-// Inline practice_locations table definition (matches shared/schema.ts)
+// Inline practice_locations table definition with user isolation
 const practiceLocations = pgTable("practice_locations", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  userId: varchar("user_id").notNull(), // CRITICAL: Links location to specific user
   name: text("name").notNull(),
-  address: text("address"),
-  city: text("city"),
-  state: text("state"),
-  zipCode: text("zip_code"),
-  phone: text("phone"),
+  address: text("address").default(''),
+  city: text("city").default(''),
+  state: text("state").default(''),
+  zipCode: text("zip_code").default(''),
+  phone: text("phone").default(''),
   isActive: boolean("is_active").default(true),
+  createdAt: timestamp("created_at").defaultNow(),
 });
 
 // Initialize Neon DB connection
@@ -40,14 +41,17 @@ try {
 // In-memory storage fallback (EMPTY - no hardcoded locations)
 let LOCATIONS: any[] = [];
 
-// Helper function to generate ID from name
-function generateId(name: string): string {
-  return name.toLowerCase().replace(/[^a-z0-9]/g, '-').replace(/-+/g, '-').replace(/^-|-$/g, '');
+// Helper to get userId from token
+function getUserIdFromToken(req: VercelRequest): string | null {
+  const authHeader = req.headers.authorization;
+  const token = authHeader?.replace('Bearer ', '');
+  if (!token) return null;
+  // Token format: username_timestamp
+  return token.split('_')[0];
 }
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   // CRITICAL: Set cache-control headers for multi-device sync
-  // Ensures app.medidentai.com never serves cached data from browser or Vercel edge
   res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');
   res.setHeader('Pragma', 'no-cache');
   res.setHeader('Expires', '0');
@@ -66,14 +70,27 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   try {
     console.log(`[LOCATIONS API] Request: ${req.method} ${req.url}`);
 
-    // GET /api/locations - List all locations from Neon DB ONLY
+    // Get userId from token for isolation
+    const userId = getUserIdFromToken(req);
+    console.log(`[LOCATIONS API] User: ${userId || 'anonymous'}`);
+
+    if (!userId) {
+      return res.status(401).json({ message: 'Authentication required' });
+    }
+
+    // GET /api/locations - List locations for current user ONLY
     if (req.method === 'GET') {
-      // Fetch from Neon DB
       if (db) {
         try {
-          const dbLocations = await db.select().from(practiceLocations);
+          // CRITICAL: Filter by user_id for isolation
+          const dbLocations = await db
+            .select()
+            .from(practiceLocations)
+            .where(eq(practiceLocations.userId, userId));
+          
           const locations = dbLocations.map(loc => ({
             id: loc.id,
+            userId: loc.userId,
             name: loc.name,
             address: loc.address || '',
             city: loc.city || '',
@@ -82,18 +99,19 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
             phone: loc.phone || '',
             isActive: loc.isActive !== false
           }));
-          console.log('[LOCATIONS API] Loaded', locations.length, 'locations from Neon DB');
+          
+          console.log('[LOCATIONS API] Loaded', locations.length, 'locations for user:', userId);
           return res.status(200).json(locations);
         } catch (dbError) {
           console.error('[LOCATIONS API] DB error:', dbError);
         }
       }
-      // Fall back to empty array - NO hardcoded locations
-      console.log('[LOCATIONS API] No locations in DB, returning empty array []');
+      // Fall back to empty array
+      console.log('[LOCATIONS API] No locations in DB for user:', userId);
       return res.status(200).json([]);
     }
 
-    // POST /api/locations - Create new location
+    // POST /api/locations - Create new location for current user
     if (req.method === 'POST') {
       const locationData = req.body;
 
@@ -101,11 +119,11 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         return res.status(400).json({ message: 'Location name is required' });
       }
 
-      // Create location in Neon DB
       if (db) {
         try {
           const newLocation = {
             id: locationData.id || sql`gen_random_uuid()`,
+            userId: userId, // CRITICAL: Link to current user
             name: locationData.name,
             address: locationData.address || '',
             city: locationData.city || '',
@@ -116,10 +134,11 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
           };
           
           await db.insert(practiceLocations).values(newLocation);
-          console.log('[LOCATIONS API] Created location in DB:', newLocation.name);
+          console.log('[LOCATIONS API] Created location for user:', userId, 'Name:', newLocation.name);
           
           return res.status(201).json({
             id: newLocation.id,
+            userId: newLocation.userId,
             name: newLocation.name,
             address: newLocation.address,
             phone: newLocation.phone,
@@ -133,9 +152,10 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         }
       }
       
-      // Fallback to in-memory (should not be used in production)
+      // Fallback to in-memory
       const newLocation = {
         id: locationData.id || `location-${Date.now()}`,
+        userId: userId,
         name: locationData.name,
         address: locationData.address || '',
         phone: locationData.phone || '',
@@ -147,7 +167,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       return res.status(201).json(newLocation);
     }
 
-    // PUT /api/locations - Update location
+    // PUT /api/locations - Update location (only if owned by user)
     if (req.method === 'PUT') {
       const updates = req.body;
       const locationId = updates.id;
@@ -156,9 +176,22 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         return res.status(400).json({ message: 'Location ID is required in request body' });
       }
 
-      // Update in Neon DB
       if (db) {
         try {
+          // First check if location exists AND belongs to user
+          const existing = await db
+            .select()
+            .from(practiceLocations)
+            .where(eq(practiceLocations.id, locationId));
+          
+          if (existing.length === 0) {
+            return res.status(404).json({ message: 'Location not found' });
+          }
+          
+          if (existing[0].userId !== userId) {
+            return res.status(403).json({ message: 'Not authorized to update this location' });
+          }
+          
           const updateData: any = {
             name: updates.name,
             address: updates.address || '',
@@ -171,22 +204,19 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
           
           await db.update(practiceLocations)
             .set(updateData)
-            .where(sql`${practiceLocations.id} = ${locationId}`);
+            .where(eq(practiceLocations.id, locationId));
           
-          console.log('[LOCATIONS API] Updated location in DB:', locationId);
+          console.log('[LOCATIONS API] Updated location for user:', userId);
           
-          // Fetch and return updated location
-          const updatedLocs = await db.select().from(practiceLocations).where(sql`${practiceLocations.id} = ${locationId}`);
-          if (updatedLocs.length > 0) {
-            const loc = updatedLocs[0];
-            return res.status(200).json({
-              id: loc.id,
-              name: loc.name,
-              address: loc.address,
-              phone: loc.phone,
-              isActive: loc.isActive
-            });
-          }
+          // Return updated location
+          return res.status(200).json({
+            id: locationId,
+            userId: userId,
+            name: updateData.name,
+            address: updateData.address,
+            phone: updateData.phone,
+            isActive: updateData.isActive
+          });
         } catch (dbError) {
           console.error('[LOCATIONS API] DB error updating location:', dbError);
         }
@@ -199,17 +229,23 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         return res.status(404).json({ message: 'Location not found' });
       }
 
+      // Check ownership
+      if (LOCATIONS[locationIndex].userId !== userId) {
+        return res.status(403).json({ message: 'Not authorized to update this location' });
+      }
+
       LOCATIONS[locationIndex] = {
         ...LOCATIONS[locationIndex],
         ...updates,
-        id: locationId
+        id: locationId,
+        userId: userId
       };
       
-      console.log(`[LOCATIONS API] Updated location in memory:`, LOCATIONS[locationIndex]);
+      console.log('[LOCATIONS API] Updated location in memory:', LOCATIONS[locationIndex]);
       return res.status(200).json(LOCATIONS[locationIndex]);
     }
 
-    // DELETE /api/locations - Delete location (ID in body)
+    // DELETE /api/locations - Delete location (only if owned by user)
     if (req.method === 'DELETE') {
       const { id: locationId } = req.body;
       
@@ -217,11 +253,26 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         return res.status(400).json({ message: 'Location ID is required in request body' });
       }
 
-      // Delete from Neon DB
       if (db) {
         try {
-          await db.delete(practiceLocations).where(sql`${practiceLocations.id} = ${locationId}`);
-          console.log('[LOCATIONS API] Deleted location from DB:', locationId);
+          // First check if location exists AND belongs to user
+          const existing = await db
+            .select()
+            .from(practiceLocations)
+            .where(eq(practiceLocations.id, locationId));
+          
+          if (existing.length === 0) {
+            return res.status(404).json({ message: 'Location not found' });
+          }
+          
+          if (existing[0].userId !== userId) {
+            return res.status(403).json({ message: 'Not authorized to delete this location' });
+          }
+          
+          await db.delete(practiceLocations)
+            .where(eq(practiceLocations.id, locationId));
+          
+          console.log('[LOCATIONS API] Deleted location for user:', userId);
           return res.status(200).json({ message: 'Location deleted successfully' });
         } catch (dbError) {
           console.error('[LOCATIONS API] DB error deleting location:', dbError);
@@ -235,10 +286,15 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         return res.status(404).json({ message: 'Location not found' });
       }
 
+      // Check ownership
+      if (LOCATIONS[locationIndex].userId !== userId) {
+        return res.status(403).json({ message: 'Not authorized to delete this location' });
+      }
+
       const deletedLocation = LOCATIONS[locationIndex];
       LOCATIONS.splice(locationIndex, 1);
       
-      console.log(`[LOCATIONS API] Deleted location from memory:`, deletedLocation);
+      console.log('[LOCATIONS API] Deleted location from memory:', deletedLocation);
       return res.status(200).json({ message: 'Location deleted successfully' });
     }
 
