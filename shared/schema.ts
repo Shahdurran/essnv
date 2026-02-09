@@ -129,12 +129,12 @@ export const users = pgTable("users", {
  */
 export const practiceLocations = pgTable("practice_locations", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
-  name: text("name").notNull(), // Manhattan NY, Atlantic Highlands NJ, etc.
-  address: text("address"), // Made optional - address can be empty
-  city: text("city"),
-  state: text("state"),
-  zipCode: text("zip_code"),
-  phone: text("phone"),
+  name: text("name").notNull(), // Only name is required
+  address: text("address").default(''),
+  city: text("city").default(''),
+  state: text("state").default(''),
+  zipCode: text("zip_code").default(''),
+  phone: text("phone").default(''),
   isActive: boolean("is_active").default(true),
 });
 

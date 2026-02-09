@@ -107,11 +107,11 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
           const newLocation = {
             id: locationData.id || sql`gen_random_uuid()`,
             name: locationData.name,
-            address: locationData.address || null,
-            city: locationData.city || null,
-            state: locationData.state || null,
-            zipCode: locationData.zipCode || null,
-            phone: locationData.phone || null,
+            address: locationData.address || '',
+            city: locationData.city || '',
+            state: locationData.state || '',
+            zipCode: locationData.zipCode || '',
+            phone: locationData.phone || '',
             isActive: locationData.isActive !== undefined ? locationData.isActive : true
           };
           
@@ -161,11 +161,11 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         try {
           const updateData: any = {
             name: updates.name,
-            address: updates.address || null,
-            city: updates.city || null,
-            state: updates.state || null,
-            zipCode: updates.zipCode || null,
-            phone: updates.phone || null,
+            address: updates.address || '',
+            city: updates.city || '',
+            state: updates.state || '',
+            zipCode: updates.zipCode || '',
+            phone: updates.phone || '',
             isActive: updates.isActive !== undefined ? updates.isActive : true
           };
           
