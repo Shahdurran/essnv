@@ -398,6 +398,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // ============================================================================
 
   /**
+   * Middleware to check if user is authenticated
+   */
+  const ensureAuthenticated = async (req: Request, res: Response, next: NextFunction) => {
+    const sessionUser = (req.session as any)?.user;
+    
+    if (!sessionUser) {
+      return res.status(401).json({ message: "Not authenticated" });
+    }
+    
+    next();
+  };
+
+  /**
    * Middleware to check if user is admin
    */
   const requireAdmin = async (req: Request, res: Response, next: NextFunction) => {
@@ -586,7 +599,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
    * GET /api/locations - Retrieve all practice locations with custom name overrides
    * Returns practice locations with names customized per dashboard settings
    */
-  app.get("/api/locations", async (req, res) => {
+  app.get("/api/locations", ensureAuthenticated, async (req, res) => {
     const startTime = Date.now();
     
     if (process.env.NODE_ENV === 'production') {
@@ -640,7 +653,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   /**
    * POST /api/locations - Create a new practice location
    */
-  app.post("/api/locations", async (req, res) => {
+  app.post("/api/locations", ensureAuthenticated, async (req, res) => {
     try {
       const locationData = req.body;
 
@@ -677,7 +690,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   /**
    * PUT /api/locations - Update an existing practice location
    */
-  app.put("/api/locations", async (req, res) => {
+  app.put("/api/locations", ensureAuthenticated, async (req, res) => {
     try {
       const updates = req.body;
       const locationId = updates.id;
@@ -703,7 +716,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   /**
    * DELETE /api/locations - Delete a practice location
    */
-  app.delete("/api/locations", async (req, res) => {
+  app.delete("/api/locations", ensureAuthenticated, async (req, res) => {
     try {
       const { id: locationId } = req.body;
 
