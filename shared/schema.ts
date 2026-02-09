@@ -60,7 +60,7 @@ export type InsertUser = typeof users.$inferInsert;
 // Practice locations table - user-isolated with userId
 export const practiceLocations = pgTable('practice_locations', {
   id: varchar('id').primaryKey().default(sql`gen_random_uuid()`),
-  userId: varchar('user_id').notNull(), // Links location to specific user for isolation
+  userId: varchar('user_id').default(''), // Links location to specific user for isolation
   name: text('name').notNull(),
   address: text('address').default(''),
   city: text('city').default(''), // OPTIONAL with default
