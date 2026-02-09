@@ -609,7 +609,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
     
     try {
-      const locations = await storage.getAllPracticeLocations();
+      // Get current user from session
+      const sessionUser = (req.session as any)?.user;
+      const isAdmin = sessionUser?.role === 'admin';
+      
+      const allLocations = await storage.getAllPracticeLocations();
+      
+      // Filter locations by userId - admins see all, regular users see only their own
+      let locations = allLocations;
+      if (!isAdmin) {
+        locations = allLocations.filter(loc => loc.userId === sessionUser?.username);
+      }
       
       // Get dashboard customization to apply location name overrides
       const customization = await storage.getDashboardCustomization();
@@ -656,7 +666,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post("/api/locations", ensureAuthenticated, async (req, res) => {
     try {
       const locationData = req.body;
-
+      
+      // Get current user from session
+      const sessionUser = (req.session as any)?.user;
+      
       if (!locationData.name || !locationData.address) {
         return res.status(400).json({ message: 'Name and address are required' });
       }
@@ -668,8 +681,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       const customId = locationData.id || generateId(locationData.name);
       
-      // Create location using storage
+      // Create location using storage - include userId from session
       const newLocation = await storage.createPracticeLocationWithId({
+        userId: sessionUser?.username, // Set userId to current user's username
         name: locationData.name,
         address: locationData.address,
         city: locationData.city || '',
@@ -694,9 +708,24 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const updates = req.body;
       const locationId = updates.id;
+      
+      // Get current user from session
+      const sessionUser = (req.session as any)?.user;
+      const isAdmin = sessionUser?.role === 'admin';
 
       if (!locationId) {
         return res.status(400).json({ message: 'Location ID is required in request body' });
+      }
+
+      // Check if location exists and belongs to user (unless admin)
+      const existingLocation = await storage.getPracticeLocation(locationId);
+      if (!existingLocation) {
+        return res.status(404).json({ message: 'Location not found' });
+      }
+      
+      // Verify ownership - regular users can only update their own locations
+      if (!isAdmin && existingLocation.userId !== sessionUser?.username) {
+        return res.status(403).json({ message: 'You do not have permission to update this location' });
       }
 
       // Update location using storage
@@ -719,9 +748,24 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.delete("/api/locations", ensureAuthenticated, async (req, res) => {
     try {
       const { id: locationId } = req.body;
+      
+      // Get current user from session
+      const sessionUser = (req.session as any)?.user;
+      const isAdmin = sessionUser?.role === 'admin';
 
       if (!locationId) {
         return res.status(400).json({ message: 'Location ID is required in request body' });
+      }
+
+      // Check if location exists and belongs to user (unless admin)
+      const existingLocation = await storage.getPracticeLocation(locationId);
+      if (!existingLocation) {
+        return res.status(404).json({ message: 'Location not found' });
+      }
+      
+      // Verify ownership - regular users can only delete their own locations
+      if (!isAdmin && existingLocation.userId !== sessionUser?.username) {
+        return res.status(403).json({ message: 'You do not have permission to delete this location' });
       }
 
       // Debug: Check what locations exist
