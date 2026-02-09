@@ -618,7 +618,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Filter locations by userId - admins see all, regular users see only their own
       let locations = allLocations;
       if (!isAdmin) {
-        locations = allLocations.filter(loc => loc.userId === sessionUser?.username);
+        locations = allLocations.filter(loc => loc.userId === sessionUser?.username || loc.userId === "demo-system");
       }
       
       // Get dashboard customization to apply location name overrides

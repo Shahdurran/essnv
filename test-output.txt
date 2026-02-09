@@ -1,0 +1,11 @@
+rtPracticeLocation[] = [
+      {
+        name: "Fairfax",
+        address: "10721 Main St, Suite 2200",
+        city: "Fairfax",
+        state: "VA",
+        zipCode: "22030",
+        phone: "571-445-0001",
+        isActive: true
+      },
+ 

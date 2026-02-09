@@ -202,7 +202,7 @@ export class MemStorage implements IStorage {
     // Initialize demo practice locations
     const locations: InsertPracticeLocation[] = [
       {
-        name: "Fairfax",
+        userId: "demo-system", name: "Fairfax",
         address: "10721 Main St, Suite 2200",
         city: "Fairfax",
         state: "VA",
@@ -211,7 +211,7 @@ export class MemStorage implements IStorage {
         isActive: true
       },
       {
-        name: "Gainesville",
+        userId: "demo-system", name: "Gainesville",
         address: "7601 Heritage Dr, Suite 330",
         city: "Gainesville",
         state: "VA",
