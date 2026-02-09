@@ -251,7 +251,9 @@ export default function Settings() {
       
       // Fetch locations
       try {
-        const locRes = await fetch('/api/locations');
+        const locRes = await fetch('/api/locations', {
+          credentials: 'include'
+        });
         if (locRes.ok) {
           const locData = await locRes.json();
           setLocations(Array.isArray(locData) ? locData : []);
