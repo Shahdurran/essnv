@@ -144,20 +144,29 @@ export default function KeyMetricsTrendsChart({ selectedLocationId, selectedTime
   const [selectedMetric, setSelectedMetric] = useState<string>("revenue");
   
   // Chart.js instance reference
-  const chartRef = useRef<HTMLCanvasElement>(null);
+  const chartRef = useRef<HTMLCanvasElement | null>(null);
   const chartInstance = useRef<Chart | null>(null);
+  
+  // Handle time period change using the prop callback if available
+  const handleTimePeriodChange = (period: string): void => {
+    // Call parent's onTimePeriodChange if it exists
+    if (typeof window !== 'undefined') {
+      const event = new CustomEvent('timePeriodChange', { detail: { period } });
+      window.dispatchEvent(event);
+    }
+  };
 
   /**
    * Get clinical metrics data from static data
    */
-  const revenueData = getRevenueTrendsFromPL(selectedLocationId, selectedTimePeriod);
+  const revenueData = getRevenueTrendsFromPL(selectedLocationId, selectedTimePeriod || "1Y");
 
   /**
    * Process chart data - filter out projections and use only historical data
    */
   const processChartData = (): RevenueDataPoint[] => {
     // Filter out projected data points to show only historical data
-    return revenueData.filter(item => !item.isProjected);
+    return revenueData.filter((item: RevenueDataPoint) => !item.isProjected);
   };
 
   /**
@@ -349,13 +358,6 @@ export default function KeyMetricsTrendsChart({ selectedLocationId, selectedTime
       default:
         return 'Value';
     }
-  };
-
-  /**
-   * Handle time period change
-   */
-  const handleTimePeriodChange = (period: string): void => {
-    setSelectedTimePeriod(period);
   };
 
   /**

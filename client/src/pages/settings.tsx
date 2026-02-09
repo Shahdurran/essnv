@@ -1225,23 +1225,6 @@ export default function Settings() {
                 </Card>
               </TabsContent>
             </Tabs>
-
-            {/* Save Button (Bottom) */}
-            <div className="flex justify-end mt-6">
-              <Button onClick={handleSave} disabled={saving} size="lg">
-                {saving ? (
-                  <>
-                    <RefreshCw className="h-4 w-4 mr-2 animate-spin" />
-                    Saving...
-                  </>
-                ) : (
-                  <>
-                    <Save className="h-4 w-4 mr-2" />
-                    Save All Changes
-                  </>
-                )}
-              </Button>
-            </div>
           </div>
         </div>
       </div>

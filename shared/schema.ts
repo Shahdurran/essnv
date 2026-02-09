@@ -382,3 +382,92 @@ export const practiceLocationsRelations = relations(practiceLocations, ({ one })
     references: [users.username],
   }),
 }));
+
+// ============ CLIENT-SIDE TYPES ============
+
+// Claims breakdown for insurance claims widget
+export interface ClaimsBreakdown {
+  status?: string;
+  provider?: string;
+  totalClaims: number;
+  pendingClaims?: number;
+  approvedClaims?: number;
+  deniedClaims?: number;
+  totalAmount: number;
+  paidAmount?: number;
+  outstandingAmount?: number;
+  approvalRate?: number;
+  providers?: Array<{
+    name: string;
+    claimCount: number;
+    amount: number;
+  }>;
+}
+
+// Revenue data point for charts
+export interface RevenueDataPoint {
+  month: string;
+  revenue: number;
+  expenses: number;
+  ebitda: number;
+  writeOffs: number;
+  patientCount: number;
+  isProjected?: boolean;
+}
+
+// Key metrics for dashboard
+export interface KeyMetrics {
+  monthlyPatients: number;
+  newPatients: number;
+  avgRevenuePerPatient: number;
+  totalRevenue: number;
+  totalExpenses: number;
+  netProfit: number;
+  profitMargin: number;
+  collectionRate: number;
+  outstandingAR: number;
+  daysInAR: number;
+  avgVisitDuration: number;
+  procedureMix: Array<{
+    category: string;
+    count: number;
+    percentage: number;
+  }>;
+}
+
+// Insurance payer data
+export interface InsurancePayerData {
+  payerName: string;
+  claimsCount: number;
+  totalClaimed: number;
+  totalPaid: number;
+  denialRate: number;
+  avgProcessingDays: number;
+}
+
+// Projection data for forecasts
+export interface ProjectionData {
+  month: string;
+  monthName?: string;
+  projectedRevenue: number;
+  projectedPatients: number;
+  confidenceLevel: number;
+  growthRate: string;
+  seasonalFactor?: number;
+}
+
+// Financial category
+export interface FinancialCategory {
+  id: string;
+  name: string;
+  amount: number;
+  change: number;
+  trend: 'up' | 'down';
+}
+
+// Financial response
+export interface FinancialResponse {
+  categories: FinancialCategory[];
+  total: number;
+  period: string;
+}

@@ -56,7 +56,7 @@ import type { ClaimsBreakdown } from "../../../shared/schema";
  */
 export function generateRevenueTimeSeriesData(months = 24, baseRevenue = 420000) {
   // Array to store the generated data points
-  const data = [];
+  const data: any[] = [];
   // Get current date as reference point for generating time series
   const currentDate = new Date();
   
@@ -219,7 +219,7 @@ export function generateRevenueTimeSeriesData(months = 24, baseRevenue = 420000)
  */
 export function generatePatientVolumeProjections(months = 6) {
   // Array to store projection data points
-  const projections = [];
+  const projections: any[] = [];
   
   // Base patient volume - current monthly average across all locations
   // This represents the practice's current capacity and patient load

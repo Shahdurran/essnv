@@ -1667,6 +1667,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const locationId = "fairfax";
 
       // Import cash flow data from CSV (conditional import to avoid database requirement)
+      // Read the CSV file content
       const fs = await import("fs");
       const path = await import("path");
       const csvPath = path.join(process.cwd(), "Cashflow-Eye-Specialists.csv");
@@ -1677,81 +1678,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
           .json({ message: "Cash flow CSV file not found" });
       }
 
+      // Read CSV file content
+      const csvContent = fs.readFileSync(csvPath, 'utf-8');
+
       // Dynamic import to avoid database requirement at startup
-      const { importCashFlowDataFromCsv, getCashFlowData } = await import("./csvImport");
-      const result = await importCashFlowDataFromCsv(csvPath, locationId);
-
-      // Transfer imported data to storage layer for time-based filtering
-      const importedData = getCashFlowData();
-
-      // Helper function to normalize month format to YYYY-MM
-      const normalizeMonthFormat = (monthYear: string | undefined): string => {
-        // Handle null/undefined values
-        if (!monthYear || typeof monthYear !== "string") {
-          return ""; // Return empty string for invalid inputs
-        }
-
-        // Handle formats like "September 2024" or "Sep-2024"
-        const monthMap: Record<string, string> = {
-          january: "01",
-          jan: "01",
-          february: "02",
-          feb: "02",
-          march: "03",
-          mar: "03",
-          april: "04",
-          apr: "04",
-          may: "05",
-          june: "06",
-          jun: "06",
-          july: "07",
-          jul: "07",
-          august: "08",
-          aug: "08",
-          september: "09",
-          sep: "09",
-          october: "10",
-          oct: "10",
-          november: "11",
-          nov: "11",
-          december: "12",
-          dec: "12",
-        };
-
-        // Handle "September 2024" format
-        if (monthYear.includes(" ")) {
-          const [month, year] = monthYear.split(" ");
-          const monthNum = monthMap[month.toLowerCase()];
-          return monthNum ? `${year}-${monthNum}` : monthYear;
-        }
-
-        // Handle "Sep-2024" format
-        if (monthYear.includes("-")) {
-          const [month, year] = monthYear.split("-");
-          const monthNum = monthMap[month.toLowerCase()];
-          return monthNum ? `${year}-${monthNum}` : monthYear;
-        }
-
-        return monthYear; // Return as-is if format is unrecognized
-      };
-
-      // Convert to storage format with normalized month format
-      const storageData = importedData
-        .filter((item) => item && (item.month || item.monthYear)) // Filter out items with invalid month data
-        .map((item) => ({
-          locationId: item.locationId,
-          lineItem: item.lineItem,
-          category: item.category,
-          monthYear: normalizeMonthFormat(item.month || item.monthYear || ""), // Use correct field name
-          amount: item.amount,
-        }))
-        .filter((item) => item.monthYear !== ""); // Filter out items that couldn't be normalized
-
-      console.log(
-        `Importing ${storageData.length} cash flow records to storage with normalized months`,
-      );
-
-      await storage.importCashFlowDataToStorage(storageData);
+      const { importCashFlowDataFromCsv } = await import("./csvImport");
+      const result = await importCashFlowDataFromCsv(csvContent, locationId);
 
       res.json(result);
     } catch (error) {

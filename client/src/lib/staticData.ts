@@ -17,6 +17,7 @@
 // Import the static JSON data (locations removed - use Neon DB only)
 import cashFlowData from '../data/cash_flow_monthly_data.json';
 import plData from '../data/pl_monthly_data.json';
+import { FinancialResponse, FinancialCategory } from './dataService';
 
 // Types for the raw data (locations removed)
 interface RawCashFlowItem {
@@ -302,7 +303,7 @@ export function getFinancialRevenueFromPL(locationId: string = 'all', period: st
 /**
  * Get financial expenses data from P&L
  */
-export function getFinancialExpensesFromPL(locationId: string = 'all', period: string = '1Y') {
+export function getFinancialExpensesFromPL(locationId: string = 'all', period: string = '1Y'): FinancialResponse {
   // Ignore locationId - data remains the same for all locations
   let filteredData = rawPLData;
   
@@ -316,12 +317,12 @@ export function getFinancialExpensesFromPL(locationId: string = 'all', period: s
   const expenseItems = groupAndSumByLineItem(expenseData);
   
   // Convert to expected format
-  const categories = expenseItems.map((item, index) => ({
+  const categories: FinancialCategory[] = expenseItems.map((item, index) => ({
     id: item.line_item.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, ''),
     name: item.line_item,
     amount: Math.round(Math.abs(item.total_amount)), // Make positive and round for display
     change: Math.random() * 6 - 3, // Random change
-    trend: Math.random() > 0.5 ? 'up' : 'down' as const
+    trend: (Math.random() > 0.5 ? 'up' : 'down') as 'up' | 'down'
   }));
   
   const total = categories.reduce((sum, cat) => sum + cat.amount, 0);

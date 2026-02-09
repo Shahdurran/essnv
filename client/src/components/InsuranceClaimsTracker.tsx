@@ -278,15 +278,16 @@ export default function InsuranceClaimsTracker({ selectedLocationId, selectedTim
             ))}
           </div>
           <p className="text-xs text-gray-500 mt-2">
-            Showing claims data for {localDateFilter.replace('-', ' ')} period
+            Showing claims data for {localDateFilter?.replace('-', ' ') || ''} period
           </p>
         </div>
 
         {/* Claims Buckets Grid - Updated to 4 columns for 4 status buckets */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
           {claimsData.map((bucket) => {
-            const StatusIcon = getStatusIcon(bucket.status);
-            const colors = getStatusColors(bucket.status);
+            const bucketStatus = bucket.status || 'unknown';
+            const StatusIcon = getStatusIcon(bucketStatus);
+            const colors = getStatusColors(bucketStatus);
             
             return (
               <div 
@@ -298,7 +299,7 @@ export default function InsuranceClaimsTracker({ selectedLocationId, selectedTim
                   <div className="flex items-center space-x-2">
                     <StatusIcon className={`h-5 w-5 ${colors.icon}`} />
                     <h4 className={`font-semibold ${colors.text}`}>
-                      {bucket.status}
+                      {bucketStatus}
                     </h4>
                   </div>
                   <Badge className={colors.badge} variant="secondary">
@@ -320,7 +321,7 @@ export default function InsuranceClaimsTracker({ selectedLocationId, selectedTim
                 <div className="space-y-3">
                   <h5 className="text-sm font-medium text-gray-700">By Insurance Provider:</h5>
                   <div className="max-h-48 overflow-y-auto space-y-2 pr-2">
-                    {bucket.providers.map((provider) => (
+                    {(bucket.providers || []).map((provider) => (
                       <div 
                         key={provider.name}
                         className="flex justify-between items-center py-2 px-3 bg-white rounded border border-gray-100"

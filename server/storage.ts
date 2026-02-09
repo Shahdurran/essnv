@@ -584,7 +584,7 @@ export class MemStorage implements IStorage {
 
   // Monthly Revenue Data - Uses Master Data Consistency
   async getMonthlyRevenueData(locationId?: string): Promise<any[]> {
-    const months = [];
+    const months: any[] = [];
     const isAllLocations = !locationId;
     const locationWeight = isAllLocations ? 1.0 : this.masterData.locationWeights[locationId as keyof typeof this.masterData.locationWeights] || 0.1;
     
@@ -681,7 +681,7 @@ export class MemStorage implements IStorage {
   }
 
   async getPatientVolumeProjections(locationId?: string): Promise<any[]> {
-    const projections = [];
+    const projections: any[] = [];
     const locations = Array.from(this.practiceLocations.values());
     
     // Base volume calculation based on location

@@ -23,6 +23,8 @@ const __dirname = __filename;
 const databaseUrl = process.env.DATABASE_URL || process.env.DATABASE_CONNECTION_STRING;
 let db: any = null;
 
+export { db };
+
 try {
   if (databaseUrl) {
     const sqlConnection = neon(databaseUrl);

@@ -159,72 +159,72 @@ export const getQueryFn: <T>(options: {
     }
     
     if (path.startsWith("/api/analytics/key-metrics")) {
-      const locationId = queryKey[2] || 'all';
-      const timeRange = queryKey[3] || '1';
+      const locationId = (queryKey[2] as string) || 'all';
+      const timeRange = (queryKey[3] as string) || '1';
       return await dataService.getKeyMetrics(locationId, timeRange);
     }
     
     if (path.startsWith("/api/financial/revenue")) {
-      const locationId = queryKey[3] || 'all';
-      const period = queryKey[4] || '1Y';
+      const locationId = (queryKey[3] as string) || 'all';
+      const period = (queryKey[4] as string) || '1Y';
       return await dataService.getFinancialRevenue(locationId, period);
     }
     
     if (path.startsWith("/api/financial/expenses")) {
-      const locationId = queryKey[3] || 'all';
-      const period = queryKey[4] || '1Y';
+      const locationId = (queryKey[3] as string) || 'all';
+      const period = (queryKey[4] as string) || '1Y';
       return await dataService.getFinancialExpenses(locationId, period);
     }
     
     if (path.startsWith("/api/financial/cashflow")) {
-      const locationId = queryKey[3] || 'all';
-      const period = queryKey[4] || '1Y';
+      const locationId = (queryKey[3] as string) || 'all';
+      const period = (queryKey[4] as string) || '1Y';
       return await dataService.getCashFlow(locationId, period);
     }
     
     if (path.startsWith("/api/financial/profit-loss")) {
-      const locationId = queryKey[3] || 'all';
-      const period = queryKey[4] || '1Y';
+      const locationId = (queryKey[3] as string) || 'all';
+      const period = (queryKey[4] as string) || '1Y';
       return await dataService.getProfitLoss(locationId, period);
     }
     
     if (path.startsWith("/api/analytics/revenue-trends")) {
-      const locationId = queryKey[3] || 'all';
-      const period = queryKey[4] || '1yr';
+      const locationId = (queryKey[3] as string) || 'all';
+      const period = (queryKey[4] as string) || '1yr';
       return await dataService.getRevenueTrends(locationId, period);
     }
     
     if (path.startsWith("/api/analytics/ar-buckets")) {
-      const locationId = queryKey[3] || 'all';
+      const locationId = (queryKey[3] as string) || 'all';
       return await dataService.getARBuckets(locationId);
     }
     
     if (path.startsWith("/api/analytics/insurance-claims")) {
-      const locationId = queryKey[3] || 'all';
+      const locationId = (queryKey[3] as string) || 'all';
       return await dataService.getInsuranceClaims(locationId);
     }
     
     if (path.startsWith("/api/analytics/patient-billing")) {
-      const locationId = queryKey[3] || 'all';
-      const timeRange = queryKey[4] || '30';
+      const locationId = (queryKey[3] as string) || 'all';
+      const timeRange = (queryKey[4] as string) || '30';
       return await dataService.getPatientBilling(locationId, timeRange);
     }
     
     if (path.startsWith("/api/analytics/top-procedures")) {
-      const locationId = queryKey[3] || 'all';
-      const category = queryKey[4] || 'all';
-      const timeRange = queryKey[5] || '1';
+      const locationId = (queryKey[3] as string) || 'all';
+      const category = (queryKey[4] as string) || 'all';
+      const timeRange = (queryKey[5] as string) || '1';
       return await dataService.getTopRevenueProcedures(locationId, category, timeRange);
     }
     
     if (path.startsWith("/api/analytics/insurance-breakdown")) {
-      const locationId = queryKey[3] || 'all';
-      const timeRange = queryKey[4] || '1';
+      const locationId = (queryKey[3] as string) || 'all';
+      const timeRange = (queryKey[4] as string) || '1';
       return await dataService.getInsurancePayerBreakdown(locationId, timeRange);
     }
     
     if (path.startsWith("/api/analytics/projections")) {
-      const locationId = queryKey[3] || 'all';
+      const locationId = (queryKey[3] as string) || 'all';
       return await dataService.getPatientVolumeProjections(locationId);
     }
     

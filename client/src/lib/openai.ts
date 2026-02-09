@@ -381,7 +381,7 @@ export function formatAIResponse(aiResponse: any) {
 
     // Format recommendations as bullet points if they exist
     const formattedRecommendations = recommendations.length > 0 
-      ? `\n\n**Recommendations:**\n${recommendations.map(rec => `• ${rec}`).join('\n')}`
+      ? `\n\n**Recommendations:**\n${recommendations.map((rec: string) => `• ${rec}`).join('\n')}`
       : '';
 
     // Format key metrics if they exist
@@ -442,8 +442,8 @@ export const queryTemplates = {
  * @param {string} queryType - The type of the previous query
  * @returns {Array} Array of suggested follow-up questions
  */
-export function getSuggestedFollowUps(queryType) {
-  const followUpMap = {
+export function getSuggestedFollowUps(queryType: string): string[] {
+  const followUpMap: Record<string, string[]> = {
     forecast: [
       "What factors are driving this forecast?",
       "How does this compare to last year?",

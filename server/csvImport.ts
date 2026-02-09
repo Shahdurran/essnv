@@ -1,6 +1,6 @@
-// CSV Import functionality for P&L data
-import { db } from './storage';
-import { plMonthlyData } from '../shared/schema';
+// CSV Import functionality for P&L and Cash Flow data
+import { db } from './storage/userConfigurations';
+import { plMonthlyData, cashFlowData } from '../shared/schema';
 import { sql } from 'drizzle-orm';
 
 interface ParsedCSVData {
@@ -93,7 +93,7 @@ export async function importPLData(
     });
   }
   
-  console.log(`Prepared ${insertData.length} records for insert`);
+  console.log(`Prepared ${insertData.length} P&L records for insert`);
   
   // Clear existing data for this location (if any)
   await db.delete(plMonthlyData);
@@ -117,7 +117,84 @@ export async function importPLData(
   
   return {
     success: true,
-    message: `Successfully imported ${insertData.length} records`,
+    message: `Successfully imported ${insertData.length} P&L records`,
+    recordsInserted: insertData.length
+  };
+}
+
+// Main function to import Cash Flow data from CSV
+export async function importCashFlowDataFromCsv(
+  csvContent: string,
+  locationId: string,
+  userId: string = 'default'
+): Promise<{ success: boolean; message: string; recordsInserted: number }> {
+  const lines = csvContent.trim().split('\n');
+  const insertData: ParsedCSVData[] = [];
+  
+  // Skip header row and process data
+  for (let i = 1; i < lines.length; i++) {
+    const line = lines[i].trim();
+    if (!line) continue;
+    
+    // Split CSV line (handling quoted values)
+    const values = parseCSVLine(line);
+    
+    if (values.length < 4) continue;
+    
+    const [lineItem, , monthYear, amountStr] = values;
+    
+    // Skip if any required field is empty
+    if (!lineItem || !monthYear || !amountStr) continue;
+    
+    // Determine category type based on line item
+    const lowerLineItem = lineItem.toLowerCase();
+    let categoryType = 'operating';
+    
+    if (lowerLineItem.includes('invest') || lowerLineItem.includes('purchase') || lowerLineItem.includes('equipment')) {
+      categoryType = 'investing';
+    } else if (lowerLineItem.includes('finance') || lowerLineItem.includes('loan') || lowerLineItem.includes('debt')) {
+      categoryType = 'financing';
+    }
+    
+    // Parse the amount
+    const amount = parseCurrency(amountStr);
+    
+    // Skip invalid amounts
+    if (isNaN(amount)) continue;
+    
+    insertData.push({
+      locationId,
+      lineItem,
+      categoryType,
+      month: convertMonthFormat(monthYear),
+      amount
+    });
+  }
+  
+  console.log(`Prepared ${insertData.length} Cash Flow records for insert`);
+  
+  // Clear existing data for this location (if any)
+  await db.delete(cashFlowData);
+  console.log('Cleared existing Cash Flow data');
+  
+  // Insert all records in a single transaction
+  if (insertData.length > 0) {
+    await db.insert(cashFlowData).values(
+      insertData.map(d => ({
+        userId,
+        locationId: d.locationId,
+        category: d.categoryType,
+        month: d.month,
+        amount: d.amount
+      }))
+    );
+    
+    console.log(`Successfully inserted ${insertData.length} Cash Flow records for location ${locationId}`);
+  }
+  
+  return {
+    success: true,
+    message: `Successfully imported ${insertData.length} Cash Flow records`,
     recordsInserted: insertData.length
   };
 }
@@ -145,7 +222,7 @@ function parseCSVLine(line: string): string[] {
   return result;
 }
 
-// Function to get available months from imported data
+// Function to get available months from imported P&L data
 export async function getAvailableMonths(locationId: string): Promise<string[]> {
   const result = await db
     .select({ month: plMonthlyData.month })
@@ -168,7 +245,25 @@ export async function getPLDataByMonth(
     .execute();
 }
 
-// Function to get summary by category for a month
+// Function to get Cash Flow data by month
+export async function getCashFlowData(
+  locationId?: string,
+  month?: string
+): Promise<typeof cashFlowData.$inferSelect[]> {
+  let query = db.select().from(cashFlowData);
+  
+  if (locationId) {
+    query = query.where(sql`${cashFlowData.locationId} = ${locationId}`) as typeof query;
+  }
+  
+  if (month) {
+    query = query.where(sql`${cashFlowData.month} = ${month}`) as typeof query;
+  }
+  
+  return query.execute();
+}
+
+// Function to get summary by category for a month (P&L)
 export async function getPLSummaryByCategory(
   locationId: string,
   month: string

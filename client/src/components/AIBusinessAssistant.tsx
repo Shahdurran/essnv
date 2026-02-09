@@ -87,6 +87,11 @@ interface ChatMessage {
   content: string;
   timestamp: string;
   isWelcome?: boolean;
+  isStreaming?: boolean;
+  isError?: boolean;
+  queryType?: string;
+  recommendations?: string[];
+  metrics?: Record<string, unknown>;
 }
 
 /*
@@ -266,9 +271,9 @@ export default function AIBusinessAssistant({ selectedLocationId }: AIBusinessAs
     if (!trimmedMessage || isLoading) return;
 
     // Add user message to chat
-    const userMessage = {
+    const userMessage: ChatMessage = {
       id: `user-${Date.now()}`,
-      type: "user",
+      type: "user" as const,
       content: trimmedMessage,
       timestamp: new Date().toISOString()
     };
@@ -294,9 +299,9 @@ export default function AIBusinessAssistant({ selectedLocationId }: AIBusinessAs
         
         // Create AI message placeholder
         const aiMessageId = `ai-${Date.now()}`;
-        const aiMessage = {
+        const aiMessage: ChatMessage = {
           id: aiMessageId,
-          type: "ai",
+          type: "ai" as const,
           content: "",
           timestamp: new Date().toISOString(),
           queryType: formattedResponse.type,
@@ -314,9 +319,9 @@ export default function AIBusinessAssistant({ selectedLocationId }: AIBusinessAs
         // Handle error response with typing delay
         setTimeout(() => {
           setIsTyping(false);
-          const errorMessage = {
+          const errorMessage: ChatMessage = {
             id: `ai-error-${Date.now()}`,
-            type: "ai",
+            type: "ai" as const,
             content: response.data.response,
             timestamp: new Date().toISOString(),
             isError: true
@@ -333,9 +338,9 @@ export default function AIBusinessAssistant({ selectedLocationId }: AIBusinessAs
       
       console.error("Error sending message to AI:", error);
       
-      const errorMessage = {
+      const errorMessage: ChatMessage = {
         id: `error-${Date.now()}`,
-        type: "ai",
+        type: "ai" as const,
         content: "I apologize, but I'm experiencing technical difficulties. Please try your question again in a moment.",
         timestamp: new Date().toISOString(),
         isError: true
@@ -351,7 +356,7 @@ export default function AIBusinessAssistant({ selectedLocationId }: AIBusinessAs
    * @param {string} fullText - The complete response text
    * @param {object} responseData - Additional response data
    */
-  const simulateTypingEffect = async (messageId, fullText, responseData) => {
+  const simulateTypingEffect = async (messageId: string, fullText: string, responseData: Record<string, unknown>): Promise<void> => {
     const words = fullText.split(' ');
     let currentText = '';
     
@@ -395,7 +400,7 @@ export default function AIBusinessAssistant({ selectedLocationId }: AIBusinessAs
               }
             }
           }
-          resolve();
+          resolve(undefined);
         });
       });
       
@@ -425,13 +430,13 @@ export default function AIBusinessAssistant({ selectedLocationId }: AIBusinessAs
    * @param {string} messageId - The message ID to update
    * @param {object} responseData - The response data containing additional sections
    */
-  const streamAdditionalSections = async (messageId, responseData) => {
+  const streamAdditionalSections = async (messageId: string, responseData: { recommendations?: string[]; key_metrics?: Record<string, number> }): Promise<void> => {
     let additionalContent = '';
     
     // Build the additional content sections
     if (responseData.recommendations && responseData.recommendations.length > 0) {
       additionalContent += '\n\n**Recommendations:**\n';
-      responseData.recommendations.forEach(rec => {
+      responseData.recommendations.forEach((rec: string) => {
         additionalContent += `• ${rec}\n`;
       });
     }
@@ -494,13 +499,13 @@ export default function AIBusinessAssistant({ selectedLocationId }: AIBusinessAs
                 }
               }
             }
-            resolve();
+            resolve(undefined);
           });
         });
         
         // Add delay between words
         const delay = 25 + Math.random() * 25; // Slightly faster for additional sections
-        await new Promise(resolve => setTimeout(resolve, delay));
+        await new Promise<void>(resolve => setTimeout(resolve, delay));
       }
       
       // Mark streaming as complete but don't add responseData since it's now part of content
@@ -521,7 +526,7 @@ export default function AIBusinessAssistant({ selectedLocationId }: AIBusinessAs
    * Handle popular question click
    * @param {Object} question - The popular question object
    */
-  const handleQuestionClick = (question) => {
+  const handleQuestionClick = (question: { question: string }) => {
     handleSendMessage(question.question, true);
   };
 
@@ -529,7 +534,7 @@ export default function AIBusinessAssistant({ selectedLocationId }: AIBusinessAs
    * Handle Enter key press in textarea
    * @param {KeyboardEvent} e - The keyboard event
    */
-  const handleKeyPress = (e) => {
+  const handleKeyPress = (e: React.KeyboardEvent<HTMLTextAreaElement>): void => {
     if (e.key === 'Enter' && !e.shiftKey) {
       e.preventDefault();
       handleSendMessage();
@@ -540,8 +545,8 @@ export default function AIBusinessAssistant({ selectedLocationId }: AIBusinessAs
    * Get icon component for popular questions
    * @param {string} iconName - The icon name
    */
-  const getQuestionIcon = (iconName) => {
-    const iconMap = {
+  const getQuestionIcon = (iconName: string) => {
+    const iconMap: Record<string, React.ComponentType<{ className?: string }>> = {
       "chart-line": TrendingUp,
       "dollar-sign": DollarSign,
       "clock": Clock,
