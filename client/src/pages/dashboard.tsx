@@ -105,8 +105,25 @@ export default function Dashboard() {
    */
 
   // Get user configuration from auth context (dynamic identity / preset)
-  const { user, isAdmin, logout } = useAuth();
+  const { user, isAdmin, logout, isLoading } = useAuth();
   const [, setLocation] = useLocation();
+
+  // Show loading state while auth is being checked
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center min-h-screen bg-gray-50">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
+          <p className="text-gray-600">Loading dashboard...</p>
+        </div>
+      </div>
+    );
+  }
+
+  // Redirect to login if not authenticated
+  if (!user) {
+    return null; // Will redirect from App.tsx or show login
+  }
 
   /*
    * LOCATION FILTER STATE
