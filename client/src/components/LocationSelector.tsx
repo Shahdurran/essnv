@@ -86,8 +86,24 @@ export default function LocationSelector({ selectedLocationId, onLocationChange 
   useEffect(() => {
     const fetchLocations = async () => {
       try {
-        const response = await fetch('/api/locations');
+        const response = await fetch('/api/locations', {
+          credentials: 'include'
+        });
+        
+        if (!response.ok) {
+          console.error('Failed to fetch locations:', response.status);
+          setLoading(false);
+          return;
+        }
+        
         const data = await response.json();
+        
+        // Ensure data is an array before filtering
+        if (!Array.isArray(data)) {
+          console.error('Invalid locations data:', data);
+          setLoading(false);
+          return;
+        }
         
         // Filter locations based on user access
         // If userLocations is empty or undefined, user has access to all locations
