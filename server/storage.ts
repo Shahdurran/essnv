@@ -270,7 +270,8 @@ export class MemStorage implements IStorage {
       password: "secure_password", // In production, this would be hashed
       name: "Dr. John Josephson",
       role: "practice_owner",
-      practiceId: "eye_specialists_nova"
+      practiceId: "eye_specialists_nova",
+      userLocations: []
     });
   }
 
@@ -297,7 +298,8 @@ export class MemStorage implements IStorage {
       role: insertUser.role ?? null,
       practiceId: insertUser.practiceId ?? null,
       createdAt: new Date(),
-      settings: insertUser.settings ?? {}
+      settings: insertUser.settings ?? {},
+      userLocations: insertUser.userLocations ?? []
     };
     this.users.set(String(id), user);
     return user;
