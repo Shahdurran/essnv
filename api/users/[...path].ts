@@ -46,7 +46,7 @@ const users = pgTable("users", {
   // Other customizations
   procedureNameOverrides: json("procedure_name_overrides"),
   locationNameOverrides: json("location_name_overrides"),
-  userLocations: json("user_locations"), // Array of location IDs user has access to
+  userLocations: json("user_locations"), // Array of locations - stored as JSONB, follows provider isolation pattern
   providers: json("providers"),
   showCollectionsWidget: boolean("show_collections_widget").default(true),
 });
@@ -294,6 +294,7 @@ function convertDbUserToAppUser(dbUser: any): any {
     arSubheadings: parseJsonField(dbUser.arSubheadings),
     procedureNameOverrides: parseJsonField(dbUser.procedureNameOverrides),
     locationNameOverrides: parseJsonField(dbUser.locationNameOverrides),
+    // userLocations - full location objects stored as JSON array, follows provider isolation pattern
     userLocations: parseJsonField(dbUser.userLocations) || []
   };
 }
@@ -499,6 +500,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
               topRevenueTitle: updates.topRevenueTitle || dbUsers[0].topRevenueTitle,
               
               // JSON fields - stringify objects for Neon DB
+              // CRITICAL: userLocations stored as full location objects array (follows provider pattern)
               revenueSubheadings: updates.revenueSubheadings ? JSON.stringify(updates.revenueSubheadings) : (dbUsers[0].revenueSubheadings || '{}'),
               expensesSubheadings: updates.expensesSubheadings ? JSON.stringify(updates.expensesSubheadings) : (dbUsers[0].expensesSubheadings || '{}'),
               cashInSubheadings: updates.cashInSubheadings ? JSON.stringify(updates.cashInSubheadings) : (dbUsers[0].cashInSubheadings || '{}'),
@@ -508,6 +510,8 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
               procedureNameOverrides: updates.procedureNameOverrides ? JSON.stringify(updates.procedureNameOverrides) : (dbUsers[0].procedureNameOverrides || '{}'),
               locationNameOverrides: updates.locationNameOverrides ? JSON.stringify(updates.locationNameOverrides) : (dbUsers[0].locationNameOverrides || '{}'),
               providers: updates.providers ? JSON.stringify(updates.providers) : (dbUsers[0].providers || '[]'),
+              // userLocations - stored as full location objects array with optional city/state/address fields
+              userLocations: updates.userLocations ? JSON.stringify(updates.userLocations) : (dbUsers[0].userLocations || '[]'),
               showCollectionsWidget: updates.showCollectionsWidget !== undefined ? updates.showCollectionsWidget : (dbUsers[0].showCollectionsWidget !== undefined ? dbUsers[0].showCollectionsWidget : true),
             };
             

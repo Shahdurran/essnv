@@ -50,6 +50,8 @@ export const users = pgTable('users', {
     compactMode: false,
     darkMode: false,
   }),
+  // User locations stored as JSONB array (isolated per user, follows provider pattern)
+  userLocations: jsonb('user_locations').default([]),
 });
 
 export type User = typeof users.$inferSelect;

@@ -134,12 +134,12 @@ interface UserConfig {
 interface PracticeLocation {
   id: string;
   name: string;
-  address: string;
+  address?: string;
   city?: string;
   state?: string;
   zipCode?: string;
-  phone: string | null;
-  isActive?: boolean | null;
+  phone?: string;
+  isActive?: boolean;
 }
 
 // Default providers when user has none
@@ -166,7 +166,6 @@ export default function Settings() {
   const [users, setUsers] = useState<UserConfig[]>([]);
   const [selectedUser, setSelectedUser] = useState<string | null>(null);
   const [editingUser, setEditingUser] = useState<UserConfig | null>(null);
-  const [locations, setLocations] = useState<PracticeLocation[]>([]);
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
   const [newUserData, setNewUserData] = useState({
     username: '',
@@ -247,22 +246,6 @@ export default function Settings() {
       if (usersWithDefaults.length > 0) {
         setSelectedUser(usersWithDefaults[0].username);
         setEditingUser(usersWithDefaults[0]);
-      }
-      
-      // Fetch locations
-      try {
-        const locRes = await fetch('/api/locations', {
-          credentials: 'include'
-        });
-        if (locRes.ok) {
-          const locData = await locRes.json();
-          setLocations(Array.isArray(locData) ? locData : []);
-        } else {
-          setLocations([]);
-        }
-      } catch (locError) {
-        console.error('Error fetching locations:', locError);
-        setLocations([]);
       }
       
       setLoading(false);
@@ -826,48 +809,97 @@ export default function Settings() {
                     <CardDescription>
                       Manage practice locations. Add, edit, or remove locations for your practice.
                       <br />
-                      <span className="text-orange-500">Total Locations: {locations?.length || 0}</span>
+                      <span className="text-orange-500">Total Locations: {editingUser?.userLocations?.length || 0}</span>
                     </CardDescription>
                   </CardHeader>
                   <CardContent className="space-y-4">
-                    {locations?.map((location, index) => (
+                    {(editingUser?.userLocations || []).map((location: PracticeLocation, index: number) => (
                       <div key={location.id} className="flex items-start gap-4 p-3 border rounded-lg">
                         <div className="flex-1 space-y-3">
                           <div>
-                            <Label htmlFor={`location-name-${index}`}>Location Name</Label>
+                            <Label htmlFor={`location-name-${index}`}>Location Name *</Label>
                             <Input
                               id={`location-name-${index}`}
-                              value={location.name}
+                              value={location.name || ''}
                               onChange={(e) => {
-                                const newLocations = [...locations];
-                                newLocations[index].name = e.target.value;
-                                setLocations(newLocations);
+                                if (!editingUser) return;
+                                const newLocations = [...(editingUser.userLocations || [])];
+                                newLocations[index] = { ...newLocations[index], name: e.target.value };
+                                setEditingUser({ ...editingUser, userLocations: newLocations });
                               }}
                               placeholder="e.g., Fairfax Office"
                             />
                           </div>
-                          <div>
-                            <Label htmlFor={`location-address-${index}`}>Address (Optional)</Label>
-                            <Input
-                              id={`location-address-${index}`}
-                              value={location.address || ''}
-                              onChange={(e) => {
-                                const newLocations = [...locations];
-                                newLocations[index].address = e.target.value;
-                                setLocations(newLocations);
-                              }}
-                              placeholder="e.g., 123 Main St, City, State ZIP"
-                            />
+                          <div className="grid grid-cols-2 gap-3">
+                            <div>
+                              <Label htmlFor={`location-address-${index}`}>Address (Optional)</Label>
+                              <Input
+                                id={`location-address-${index}`}
+                                value={location.address || ''}
+                                onChange={(e) => {
+                                  if (!editingUser) return;
+                                  const newLocations = [...(editingUser.userLocations || [])];
+                                  newLocations[index] = { ...newLocations[index], address: e.target.value };
+                                  setEditingUser({ ...editingUser, userLocations: newLocations });
+                                }}
+                                placeholder="123 Main St"
+                              />
+                            </div>
+                            <div>
+                              <Label htmlFor={`location-city-${index}`}>City (Optional)</Label>
+                              <Input
+                                id={`location-city-${index}`}
+                                value={location.city || ''}
+                                onChange={(e) => {
+                                  if (!editingUser) return;
+                                  const newLocations = [...(editingUser.userLocations || [])];
+                                  newLocations[index] = { ...newLocations[index], city: e.target.value };
+                                  setEditingUser({ ...editingUser, userLocations: newLocations });
+                                }}
+                                placeholder="City"
+                              />
+                            </div>
+                          </div>
+                          <div className="grid grid-cols-2 gap-3">
+                            <div>
+                              <Label htmlFor={`location-state-${index}`}>State (Optional)</Label>
+                              <Input
+                                id={`location-state-${index}`}
+                                value={location.state || ''}
+                                onChange={(e) => {
+                                  if (!editingUser) return;
+                                  const newLocations = [...(editingUser.userLocations || [])];
+                                  newLocations[index] = { ...newLocations[index], state: e.target.value };
+                                  setEditingUser({ ...editingUser, userLocations: newLocations });
+                                }}
+                                placeholder="State"
+                              />
+                            </div>
+                            <div>
+                              <Label htmlFor={`location-zip-${index}`}>ZIP (Optional)</Label>
+                              <Input
+                                id={`location-zip-${index}`}
+                                value={location.zipCode || ''}
+                                onChange={(e) => {
+                                  if (!editingUser) return;
+                                  const newLocations = [...(editingUser.userLocations || [])];
+                                  newLocations[index] = { ...newLocations[index], zipCode: e.target.value };
+                                  setEditingUser({ ...editingUser, userLocations: newLocations });
+                                }}
+                                placeholder="12345"
+                              />
+                            </div>
                           </div>
                           <div>
-                            <Label htmlFor={`location-phone-${index}`}>Phone</Label>
+                            <Label htmlFor={`location-phone-${index}`}>Phone (Optional)</Label>
                             <Input
                               id={`location-phone-${index}`}
                               value={location.phone || ''}
                               onChange={(e) => {
-                                const newLocations = [...locations];
-                                newLocations[index].phone = e.target.value;
-                                setLocations(newLocations);
+                                if (!editingUser) return;
+                                const newLocations = [...(editingUser.userLocations || [])];
+                                newLocations[index] = { ...newLocations[index], phone: e.target.value };
+                                setEditingUser({ ...editingUser, userLocations: newLocations });
                               }}
                               placeholder="e.g., (555) 123-4567"
                             />
@@ -876,37 +908,17 @@ export default function Settings() {
                         <Button
                           variant="ghost"
                           size="sm"
-                          onClick={async () => {
-                            if (!confirm(`Are you sure you want to delete ${location.name}?`)) {
+                          onClick={() => {
+                            if (!editingUser) return;
+                            if (!confirm(`Are you sure you want to delete ${location.name || 'this location'}?`)) {
                               return;
                             }
-                            
-                            try {
-                              const response = await fetch('/api/locations', {
-                                method: 'DELETE',
-                                headers: { 'Content-Type': 'application/json' },
-                                credentials: 'include',
-                                body: JSON.stringify({ id: location.id })
-                              });
-                              
-                              if (!response.ok) {
-                                throw new Error('Failed to delete location');
-                              }
-                              
-                              setLocations(locations.filter(loc => loc.id !== location.id));
-                              
-                              toast({
-                                title: "Success",
-                                description: `Location ${location.name} deleted successfully`
-                              });
-                            } catch (error) {
-                              console.error('Error deleting location:', error);
-                              toast({
-                                title: "Error",
-                                description: "Failed to delete location",
-                                variant: "destructive"
-                              });
-                            }
+                            const newLocations = editingUser.userLocations?.filter((loc: PracticeLocation) => loc.id !== location.id) || [];
+                            setEditingUser({ ...editingUser, userLocations: newLocations });
+                            toast({
+                              title: "Success",
+                              description: `Location deleted successfully`
+                            });
                           }}
                           className="mt-6"
                         >
@@ -917,20 +929,27 @@ export default function Settings() {
                     
                     <div className="flex items-center justify-between pt-4 border-t">
                       <p className="text-sm text-gray-500">
-                        Total Locations: {locations?.length || 0}
+                        Total Locations: {editingUser?.userLocations?.length || 0}
                       </p>
                       <Button
                         variant="outline"
                         size="sm"
                         onClick={() => {
-                          const newLocation = {
+                          if (!editingUser) return;
+                          const newLocation: PracticeLocation = {
                             id: `location-${Date.now()}`,
                             name: '',
                             address: '',
-                            phone: null,
+                            city: '',
+                            state: '',
+                            zipCode: '',
+                            phone: '',
                             isActive: true
                           };
-                          setLocations([...(locations || []), newLocation]);
+                          setEditingUser({
+                            ...editingUser,
+                            userLocations: [...(editingUser.userLocations || []), newLocation]
+                          });
                         }}
                       >
                         <Plus className="h-4 w-4 mr-2" />
@@ -938,65 +957,9 @@ export default function Settings() {
                       </Button>
                     </div>
                     
-                    <div className="pt-4 border-t">
-                      <Button
-                        onClick={async () => {
-                          try {
-                            for (const location of (locations || [])) {
-                              if (!location.name) {
-                                toast({
-                                  title: "Error",
-                                  description: "All locations must have a name",
-                                  variant: "destructive"
-                                });
-                                return;
-                              }
-                              
-                              if (location.id.startsWith('location-')) {
-                                const response = await fetch('/api/locations', {
-                                  method: 'POST',
-                                  headers: { 'Content-Type': 'application/json' },
-                                  credentials: 'include',
-                                  body: JSON.stringify(location)
-                                });
-                                
-                                if (!response.ok) {
-                                  throw new Error('Failed to create location');
-                                }
-                              } else {
-                                const response = await fetch('/api/locations', {
-                                  method: 'PUT',
-                                  headers: { 'Content-Type': 'application/json' },
-                                  credentials: 'include',
-                                  body: JSON.stringify(location)
-                                });
-                                
-                                if (!response.ok) {
-                                  throw new Error('Failed to update location');
-                                }
-                              }
-                            }
-                            
-                            await fetchData();
-                            
-                            toast({
-                              title: "Success",
-                              description: "Locations saved successfully"
-                            });
-                          } catch (error) {
-                            console.error('Error saving locations:', error);
-                            toast({
-                              title: "Error",
-                              description: "Failed to save locations",
-                              variant: "destructive"
-                            });
-                          }
-                        }}
-                      >
-                        <Save className="h-4 w-4 mr-2" />
-                        Save All Locations
-                      </Button>
-                    </div>
+                    <p className="text-sm text-gray-500 pt-2">
+                      <strong>Note:</strong> All changes will be saved when you click the "Save Changes" button in the header.
+                    </p>
                   </CardContent>
                 </Card>
               </TabsContent>

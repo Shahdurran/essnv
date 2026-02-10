@@ -21,11 +21,17 @@
  * - Practice owners need to identify top and bottom performing sites
  * 
  * REACT PATTERNS USED:
- * - TanStack Query for server state management
+ * - Auth context for user access control
  * - Controlled component pattern (parent manages selected state)
  * - Callback props for parent communication
  * - Conditional rendering for loading/error states
- * - Modern React hooks (useQuery)
+ * 
+ * LOCATION STORAGE:
+ * Locations are now stored as user_locations JSONB array in the user profile,
+ * following the same isolation pattern as providers. This ensures:
+ * - Each user sees only their own locations
+ * - Locations are saved automatically with the user profile
+ * - No separate API calls needed for location data
  */
 
 // React hooks
@@ -37,6 +43,18 @@ import { Button } from "@/components/ui/button";
 import { MapPin, TrendingUp } from "lucide-react";
 // Auth context for user access control
 import { useAuth } from "@/contexts/AuthContext";
+
+// Type definition for practice location
+interface PracticeLocation {
+  id: string;
+  name: string;
+  address?: string;
+  city?: string;
+  state?: string;
+  zipCode?: string;
+  phone?: string;
+  isActive?: boolean;
+}
 
 /*
  * TYPESCRIPT INTERFACE DEFINITION
@@ -55,72 +73,42 @@ interface LocationSelectorProps {
  * ================================
  * 
  * This component provides location filtering functionality for the entire dashboard.
- * It fetches location data from the API and renders interactive selection buttons.
+ * Locations are now stored as user_locations JSONB array in the user profile,
+ * following the same isolation pattern as providers.
  * 
  * COMPONENT LIFECYCLE:
- * 1. Mount: Fetch location data from API
- * 2. Render: Show loading state while fetching
+ * 1. Mount: Get locations from user context (no API call needed)
+ * 2. Render: Show loading state while auth loads
  * 3. Interactive: User clicks location buttons
  * 4. Update: Parent component receives location change callbacks
  * 
  * STATE MANAGEMENT:
- * - Server state: Managed by TanStack Query (location data from API)
+ * - Server state: Locations come from authenticated user object
  * - UI state: Managed by parent component (selectedLocationId)
- * - No local component state needed (fully controlled)
  * 
  * @param {LocationSelectorProps} props - Component properties
  */
 export default function LocationSelector({ selectedLocationId, onLocationChange }: LocationSelectorProps) {
   
   /*
-   * GET LOCATION DATA FROM API AND USER ACCESS
-   * ==========================================
+   * GET LOCATION DATA FROM USER PROFILE
+   * ==================================
    * 
-   * Fetch practice location data from API which includes user-specific name overrides.
-   * Filter locations based on user's access permissions.
+   * Locations are now stored as user_locations JSONB in the user profile.
+   * This ensures proper isolation - each user sees only their own locations.
    */
   const { user } = useAuth();
-  const [locations, setLocations] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
 
+  // Get locations from user profile - now directly available
+  // user.userLocations is stored as PracticeLocation[] in the user profile
+  const locations: any[] = user?.userLocations || [];
+
   useEffect(() => {
-    const fetchLocations = async () => {
-      try {
-        const response = await fetch('/api/locations', {
-          credentials: 'include'
-        });
-        
-        if (!response.ok) {
-          console.error('Failed to fetch locations:', response.status);
-          setLoading(false);
-          return;
-        }
-        
-        const data = await response.json();
-        
-        // Ensure data is an array before filtering
-        if (!Array.isArray(data)) {
-          console.error('Invalid locations data:', data);
-          setLoading(false);
-          return;
-        }
-        
-        // Filter locations based on user access
-        // If userLocations is empty or undefined, user has access to all locations
-        let filteredLocations = data;
-        if (user?.userLocations && user.userLocations.length > 0) {
-          filteredLocations = data.filter((loc: any) => user.userLocations?.includes(loc.id));
-        }
-        
-        setLocations(filteredLocations);
-        setLoading(false);
-      } catch (error) {
-        console.error('Error fetching locations:', error);
-        setLoading(false);
-      }
-    };
-    
-    fetchLocations();
+    // Set loading to false once user is available
+    if (user !== undefined) {
+      setLoading(false);
+    }
   }, [user]);
 
   /*
